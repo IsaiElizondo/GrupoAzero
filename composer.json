@@ -8,12 +8,10 @@
 	],
 	"license" : "MIT",
 	"require" : {
-		"php" : "^7.2.5|^8.0",
-		"fideloper/proxy" : "^4.4",
-		"fruitcake/laravel-cors" : "^2.0",
+		"php" : "^8.0",
 		"guzzlehttp/guzzle" : "^7.0.1",
 		"laravel-frontend-presets/material-dashboard" : "^1.1",
-		"laravel/framework" : "^8.0",
+		"laravel/framework" : "^9.0",
 		"laravel/tinker" : "^2.5",
 		"laravel/ui" : "^3.0",
 		"laraveles/spanish" : "^1.5",
@@ -21,18 +19,18 @@
 		"ellumilel/php-excel-writer": ">=0.1.3"
 	},
 	"require-dev" : {
-		"facade/ignition" : "^2.3.6",
+		"spatie/laravel-ignition": "^1.0",
 		"fakerphp/faker" : "^1.9.1",
 		"mockery/mockery" : "^1.3.1",
-		"nunomaduro/collision" : "^5.0",
-		"phpunit/phpunit" : "^9.0"
+		"nunomaduro/collision" : "^6.1",
+		"phpunit/phpunit" : "^9.5"
 	},
 	"config" : {
 		"optimize-autoloader" : true,
 		"preferred-install" : "dist",
 		"sort-packages" : true,
 		"platform" : {
-			"php" : "7.3.33"
+			"php" : "8.3.13"
 		}
 	},
 	"autoload" : {
@@ -40,7 +38,7 @@
 			"App\\" : "app/"
 		},
 		"classmap" : [
-			"database/seeds",
+			"database/seeders",
 			"database/factories"
 		]
 	},
@@ -49,7 +47,7 @@
 			"Tests\\" : "tests/"
 		}
 	},
-	"minimum-stability" : "dev",
+	"minimum-stability" : "stable",
 	"prefer-stable" : true,
 	"scripts" : {
 		"post-autoload-dump" : [
