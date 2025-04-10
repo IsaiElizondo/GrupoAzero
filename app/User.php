@@ -40,11 +40,13 @@ class User extends Authenticatable
     ];
     
     
-    public static function countAll(){
-        $list = DB::select(DB::raw("SELECT COUNT(*) AS tot FROM users"));
-        
-        return $list[0]->tot;
+    public static function countAll()
+    {
+        $list = DB::select("SELECT COUNT(*) AS tot FROM users");
+        $list = json_decode(json_encode($list), true);
+        return $list[0]['tot'];
     }
+
 
     public function role()
     {
