@@ -35,7 +35,7 @@ class Evidence extends Model
         JOIN orders o ON o.id IN(c.order_id, d.order_id, r.order_id)
         WHERE o.id = '$order_id'";
        // echo $q;
-        return  DB::select(DB::raw($q));
+        return  DB::select($q);
      }
 
 }

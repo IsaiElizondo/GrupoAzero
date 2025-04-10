@@ -39,7 +39,7 @@ class Picture extends Model
         WHERE o.id = '$order_id'";
         $q.= !empty($event) ? " AND p.event = '$event'" : "";
 
-        return DB::select(DB::raw($q));
+        return DB::select($q);
     }
 
 }

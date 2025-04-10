@@ -43,7 +43,7 @@ class Debolution extends Model
         JOIN reasons r ON r.id = d.reason_id 
         WHERE d.order_id = '$order_id'";
         //$this->table("debolutions")->join("reasons")
-        return DB::select(DB::raw($q));
+        return DB::select($q);
     }
 
 

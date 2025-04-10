@@ -23,7 +23,8 @@ class Pedidos2 extends Model
         FROM orders o
         JOIN statuses s ON s.id = o.status_id 
         WHERE o.id = '$order_id'";
-        $list = DB::select(DB::raw($q));
+        $list = DB::selected($q);
+        //$list = DB::select(DB::raw($q));
        // $list = DB::table('orders')->where("id",$order_id)->get();
         return !empty($list) ? $list[0] : [];
     }
@@ -144,12 +145,12 @@ class Pedidos2 extends Model
         $wherestring = implode(" AND ",$wheres);
 
         //QUERY TOTAL
-        $listt = DB::select(DB::raw("SELECT 
+        $listt = DB::select("SELECT
         COUNT(*) AS tot 
         FROM orders o 
         LEFT JOIN quotes q ON q.order_id = o.id 
         LEFT JOIN stockreq r ON r.order_id = o.id 
-        WHERE ". $wherestring));
+        WHERE ". $wherestring);
 
         self::$total = !empty($listt) ? $listt[0]->tot : 0 ;
 
@@ -176,7 +177,7 @@ class Pedidos2 extends Model
         ". $wherestring  ." ORDER BY updated_at DESC LIMIT ".$ini.", ". self::$rpp;
     //echo $q;
     
-        $list = DB::select(DB::raw($q));
+        $list = DB::select($q);
         
     return $list;
     }
@@ -220,7 +221,7 @@ class Pedidos2 extends Model
     JOIN orders o ON o.id IN( p.order_id, pa.order_id, s.order_id)  
     WHERE o.id = '$order_id'";
 
-    return DB::select(DB::raw($q));
+    return DB::select($q);
 }
 
 

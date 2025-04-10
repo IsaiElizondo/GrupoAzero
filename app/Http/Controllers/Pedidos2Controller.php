@@ -2359,7 +2359,7 @@ class Pedidos2Controller extends Controller
         //echo $q;
 
         if($estatus==2 || $estatus == 10 ){
-            $shipments = DB::select(DB::raw($q));
+            $shipments = DB::select($q);
             $statusesq = Status::all();
             $statuses = [];
                 foreach($statusesq as $st){
@@ -2369,7 +2369,7 @@ class Pedidos2Controller extends Controller
             return view("pedidos2.multie.lista",compact('user','shipments',"statuses"));
         }else{
            // echo DB::raw($qo);
-            $lista = DB::select(DB::raw($qo));
+            $lista = DB::select($qo);
             $statusesq = Status::all();
             $statuses = [];
                 foreach($statusesq as $st){

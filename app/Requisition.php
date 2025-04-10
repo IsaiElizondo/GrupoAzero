@@ -12,9 +12,10 @@ class Requisition extends Model
     ];
     
     public static function countAll(){
-        $list = DB::select(DB::raw("SELECT COUNT(*) AS tot FROM requisitions"));
-
-        return $list[0]->tot;
+        $list = DB::select("SELECT COUNT(*) AS tot FROM requisitions");
+        $list = json_decode(json_encode($list), true);
+        return $list[0]['tot'];
+        
     }
 
 

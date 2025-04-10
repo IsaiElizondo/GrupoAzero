@@ -37,7 +37,8 @@ LEFT JOIN purchase_orders po ON po.order_id = o.id
 LEFT JOIN manufacturing_orders mo ON mo.order_id = o.id
             
 WHERE o.created_at BETWEEN '".$desde."' AND '".$hasta."'"; 
-        $list = DB::select(DB::raw($q));
+        $list = DB::select($ql);
+        $list = json_decode(json_encode($list), true);
         return $list;
     }
     
@@ -78,7 +79,7 @@ WHERE o.created_at BETWEEN '".$desde."' AND '".$hasta."'";
         LEFT JOIN stockreq rs ON rs.order_id = o.id
         LEFT JOIN statuses s ON s.id = o.status_id         
         WHERE o.created_at BETWEEN '$desde' AND '$hasta') sub ";
-        $list = DB::select(DB::raw($qLog));        
+        $list = DB::select($qLog);        
 
         return $list;
     }
@@ -102,7 +103,7 @@ WHERE o.created_at BETWEEN '".$desde."' AND '".$hasta."'";
         LEFT JOIN stockreq rs ON rs.order_id = o.id
         LEFT JOIN statuses s ON s.id = o.status_id    
         WHERE o.created_at BETWEEN '$desde' AND '$hasta'";
-        $list = DB::select(DB::raw($qGeneral));        
+        $list = DB::select($qGeneral);        
 
         return $list;
     }
