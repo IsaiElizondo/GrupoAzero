@@ -11,11 +11,14 @@ class Order extends Model
         'office', 'invoice', 'invoice_number', 'invoice_document','client', 'credit', 'status_id', 'delete','origin'
     ];
     
-    public static function countAll(){
-        $list = DB::select(DB::raw("SELECT COUNT(*) AS tot FROM orders"));
-
-        return $list[0]->tot;
+    public static function countAll()
+    {
+        $list = DB::select("SELECT COUNT(*) AS tot FROM orders");
+        $list = json_decode(json_encode($list), true);
+        return $list[0]['tot'];
     }
+    
+
 
     public function status()
     {
