@@ -196,9 +196,14 @@ class Pedidos2 extends Model
     return $arr;
     }
 
-    public static function Events() : array {
-        return DB::table('events')->get()->toArray();
-   }
+    public static function Events(): array
+{
+    $events = DB::table('events')->get();
+
+    dd($events); // 🔍 Esto mostrará lo que se está obteniendo realmente
+
+    return $events->toArray();
+}
    public static function EventsCat(string $default="") : array{
        $arr=[];
        if(!empty($default)){$arr[""]=$default;}

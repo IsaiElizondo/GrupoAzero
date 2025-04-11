@@ -78,7 +78,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/debolutionEvidence', [DebolutionsController::class, 'debolutionEvidence'])->name('debolution.evidence'); //EVIDENCIA DE DEVOLUCION
     Route::get('/debolutionRepayment', [DebolutionsController::class, 'debolutionRepayment'])->name('debolution.repayment'); //REEMBOLSO DE DEVOLUCION
 
-    Route::get('/reportes', [ReportesController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes', [ReportesController::class, 'index'])->name('reportes');
     Route::get('/reportes/resporte', [ReportesController::class, 'reporte'])->name('reporte');
 
     Route::get('/order/attachlist', [OrderController::class, 'attachlist'])->name('order.attachlist');
