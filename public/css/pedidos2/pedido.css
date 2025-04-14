@@ -506,7 +506,7 @@ background: linear-gradient(0deg, rgba(240,240,240,1) 0%, rgba(246,246,246,1) 40
     align-items: center;
     gap:10px;
     min-width:40vw;
-    margin:0px auto;
+    margin:20px auto 0px auto;
 }
 
 
@@ -573,6 +573,25 @@ border-left:dotted 4px #ccc;
 .FilaAddNotes{
     margin-left:80px;
 }
+
+
+.alGridItem{
+    background-color: #fff;
+    border:#ccc dotted 2px;
+    border-radius: 7px;
+}
+
+input[type='checkbox'].des{
+    color:red;
+    font-weight: bold;
+}
+
+.Fila.deshacer, .Fila.deshacer label{
+    color:#993333;
+    text-align: left;
+} 
+
+
 
 
 @media screen and (max-width:600px) {

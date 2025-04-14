@@ -7,7 +7,7 @@ use App\Http\Controllers\ReportesController;
 
 Route::group (['middleware' => 'auth'], function (){
 
-    Route::get('resportes', [ReportesController::class, 'index'])->name('reportes');
+    Route::get('reportes', [ReportesController::class, 'index'])->name('reportes');
     
     Route::get('reportes/subprocesos', [ReportesController::class, 'subprocesos']);
     Route::get('reportes/participaciones', [ReportesController::class, 'participaciones']);

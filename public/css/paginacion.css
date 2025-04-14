@@ -24,16 +24,16 @@ color:#fff;
 
 ul.paginacion li{
 display:inline-block;
-margin:2px 12px 2px 0px;
+margin:2px 26px 2px 0px;
 list-style:none;
 padding:0px 0px;
-color:#fff;
-font-size: 12px;
+color:#ee9999;
+font-size: 16px;
 vertical-align:middle;
 }
 ul.paginacion li span{
 padding:0px 12px;
-color:#fff;
+color:#ffeeee;
 }
 ul.paginacion li a{
     display:block;

@@ -63,3 +63,26 @@ a.pdf{
     gap:10px;
     flex-wrap:wrap;
 }
+
+
+a.followBtn{
+    display: inline-block;
+    min-width:32px;
+    height:26px;
+    padding:4px .1rem 0px 32px;
+    font-size:16px;
+    color:#666;
+    background-color: transparent;
+    background-image: url(icon_follow.png);
+    background-position: 2px 2px;
+    background-repeat: no-repeat;
+    background-size: auto 80%;
+    cursor:pointer;
+}
+a.followBtn.no{
+    background-color: transparent;
+    background-image: url(icon_follow_no.png);
+}
+.padded a.followBtn{
+    margin-left:10px;
+}
