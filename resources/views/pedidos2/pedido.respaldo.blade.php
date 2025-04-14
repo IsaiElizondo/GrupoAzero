@@ -24,11 +24,7 @@ $follow = Follow::where( ["user_id"=> $user->id, "order_id" => $pedido->id] )->f
 <main class="content">
 
 
-<!--
-<?php
-var_dump($pedido);
-?>
--->
+
 
 
     <div class="card Fila">

@@ -2,7 +2,7 @@
     <div class="Fila">
         <label>El pedido fue entregado</label>
         <div>
-         @if ($user->role_id == 1 && $order->status_id == 6)
+         @if ( ($user->role_id == 1 || in_array($user->department_id,[4])) && ($order->status_id == 6 || $order->status_6 ==1) )
         <a class="deshacerEntregado" 
         href="{{ url('pedidos2/unset_entregado/'.$order->id) }}" title="Revertir Entrega y regresar al estado más reciente. Esta acción será guardada.">Deshacer entregado</a>
         

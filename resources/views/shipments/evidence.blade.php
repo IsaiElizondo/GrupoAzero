@@ -1,8 +1,6 @@
 @extends('layouts.app', ['activePage' => 'orders', 'titlePage' => __('Evidencia de material terminado')])
 
-
 @section('content')
-<link rel='stylesheet' type='text/css' href='{{ url("/") }}/css/attachlist.css' />
     <div class="content">
         <div class="container-fluid">
             <div class="row">
@@ -17,12 +15,32 @@
                             <p class="card-category">Pedido {{ $order->invoice }}</p>
                         </div>
                         <div class="card-body ">
-                        
-     						<section class='attachList' rel='ever' 
-     						uploadto="{{ url('order/attachpost?catalog=shipments') }}" 
-     						href="{{ url('order/attachlist?rel=ever&catalog=shipments&order_id='.$order->id) }}"></section> 
-     						  
-                        </div>
+                            <div class="row">
+                                <label class="col-sm-2 col-form-label">Archivo</label>
+                                <div class="col-sm-7">
+                                    <div class="">
+                                        <label for="picture">Adjuntar archivo</label>
+                                        <input type="file" name="file" class="form-control-file" id="picture" accept="image/*,.pdf" required>
+                                    </div>
+                                </div>
+                            </div>
+                            {{-- @if ( isset($order->shipments) )
+                                {{ $order->shipments }}
+                                <input type="hidden" name="oldShipment" value="true" class="form-control">
+                                <input type="hidden" name="shipmentId" value="{{ $order->sipments->id }}" class="form-control">
+                            @else
+                                <div class="row">
+                                    <label class="col-sm-2 col-form-label">Razón</label>
+                                    <div class="col-sm-7">
+                                        <select name="reason_id" id="reason_id" class="form-control" required>
+                                            <option value="1" selected><b>Selecciona una razón...</b></option>
+                                            @foreach ($reasons as $reason)
+                                                <option value="{{ $reason->id }}">{{ $reason->reason }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            @endif --}}
 
                         </div>
                         <div class="card-footer ml-auto mr-auto">
@@ -34,27 +52,8 @@
                 </div>
         </div>
     </div>
-
-
-
-
-
 @endsection
 
-
 @push('js')
-<script type='text/javascript' src='{{ url("/") }}/js/attachlist.js'></script>
-<script type='text/javascript'>
-
-$(document).ready(function(){
-    
-    AttachList("ever");
-
-});
-
-
-</script>
 
 @endpush
-
-

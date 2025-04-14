@@ -26,7 +26,7 @@
 
     <section mode="edit" class='attachList form-control' rel='enp' 
     uploadto="{{ url('pedidos2/attachlist?catalog=shipments&shipment_id='.$shipment->id) }}" 
-    href="{{ url('pedidos2/attachlist?rel=enp&catalog=shipments&shipment_id='.$shipment->id) }}"></section> 
+    href="{{ url('pedidos2/attachlist?rel=enp&catalog=shipments&stage=1&shipment_id='.$shipment->id) }}"></section> 
 
 
     <div class="Fila" id="filaEnpuertaN" style="display:none"><input type="button" name="sb" class="form-control" onclick="MiModal.exit()" value="Terminar" /> </div>

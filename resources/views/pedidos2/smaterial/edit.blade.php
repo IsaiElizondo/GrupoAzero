@@ -10,7 +10,11 @@ if($user->department_id==6){
 }
 
 if($user->department_id == 8){
-    $estatuses=[5 => "En Puerta"];
+    $estatuses=[5 => "En Puerta", 6=>"Entregado"];
+}
+
+if($user->department_id == 4){
+    $estatuses=[4=>"Elaborado", 6=>"Entregado", 7=>"Cancelado"];
 }
 
 ?>
@@ -48,6 +52,7 @@ if($user->department_id == 8){
     </div>
 
 
+
     <div class="Fila" id="filaContinuar">
         <input type="button" class="form-control" id="continuarEdit" value="Continuar" />
     </div>
@@ -58,10 +63,20 @@ if($user->department_id == 8){
     <div class="Fila agregarImagenes" style="display: none;"><label>Agregar Imágenes</label></div>
 
     <div id="alContenedor"></div>
+
+
     
     <div class="Fila terminarEdit" style="display: none;"><input type="submit" name="sb" class="form-control" value="Guardar" /> </div>
 
+
+
 </aside>
 
+
+    @if ($ob->status_6 == 1)
+    <div class="Fila deshacer" >
+        <a href="{{ url('pedidos2/smaterial_desestatus/'.$id.'/6') }}" class="deshacersub" rel="smaterial" title="Deshacer es estatus de entregado. Esta acción quedará registrada.">Deshacer entregado</a>     
+    </div>
+    @endif
 
 </form>

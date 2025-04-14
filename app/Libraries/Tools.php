@@ -153,18 +153,21 @@ class Tools{
     $Y = $f->format("Y");
     $w = $f->format("w");
 
+    $fFechaLargo="%d de %m de %Y %H:%i";
+    $dsem=["1"=>"L","2"=>"M","3"=>"Mi","4"=>"J","5"=>"V","6"=>"S","7"=>"D"];
+
     $vars = ["%w","%d","%m","%Y"];
-    $rep = [lang("General.w.".$w),$d,lang("General.m.".$m),$Y];
+    $rep = [$dsem[$w],$d, $dsem[$m],$Y];
         if($anio_flexible == true){
             if($Y != date("Y")){
-            $str = str_replace($vars,$rep,lang("General.fecha.largo"));      
+            $str = str_replace($vars,$rep,$fFechaLargo);      
             }
             else{
-            $str = str_replace($vars,$rep,lang("General.fecha.largodm"));      
+            $str = str_replace($vars,$rep, $fFechaLargo);      
             }          
         }
         else{
-        $str = str_replace($vars,$rep,lang("General.fecha.largo"));    
+        $str = str_replace($vars,$rep, $fFechaLargo);    
         }    
     $str.=($hora==true)?" ".$f->format("H:i"):"";
     
@@ -263,7 +266,7 @@ class Tools{
     $h="";
         if(empty($path)){return $h;}
 
-    $imgpath=FCPATH.$path;
+    $imgpath=base_path().$path;
     
         if(is_file($imgpath)){
         $imgdata = file_get_contents($imgpath);
@@ -325,6 +328,33 @@ class Tools{
     $hostpart=!empty($pts["host"])?$pts["scheme"]."://".$pts["host"]:"";
         
     return $hostpart.$pts["path"]."?".http_build_query($qs).(!empty($pts["fragment"])?"#".$pts["fragment"]:"");
+    }
+
+
+
+    public static function simpleTable(array $data) : string {
+        if(empty($data)){return "";}
+
+    $table="<table border=\"1\">";
+    
+    $table.="<tr>";
+    foreach(array_keys((array)$data[0]) as $key){
+    $table.="<th>$key</th>";  
+    }
+    
+    $table.="</tr>";
+
+    foreach($data as $row){
+    $table.="<tr>";
+        foreach($row as $value){
+        $table.="<td> $value </td>";
+        }
+    $table.="</tr>
+    ";
+    }       
+
+    $table.="</table>";
+    return $table;
     }
     
 

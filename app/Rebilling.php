@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Rebilling extends Model
 {
     protected $fillable = [
-        'order_id', 'reason_id','number','url'
+        'order_id', 'reason_id'
     ];
 
     public function order()

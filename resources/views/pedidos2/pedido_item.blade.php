@@ -191,8 +191,14 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                     -->
                         <a class="historial" title="Más Información" href="{{ url('pedidos2/masinfo/'.$item->id) }}"></a>
                         <a class="notas" title="Notas" href="{{ url('pedidos2/fragmento/'.$item->id.'/notas')}}"></a>
-                    </div>
+                        
+                        <a class="followBtn {{ (($item->follows > 0) ? '':'no') }}" title="A mis favoritos"  
+                        href="{{ url('pedidos2/set_followno/'.$item->id.'/'.$user->id)}}" hrefno="{{ url('pedidos2/set_follow/'.$item->id.'/'.$user->id)}}"></a>
+                    </div>                    
+
                 </div>
+
+                
             </div>
 
     </div>

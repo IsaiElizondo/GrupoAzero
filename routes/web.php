@@ -19,6 +19,7 @@ use App\Http\Controllers\RebillingsController;
 use App\Http\Controllers\DebolutionsController;
 use App\Http\Controllers\ShipmentsController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\Pedidos2Controller;
 
 
 /*
@@ -42,7 +43,7 @@ Route::get('/home/prueba', [HomeController::class, 'prueba']);
 
 Auth::routes();
 
-Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
+Route::get('/home', [Pedidos2Controller::class, 'index'])->name('home')->middleware('auth');
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -78,9 +79,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/debolutionEvidence', [DebolutionsController::class, 'debolutionEvidence'])->name('debolution.evidence'); //EVIDENCIA DE DEVOLUCION
     Route::get('/debolutionRepayment', [DebolutionsController::class, 'debolutionRepayment'])->name('debolution.repayment'); //REEMBOLSO DE DEVOLUCION
 
-    Route::get('/reportes', [ReportesController::class, 'index'])->name('reportes');
-    Route::get('/reportes/resporte', [ReportesController::class, 'reporte'])->name('reporte');
-
     Route::get('/order/attachlist', [OrderController::class, 'attachlist'])->name('order.attachlist');
     Route::post('/order/attachpost', [OrderController::class, 'attachpost']);
 
@@ -93,6 +91,8 @@ Route::group(['middleware' => 'auth'], function () {
 });
 
 require_once "pedidos2.php";
+require_once "reportes.php";
+require_once "dev.php";
 
 // Para generar el storage link
 // Route::get('storage-link', function(){

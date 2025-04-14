@@ -1,6 +1,6 @@
 <?php
 $estatuses = [1=>"Elaborada",3=>"En Fabricación", 4=>"Fabricado"];
-if($user->role_id == 1 ){
+if($user->role_id == 1 || in_array($user->department_id,[5]) ){
     $estatuses[7] = "Cancelado";
 }
 if($user->department_id == 7){
@@ -56,5 +56,22 @@ if($user->department_id == 7){
 
 </aside>
 
+@if ($ob->status_7 == 1 && ($user->role_id==1 || in_array($user->department_id,[5])))
+    <div class="Fila deshacer" >
+        <a href="{{ url('pedidos2/ordenf_desestatus/'.$id.'/7') }}" class="deshacersub" rel="ordenf" title="Deshacer el estatus de cancelado. Esta acción quedará registrada.">Deshacer Cancelado</a>     
+    </div>
+@endif
+
+@if ($ob->status_4 == 1  && ($user->role_id==1 || in_array($user->department_id,[4,5])) )
+    <div class="Fila deshacer" >
+        <a href="{{ url('pedidos2/ordenf_desestatus/'.$id.'/4') }}" class="deshacersub" rel="ordenf" title="Deshacer el estatus de fabricado. Esta acción quedará registrada.">Deshacer Fabricado</a>     
+    </div>
+@endif
+
+@if ($ob->status_3== 1 && $ob->status_id < 4  && ($user->role_id==1 || in_array($user->department_id,[5])) )
+    <div class="Fila deshacer" >
+        <a href="{{ url('pedidos2/ordenf_desestatus/'.$id.'/3') }}" class="deshacersub" rel="ordenf" title="Deshacer el estatus de en fabricación. Esta acción quedará registrada.">Deshacer En Fabricación</a>     
+    </div>
+@endif
 
 </form>

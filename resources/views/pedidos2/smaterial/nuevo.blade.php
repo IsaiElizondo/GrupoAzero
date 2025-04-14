@@ -9,6 +9,10 @@ ksort($estatuses);
         $estatuses=[5 => "En Puerta"];
     }
 
+    if($user->department_id == 4){
+        $estatuses=[4=>"Elaborado", 6 => "Entregado"];
+    }
+
 $monTexts =[];
 $monTexts[4] ="La salida de material fue generado.";
 $monTexts[5] = "Puede agregar imágenes como evidencia";

@@ -34,7 +34,7 @@ class Pedidos2 extends Model
 
     public static function Lista(int $pag, string $termino, string $desde, string $hasta, 
     array $status=[], array $subprocesos=[], array $origen=[], array $sucursal=[], array $subpstatus=[], 
-    array $recogido=[], array $suborigen=[]) : array {
+    array $recogido=[], array $suborigen=[], int $user_id=0) : array {
 
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
@@ -150,7 +150,7 @@ class Pedidos2 extends Model
         FROM orders o 
         LEFT JOIN quotes q ON q.order_id = o.id 
         LEFT JOIN stockreq r ON r.order_id = o.id 
-        WHERE ". $wherestring);
+        WHERE ". $wherestring));
 
         self::$total = !empty($listt) ? $listt[0]->tot : 0 ;
 
@@ -160,6 +160,7 @@ class Pedidos2 extends Model
         (SELECT p.number FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_code,      
         (SELECT p.document FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS document,
         (SELECT p.requisition FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_document,
+        (SELECT COUNT(*) FROM follows WHERE follows.user_id = '$user_id' AND follows.order_id= o.id) AS follows, 
         q.number AS quote, 
         q.document quote_document, 
         r.id AS stockreq_id,
@@ -168,14 +169,16 @@ class Pedidos2 extends Model
         (SELECT m.number FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_number,
         (SELECT m.status_id FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_status_id,
         (SELECT pa.invoice FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_number,
-        (SELECT pa.status_id FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_status_id
+        (SELECT pa.status_id FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_status_id,
+        (SELECT ue.office FROM users ue WHERE ue.id = o.embarques_by) AS embarques_office, 
+        u.name AS creator  
         FROM orders o 
         LEFT JOIN quotes q ON q.order_id = o.id 
         LEFT JOIN stockreq r ON r.order_id = o.id 
-
+        LEFT JOIN users u ON u.id = o.created_by 
         WHERE 
         ". $wherestring  ." ORDER BY updated_at DESC LIMIT ".$ini.", ". self::$rpp;
-    //echo $q;
+     //echo $q;
     
         $list = DB::select($q);
         

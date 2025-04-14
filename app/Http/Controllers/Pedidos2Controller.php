@@ -37,7 +37,7 @@ use Illuminate\Support\Str;
 class Pedidos2Controller extends Controller
 {
 
-    const QS ="";
+    const QS ="querystring";
     const PAG = "last_pag";
 
     public function index(Request $request)
@@ -64,6 +64,7 @@ class Pedidos2Controller extends Controller
 
 
     public function lista(Request $request){
+        $user = auth()->user();
 
         $termino = (string)$request->query("termino","");
         $termino = addslashes($termino);
@@ -75,7 +76,11 @@ class Pedidos2Controller extends Controller
         //var_dump($fechaspts);
         if(count($fechaspts) == 2) {
             $desde = trim($fechaspts[0]);
+            $desdeob = new \DateTime($desde);
+            $desde = $desdeob->format("Y-m-d");
             $hasta = trim($fechaspts[1]);
+            $hastaob = new \DateTime($hasta);
+            $hasta = $hastaob->format("Y-m-d");
         }else{
             $fob = new \DateTime();
             $hasta = $fob->format("Y-m-d 23:59:59");
@@ -111,7 +116,7 @@ class Pedidos2Controller extends Controller
 
         if($excel == 1){
             Pedidos2::$rpp=2010;
-            $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub);
+            $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id);
 
             // $eParams=compact("termino","desde","hasta","status","subprocesos","origen","sucursal","subpstatus","recogido","orsub");
             $RC = new ReportesController();
@@ -121,7 +126,7 @@ class Pedidos2Controller extends Controller
          }
 
 
-         $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub);
+         $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id);
 
          $statuses = Status::all();
          $estatuses = [];
@@ -132,7 +137,7 @@ class Pedidos2Controller extends Controller
         $total = Pedidos2::$total;
         $rpp = Pedidos2::$rpp;
 
-        echo view("pedidos2.lista",compact("lista","estatuses","total","rpp","pag"));
+        echo view("pedidos2.lista",compact("lista","estatuses","total","rpp","pag", "user"));
     }
 
 
@@ -260,9 +265,11 @@ class Pedidos2Controller extends Controller
             ];
 
             //Preexistente
-            $existe = Order::where(["invoice_number"=>$code])->get()->toArray();
+            $existe = Order::where(["invoice_number"=>$code])
+            ->where("status_id","<>",7)
+            ->get()->toArray();
             if(count($existe) > 0 ){
-            Feedback::error("Ya existe un pedido con el número de factura '$code'");
+            Feedback::error("Ya existe un pedido activo con el número de factura '$code'");
             Feedback::j(0);    
             }
 
@@ -298,9 +305,12 @@ class Pedidos2Controller extends Controller
         else if($origin =="C"){
 
             //Existe folio
-            $existe = Order::where(["invoice"=>$code])->get()->toArray();
+            $existe = Order::where(["invoice"=>$code])
+            ->where("status_id","<>",7)
+            ->get()->toArray();
             if(count($existe) > 0 ){
-            Feedback::error("Ya existe un pedido con el folio '$code'");
+            
+            Feedback::error("Ya existe una ".($existe[0]["status_id"])." cotización con el folio '$code'");
             Feedback::j(0);    
             }
 
@@ -316,12 +326,7 @@ class Pedidos2Controller extends Controller
 
             $order = Order::create($orderData);
 
-                //Preexistente
-                $existe = Quote::where(["number"=>$code])->get()->toArray();
-                if(count($existe) > 0 ){
-                        Feedback::error("Ya existe una cotización con el folio '$code'");
-                        Feedback::j(0);    
-                }
+
 
             //ARCHIVO
             $sqlPath="";
@@ -339,14 +344,29 @@ class Pedidos2Controller extends Controller
                 "document"=>$sqlPath,
                 "created_at"=>$now
             ];
-            Quote::create($quoteData);
+
+            //Preexistente
+            $existe = Quote::where(["number"=>$code])->get()->toArray();
+
+                if(count($existe) > 0 ){
+                unset($quoteData["created_at"]);
+                $quoteData["updated_at"]=$now;
+                Quote::where("number",$code)->update($quoteData);  
+                }
+                else{
+                Quote::create($quoteData);
+                }
+            
 
         }     
 
         else if($origin =="R"){
 
             //Preexistente
-            $existe = Stockreq::where(["number"=>$code])->get()->toArray();
+            $existe = Stockreq::where(["stockreq.number"=>$code])
+            ->join("orders","orders.id",'=','stockreq.order_id')
+            ->where("orders.status_id","<>",7)
+            ->get()->toArray();
                 if(count($existe) > 0 ){
                 Feedback::error("Ya existe un requerimiento de stock con el folio '$code'");
                 Feedback::j(0);    
@@ -553,6 +573,11 @@ class Pedidos2Controller extends Controller
             return view("pedidos2/accion/desauditoria",compact("id","order","paso"));  
         }
 
+        if($accion == "audita"){
+
+            return view("pedidos2/accion/audita",compact("id","order","paso"));  
+        }
+
         /*
         if($accion == "refacturar"){
 
@@ -638,6 +663,7 @@ class Pedidos2Controller extends Controller
         if($accion == "recibido"){
             $data=[
                 "status_id"=>2,
+                "embarques_by"=>$user->id,
                 "updated_at"=>date("Y-m-d H:i:s")
             ];
             Order::where(["id"=>$id])->update($data);
@@ -848,6 +874,9 @@ class Pedidos2Controller extends Controller
         $status_id = Tools::_int($request->status_id);       
         $code = Tools::_string($request->code,24);
 
+
+
+        
         $updateData = [
             "status_id"=> $status_id,   
             "status_".$status_id => 1,
@@ -863,8 +892,100 @@ class Pedidos2Controller extends Controller
         $estatuses = [4=>"Elaborada",5=>"En Puerta", 6=>"Entregado", 7=>"Cancelado"];
  
         Pedidos2::Log($ob->order_id,"Salida Material Cambio", " Cambio en la salida de material #{$ob->code} Estatus:".$estatuses[$status_id], $status_id, $user);
-
         Feedback::j(1);
+        
+    }
+
+
+
+    public function smaterial_desestatus($id,$status_id){
+        $id = Tools::_int($id);       
+        $user = auth()->user();
+
+       $status_id = Tools::_int($status_id);     
+
+       $estatuses = [4=>"Elaborada",5=>"En Puerta", 6=>"Entregado", 7=>"Cancelado"];
+
+
+        if($status_id != 6){
+            $estTxt = isset($estatuses[$status_id]) ? $estatuses[$status_id] : "?" ;
+            Feedback::error("No se admite deshacer el estatus $estTxt para este subproceso.");
+            Feedback::j(0);
+            return;}  
+
+        $ob = Smaterial::where(["id" => $id])->first(); 
+
+        $updateData = [
+            "status_".$status_id => 0,
+            "updated_at"=>date("Y-m-d H:i:s")
+        ];    
+        if($ob->status_id ==6){
+            $updateData["status_id"]=5;
+   
+            $pics = Picture::where(["smaterial_id"=>$ob->id,"event"=>"6"])->get();
+            foreach($pics as $pic){
+                $ppath = '/public/'.$pic->picture;
+
+                if(Storage::exists($ppath))
+                {
+                    // 1. possibility
+                    Storage::delete($ppath);
+                }                
+            }
+
+            Picture::where(["smaterial_id"=>$ob->id,"event"=>"6"])->delete();
+        }
+
+        Smaterial::where("id", $id)->update($updateData); 
+        
+        Pedidos2::Log($ob->order_id,"Deshacer estatus salida material", "Deshacer estatus de Salida de Materiales ".$estatuses[$status_id], $status_id, $user);
+        Feedback::j(1);
+        return;
+    }
+
+
+    public function parcial_desestatus($id,$status_id){
+        $id = Tools::_int($id);       
+        $user = auth()->user();
+
+       $status_id = Tools::_int($status_id);     
+
+       $estatuses = [5=>"En Puerta", 6=>"Entregado", 7=>"Cancelado"];
+
+        if($status_id != 6){
+            $estTxt = isset($estatuses[$status_id]) ? $estatuses[$status_id] : "?" ;
+            Feedback::error("No se admite deshacer el estatus $estTxt para este subproceso.");
+            Feedback::j(0);
+            return;}  
+
+        $ob = Partial::where(["id" => $id])->first(); 
+
+        $updateData = [
+            "status_".$status_id => 0,
+            "updated_at"=>date("Y-m-d H:i:s")
+        ];    
+        if($ob->status_id ==6){
+            $updateData["status_id"]=5;
+
+            $pics = Picture::where(["partial_id"=>$ob->id,"event"=>"6"])->get();
+            foreach($pics as $pic){
+                $ppath = '/public/'.$pic->picture;
+                if(Storage::exists($ppath))
+                {
+                    // 1. possibility
+                Storage::delete($ppath);
+                }                
+            }
+            Picture::where(["partial_id"=>$ob->id,"event"=>"6"])->delete();
+        }
+
+        Partial::where("id", $id)->update($updateData); 
+
+
+        
+        Pedidos2::Log($ob->order_id,"Deshacer estatus parcial", "Deshacer estatus de Salida Parcial ".$estatuses[$status_id], $status_id, $user);
+        Feedback::j(1);
+        return;
     }
 
 
@@ -884,7 +1005,7 @@ class Pedidos2Controller extends Controller
         
         $previo = ManufacturingOrder::where(["order_id" => $order_id,"number"=>$code])->get()->toArray();
             if(count($previo)>0){       
-                $error ="Ya existe una orden de fabricacion con el numero ".$code." para el pedido ".$order_id;
+                $error ="Ya existe una orden de fabricación con el numero ".$code." para el pedido ".$order_id;
                 Feedback::error($error);
                 Feedback::j(0);
                 return;  
@@ -897,6 +1018,7 @@ class Pedidos2Controller extends Controller
             "status_".$status_id => 1,
             "order_id"=>$order_id,
             "created_at"=>date("Y-m-d H:i:s"),
+            "created_by"=>$user->id,
             "updated_at"=>date("Y-m-d H:i:s")
         ];
    
@@ -914,7 +1036,7 @@ class Pedidos2Controller extends Controller
         }
 
 
-        Pedidos2::Log($order_id,"Orden de fabricación", "Nueva orden de fabricacion #{$ordenf->number}", $status_id, $user);
+        Pedidos2::Log($order_id,"Orden de fabricación", "Nueva orden de fabricación #{$ordenf->number}", $status_id, $user);
 
        // $paso=2;
         Feedback::value($ordenf->id);
@@ -988,6 +1110,10 @@ class Pedidos2Controller extends Controller
             if(!empty($sqlPathc)){
                 $data["documentc"]=$sqlPathc;
             }
+            if($status_id == 3)
+            {
+                $data["manufactured_by"] =$user->id;
+            }
 
         ManufacturingOrder::where("id", $id)->update($data); 
         $morder = ManufacturingOrder::where("id", $id)->first(); 
@@ -998,6 +1124,57 @@ class Pedidos2Controller extends Controller
         Feedback::j(1);
         return;
     }
+
+
+    public function ordenf_desestatus($id,$status_id){
+        $id = Tools::_int($id);       
+        $user = auth()->user();
+
+       $status_id = Tools::_int($status_id);     
+
+       $estatuses = [1=>"Elaborada",3=>"En Fabricación", 4=>"Fabricado",7=>"Cancelado"];
+
+       //Solo estatus
+        if(!in_array($status_id,[3,4,7])){
+            $estTxt = isset($estatuses[$status_id]) ? $estatuses[$status_id] : "?" ;
+            Feedback::error("No se admite deshacer el estatus $estTxt para este subproceso.");
+            Feedback::j(0);
+            return;
+        }  
+
+        $ob = ManufacturingOrder::where(["id" => $id])->first(); 
+
+        $updateData = [
+            "status_".$status_id => 0,
+            "updated_at"=>date("Y-m-d H:i:s")
+        ];    
+
+        //Revertir según estatus
+        switch($status_id){
+            case 7: 
+                $updateData["status_id"]=4; 
+                    if(!empty($ob->documentc)){
+                        $ppath = '/public/'.$ob->documentc;
+                        if(Storage::exists($ppath)){
+                        Storage::delete($ppath);
+                        } 
+                        $updateData["documentc"] = "";
+                    }   
+                                
+                break;
+            case 4: $updateData["status_id"]=3; break;
+            default: $updateData["status_id"]=1; break; 
+        }
+
+        ManufacturingOrder::where("id", $id)->update($updateData); 
+        
+        Pedidos2::Log($ob->order_id,"Deshacer estatus ordenf", "Deshacer estatus de Orden de fabricación ".$estatuses[$status_id], $status_id, $user);
+        Feedback::j(1);
+        return;
+    }
+
+
+
 
 
 
@@ -1030,7 +1207,8 @@ class Pedidos2Controller extends Controller
             "status_1" => date("Y-m-d H:i:s"),
             "order_id"=>$order_id,
             "created_at"=>date("Y-m-d H:i:s"),
-            "updated_at"=>date("Y-m-d H:i:s")
+            "updated_at"=>date("Y-m-d H:i:s"),
+            'created_by'=>$user->id
         ]); 
 
         //ARCHIVO
@@ -1235,6 +1413,8 @@ class Pedidos2Controller extends Controller
         $user = auth()->user();
         
         $type= isset($request->type) ? (int)($request->type) : 1;
+   
+        $entregas = [1=>"Entrega chofer interno",2=>"Cliente recoge"];
   
         Order::where(["id"=>$id])->update( ["status_id" => 5,"status_5" => 1, "updated_at"=>date("Y-m-d H:i:s") ] );
 
@@ -1246,7 +1426,7 @@ class Pedidos2Controller extends Controller
               "updated_at" => date("Y-m-d H:i:s")
           ]);
 
-        Pedidos2::Log($id,"En Puerta", "El pedido pasó por puerta", 5, $user);  
+        Pedidos2::Log($id,"En Puerta", "El pedido pasó por puerta. ".$entregas[$type], 5, $user);  
 
         Feedback::custom("url", url("pedidos2/accion/$id?a=enpuerta&paso=2"));
         Feedback::j(2);
@@ -1306,7 +1486,7 @@ class Pedidos2Controller extends Controller
     function set_accion_entregar(int $id,Request $request){
         $user = auth()->user();
         
-        Order::where(["id"=>$id])->update( ["status_id" => 6, "status_6"=>1, "updated_at" => date("Y-m-d H:i:s") ] );
+        Order::where(["id"=>$id])->update( ["status_id" => 6, "status_6"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
 
         $order = Order::where("id",$id)->first();
         $codigo = Pedidos2::CodigoDe($order);
@@ -1421,7 +1601,8 @@ class Pedidos2Controller extends Controller
         
         $data=[
             "status_id"=>8,
-            "updated_at"=>date("Y-m-d H:i:s")
+            "updated_at"=>date("Y-m-d H:i:s"),
+            "end_at" => date("Y-m-d H:i:s")
         ];
 
         Order::where(["id"=>$id])->update($data);
@@ -1430,6 +1611,20 @@ class Pedidos2Controller extends Controller
 
     }
 
+
+
+    function set_accion_audita(int $id,Request $request){
+        $user = auth()->user();
+        
+        Order::where(["id"=>$id])->update( ["status_id" => 10, "status_10"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
+
+        $order = Order::where("id",$id)->first();
+        $codigo = Pedidos2::CodigoDe($order);
+
+        Pedidos2::Log($id,"Recibido x auditoria", "El pedido '$codigo' fue recibido por auditoria", 10, $user);
+        
+        Feedback::json_service(1);
+    }
 
 
 
@@ -1458,6 +1653,8 @@ class Pedidos2Controller extends Controller
         $event = $request->event;
         $mode = $request->mode;
         $mode = !empty($request->mode) ? $request->mode : "edit" ;
+
+        $stage=!empty($request->stage) ? $request->stage : 0;
 
 
         if(empty($catalog)){return "?";}
@@ -1504,6 +1701,16 @@ class Pedidos2Controller extends Controller
         elseif($catalog==="shipments"){
             if(!empty($shipment_id)){
                 $list = Picture::where("shipment_id",$shipment_id)->get();
+                if($list->isEmpty()){
+                    $eship = Shipment::where("id",$shipment_id)->first();
+                    //var_dump($eship->order_id);
+                    if(isset($eship->order_id)){
+                       // var_dump($eship->order_id);
+                    $list = Picture::where("order_id",$eship->order_id)->get();    
+                    }
+                    
+                }
+                //var_dump($list);
             }
             else{
                 return "?sr";
@@ -1526,9 +1733,13 @@ class Pedidos2Controller extends Controller
         if(!empty($smaterial_id)){$urlParams["smaterial_id"]=$smaterial_id;}
         if(!empty($event)){$urlParams["event"]=$event;}
 
+        if(!empty($stage) && $stage > 0 ){$urlParams["stage"]=$stage;}
+        
+
+
         $url = url('pedidos2/attachlist?'.http_build_query($urlParams));
      
-        return view('pedidos2.attachlist', compact('list','catalog','url','rel','urlParams','mode', 'user','event'));
+        return view('pedidos2.attachlist', compact('list','catalog','url','rel','urlParams','mode', 'user','event','eliminable','stage'));
     }
 
 
@@ -1838,12 +2049,16 @@ class Pedidos2Controller extends Controller
 
 
     public function cancelar($id, Request $request){
+
+        $user = auth()->user();
        // $hashGet = isset($request->hash) ? $request->hash : "";
         $orders = Order::where(["id"=>$id])->get()->toArray();
         $order = !empty($orders) ? $orders[0] : [] ;
 
         if(!empty($order)){
-            Order::where(["id"=>$id])->update(["status_id" => 7, "status_7"=>1 ,"updated_at"=>date("Y-m-d H:i:s")]);
+            Order::where(["id"=>$id])->update(["status_id" => 7, "status_7"=>1 ,
+            "updated_at"=>date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s")]);
+            Pedidos2::Log($id,"Cancelar","El pedido fue cancelado",7,$user);
         }
         return redirect("pedidos2/pedido/$id");
     }
@@ -1853,12 +2068,16 @@ class Pedidos2Controller extends Controller
          $orders = Order::where(["id"=>$id])->get()->toArray();
          $order = !empty($orders) ? $orders[0] : [] ;
 
+         $user = auth()->user();
+
          if(!empty($order)){
             $logs = Log::where(["order_id"=>$id])->orderBy("created_at", "DESC")->limit(1)->get();
             $log = !empty($logs) ? $logs[0] : [] ;
-            $sid = (!empty($log) && !empty($log["status_id"])) ? $log["status_id"] : 2;
+            $sid = (!empty($log) && !empty($log["status_id"]) && $log["status_id"] != 7) ? $log["status_id"] : 1;
     
             Order::where(["id"=>$id])->update(["status_id" => $sid, "status_7"=>0, "updated_at"=>date("Y-m-d H:i:s")]);
+
+            Pedidos2::Log($id,"Descancelar","El pedido estaba cancelado pero fue recuperado",$sid,$user);
          }
          return redirect("pedidos2/pedido/$id");
      }
@@ -1868,7 +2087,13 @@ class Pedidos2Controller extends Controller
      public function historial($order_id){
 
         //echo "historial $id";
-        $lista = Log::where(["order_id" => $order_id])->orderBy("created_at","DESC")->get();
+        $lista = Log::where(["order_id" => $order_id])       
+        ->join('users', 'users.id', '=', 'logs.user_id')
+        ->join('departments', 'users.department_id', '=', 'departments.id')
+        ->select('logs.*', 'departments.name AS department', 'users.name AS userName','users.office AS office')
+        ->orderBy("created_at","DESC")->get();
+
+        
 
         $order = Order::where("id",$order_id)->first();
 
@@ -2310,6 +2535,10 @@ class Pedidos2Controller extends Controller
             elseif($order->status_3 == 1){$revertTo = 3 ; }
             elseif($order->status_2 == 1){$revertTo = 2 ; }
 
+           // elseif($order->status_6 == 1){$revertTo = 6 ; }
+            elseif($order->status_7 == 1){$revertTo = 7 ; }
+            elseif($order->status_10 == 1){$revertTo = 10 ; }
+
         Order::where(["id"=>$id])->update( ["status_id" => $revertTo, "status_6"=>0,"updated_at" => date("Y-m-d H:i:s") ] );
 
         $codigo = Pedidos2::CodigoDe($order);
@@ -2334,7 +2563,7 @@ class Pedidos2Controller extends Controller
         $validos =[2,3,4,10];
         $estatus = in_array($estatus,$validos) ? $estatus : 0;       
 
-        return view('pedidos2.multie.multie', compact('user','role','estatus'));
+        return view('pedidos2.multie.index', compact('user','role','estatus'));
     }
 
 
@@ -2401,6 +2630,7 @@ class Pedidos2Controller extends Controller
 
             if($status_id > 2){
                 $data["status_".$status_id] = 1;
+                $data["embarques_by"]= $user->id;
             }
 
         Order::where("id", $id)->update($data);      
@@ -2419,7 +2649,7 @@ class Pedidos2Controller extends Controller
              
         $user = auth()->user();
 
-        $estatuses = [2=>"Entregado", 3 => "En Fabricaicón", 4=>"Fabricado",10=>"Recibido por Auditoria"];
+        $estatuses = [2=>"Recibido por embarques", 3 => "En Fabricación", 4=>"Fabricado",10=>"Recibido por Auditoria"];
 
         $catalogo = isset($request->catalogo) ? (string)$request->catalogo : "";
         $listaor = $request->lista;
@@ -2520,6 +2750,35 @@ class Pedidos2Controller extends Controller
 
         return redirect("pedidos2/pedido/".$id);
     }
+
+
+    public function set_follow($id_pedido,$id_usuarios, Request $request){
+        $id_pedido = Tools::_int($id_pedido);  
+        $id_usuarios = Tools::_int($id_usuarios);      
+        $user = auth()->user();
+
+        $follow = \App\Follow::where(["order_id"=>$id_pedido, "user_id"=>$id_usuarios])->first();
+        if($follow == null){
+            $new = ["order_id" => $id_pedido, "user_id"=>$id_usuarios,"created_at"=>date("Y-m-d H:i:s"),"updated_at"=>date("Y-m-d H:i:s")];
+            \App\Follow::create($new);
+        }else{
+            \App\Follow::where(["order_id"=>$id_pedido, "user_id"=>$id_usuarios])->update(["updated_at"=>date("Y-m-d H:i:s")]);
+        }
+
+        Feedback::j(1);
+    }
+
+
+    public function set_followno($id_pedido,$id_usuarios, Request $request){
+        $id_pedido = Tools::_int($id_pedido);  
+        $id_usuarios = Tools::_int($id_usuarios);      
+        $user = auth()->user();
+
+        \App\Follow::where(["order_id"=>$id_pedido, "user_id"=>$id_usuarios])->delete();
+
+        Feedback::j(1);
+    }
+
 
 
 

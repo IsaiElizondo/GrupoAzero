@@ -8,7 +8,11 @@ if($user->department_id==6){
 
 
 if($user->department_id == 8){
-    $estatuses=[5 => "En Puerta"];
+    $estatuses=[5 => "En Puerta","6"=>"Entregado"];
+}
+
+if($user->department_id == 4){
+    $estatuses=["4"=>"Generado", "6"=>"Entregado", "7"=>"Cancelado"];
 }
 
 ?>
@@ -53,5 +57,11 @@ if($user->department_id == 8){
 
 </aside>
 
+
+@if ($partial->status_6 == 1)
+    <div class="Fila deshacer" >
+        <a href="{{ url('pedidos2/parcial_desestatus/'.$id.'/6') }}" class="deshacersub" rel="parcial" title="Deshacer el estatus de entregado. Esta acción quedará registrada.">Deshacer entregado</a>     
+    </div>
+    @endif
 
 </form>

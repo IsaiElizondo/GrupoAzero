@@ -14,38 +14,34 @@
     <div class="sidebar-wrapper">
         
         <ul class="nav">
+
+
+        {{--
             <li class="nav-item{{ $activePage == 'dashboard' ? ' active' : '' }}">
                 <a class="nav-link" href="{{ route('home') }}">
                     <i class="material-icons">dashboard</i>
                     <p>{{ __('Dashboard') }}</p>
                 </a>
             </li>
+        --}}
 
-           @if ( auth()->user()->role->name == "Administrador" )
-                <li class="nav-item{{ $activePage == 'reportes' ? ' active' : '' }}">
-                    <a class="nav-link" href="{{ route('reportes') }}">
-                        <i class="material-icons">receipt</i>
-                        <p>{{ __('Reportes') }}</p>
-                    </a>
-                </li>
-            @endif
+
+
             
+
+
+
             @if ( auth()->user()->role->name != "Cliente" )
                 <li class="nav-item{{ $activePage == 'orders' ? ' active' : '' }}">
-                    <a class="nav-link" href="{{ route('orders.index') }}">
+                    <a class="nav-link" href="{{ url('pedidos2') }}">
                         <i class="material-icons">receipt</i>
                         <p>{{ __('Pedidos') }}</p>
                     </a>
                 </li>
 
-                <li class="nav-item{{ $activePage == 'orders' ? ' active' : '' }}">
-                    <a class="nav-link" href="{{ url('pedidos2') }}">
-                        <i class="material-icons">receipt</i>
-                        <p>{{ __('Pedidos NUEVO') }}</p>
-                    </a>
-                </li>
-
             @endif
+
+
             {{-- @if ( auth()->user()->role->name != "Flotilla" ) --}}
                 <li class="nav-item{{ $activePage == 'follows' ? ' active' : '' }}">
                     <a class="nav-link" href="{{ route('follows.index') }}">
@@ -54,6 +50,20 @@
                     </a>
                 </li>
             {{-- @endif --}}
+
+
+            @if ( auth()->user()->role->name == "Administrador" || in_array(auth()->user()->department_id, [3,4,5,7,9]) )
+                <li class="nav-item{{ $activePage == 'reportes' ? ' active' : '' }}">
+                    <a class="nav-link" href="{{ route('reportes') }}">
+                        <i class="material-icons">timeline</i>
+                        <p>{{ __('Reportes') }}</p>
+                    </a>
+                </li>
+            @endif
+
+
+
+
             <li class="nav-item {{
                 (
                     $activePage == 'profile' ||
@@ -84,12 +94,17 @@
                     </a>
                 </li>
                 @if ( auth()->user()->role->name == "Administrador")
+                    
+                
+                <!--
                     <li class="nav-item{{ $activePage == 'archived' ? ' active' : '' }}">
                         <a class="nav-link" href="{{ route('archived.index') }}">
                         <span class="sidebar-mini"> AR </span>
                         <span class="sidebar-normal"> {{ __('Archivados') }} </span>
                         </a>
                     </li>
+                -->
+                    
                     <li class="nav-item{{ $activePage == 'user-management' ? ' active' : '' }}">
                         <a class="nav-link" href="{{ route('users.index') }}">
                         <span class="sidebar-mini"> US </span>
@@ -154,6 +169,20 @@
                 <p>{{ __('Upgrade to PRO') }}</p>
             </a>
             </li> --}}
+
+
+
+            @if ( auth()->user()->role_id == 1 )
+                <li class="nav-item{{ $activePage == 'orders' ? ' active' : '' }}">
+                    <a class="nav-link" href="{{ route('orders.index') }}">
+                        <i class="material-icons">receipt</i>
+                        <p>{{ __('ANTERIOR Pedidos') }}</p>
+                    </a>
+                </li>
+            @endif
+
+
+
         </ul>
     </div>
 </div>

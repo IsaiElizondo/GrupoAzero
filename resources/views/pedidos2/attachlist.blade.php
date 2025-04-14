@@ -33,8 +33,10 @@ return $iconHtml;
 ?>
 
 <?php
-$eliminable = ($user->role_id==1) ? true : false ;
-
+//$eliminable = ($user->role_id==1) ? true : false ;
+//var_dump($eliminable);
+//var_dump($stage);
+//var_dump($user->department_id);
 ?>
 
 <section class='attachList' rel='{{$rel}}' 
@@ -42,13 +44,26 @@ uploadto="{{ url('pedidos2/attachpost?catalog=' . $catalog) }}"
 href="{{ $url }}">
 
 <ul>
+
 @foreach ($list as $li)
 
     @if ($catalog == "pictures") 
     <li class='attachitem'>
     <!--   <img class='atticon' src='{{ asset("storage/".$li->picture) }}' /> -->
     {!! IconOf($li->picture) !!}
-        @if (($mode =="edit" || $mode =="") && $eliminable==true)
+
+    <?php
+     $ultimahora = new \DateTime();
+     $ultimahora->modify("-1 hour");
+    // var_dump($user->id);
+    // var_dump($li->user_id);
+    // var_dump($li->created_at->format("Y-m-d H:i"));
+    // var_dump($ultimahora->format("Y-m-d H:i"));
+     $miEliminable = false;
+        if($user->id == $li->user_id && $li->created_at > $ultimahora){$miEliminable=true;}
+     ?>
+
+        @if ((($mode =="edit" || $mode =="") && $eliminable==true) || $miEliminable==true)
         <div class='delspace'><a class="delatt" href="{{ url("pedidos2/attachdelete?catalog=".$catalog."&id=".$li->id) }}" title="Eliminar imagen">X</a></div>    
         @endif
     </li>
@@ -64,7 +79,17 @@ href="{{ $url }}">
     @elseif ($catalog == "shipments") 
     <li class='attachitem'>
      {!! IconOf( isset($li->file) ? $li->file : $li->picture ) !!}
-        @if (($mode =="edit" || $mode =="") && $eliminable==true)
+     <?php
+     $ultimahora = new \DateTime();
+     $ultimahora->modify("-1 hour");
+    // var_dump($user->id);
+    // var_dump($li->user_id);
+    // var_dump($li->created_at->format("Y-m-d H:i"));
+    // var_dump($ultimahora->format("Y-m-d H:i"));
+     $miEliminable = false;
+        if($user->id == $li->user_id && $li->created_at > $ultimahora){$miEliminable=true;}
+     ?>
+        @if ( (($mode =="edit" || $mode =="") && $eliminable==true ) || $miEliminable==true)
         <div class='delspace'><a class="delatt" href="{{ url("pedidos2/attachdelete?catalog=".$catalog."&id=".$li->id) }}" title="Eliminar Evidencia de Embarque">X</a></div>
         @endif
     </li>    

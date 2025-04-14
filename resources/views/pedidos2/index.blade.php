@@ -9,7 +9,7 @@ use App\Http\Controllers\Pedidos2Controller;
 <link rel="stylesheet" href="{{ asset('css/pedidos2/general.css') }}" />
 <link rel="stylesheet" href="{{ asset('css/pedidos2/index.css').'?x='.rand(0,999) }}" />
 <link rel="stylesheet" href="{{ asset('js/drp/daterangepicker.css') }}" />
-<link rel="stylesheet" href="{{ asset('css/paginacion.css') }}" />
+<link rel="stylesheet" href="{{ asset('css/paginacion.css').'?x='.rand(0,999) }}" />
 <link rel="stylesheet" href="{{ asset('css/piedramuda.css') }}" />
 <link rel="stylesheet" href="{{ asset('jqueryui/jquery-ui.min.css') }}" />
 
@@ -37,13 +37,15 @@ use App\Http\Controllers\Pedidos2Controller;
             <div class="fechasBox">
                 <label for="fechas"><span id="MuestraFecha"></span></label>
                 <?php
+                date_default_timezone_set("America/Mexico_City");
+                echo "<!-- ".date("Y-m-d H:i:s")." -->";
                 $desde = new DateTime();
                 $hoyf= $desde->format("Y-m-d");
                 $desde->modify("-7 month");
                 $desdef = $desde->format("Y-m-d");
                 ?>
                 <div class="divFechas"><input type="text" id="fechas" name="fechas" value="{{ $desdef}} - {{ $hoyf }}" /></div>
-                <div class="fechasNotas"><small>Selecciona PRIMERO la fecha inicial y DESPUES la fecha final</small></div>
+                <div class="fechasNotas"><small>Selecciona PRIMERO la fecha inicial y DESPUES la fecha final de creacion</small></div>
             </div>
             
             <div class="Fila center" id="MuestraAvanzada">
@@ -155,6 +157,12 @@ use App\Http\Controllers\Pedidos2Controller;
         <input type="hidden" name="p" value="{{ $pag }}" />
         <input type="hidden" name="excel" value="0" />
         <section class="formaBuscar">
+        <div class="terminoBox">
+                
+                <input type="text" name="termino"  maxlength="90" />
+
+                <input type="button" id="buscarBoton" value="Buscar" />
+        </div>
 
         <div class="fechasBox">
                 <label for="fechas"><span id="MuestraFecha"></span></label>
@@ -191,7 +199,7 @@ use App\Http\Controllers\Pedidos2Controller;
     <div class="container-fluid">
         <div class="BotsPrincipales">
         
-        @if ( !in_array($user->department_id,[3,7]))
+        @if ( !in_array($user->department_id,[3,7,8]))
         <button class="nuevo" href="{{ url('pedidos2/multie') }}">Cambio de Estatus Masivo </button>   
         @endif
 
@@ -232,7 +240,11 @@ use App\Http\Controllers\Pedidos2Controller;
 <script type="text/javascript" src="{{ asset('jqueryui/jquery-ui.min.js') }}"></script>
  <script type="text/javascript" src="{{ asset('js/piedramuda.js') }}"></script> 
 
-
+\<?php
+$manana = new \DateTime();
+$manana->modify("+1 day");
+$mananaString = $manana->format("Y-m-d");
+?>
 <script type="text/javascript" >
     
 $(document).ready(function(){
@@ -240,13 +252,14 @@ $(document).ready(function(){
     $('input[name="fechas"]').daterangepicker({
     timePicker: false,
     minDate: new Date("2021-10-11"),
-    maxDate: new Date(),
+    maxDate: new Date("{{ $mananaString }}"),
     maxSpans:{
-        "years":4
+        "years":3
     },
     linkedCalendars: false,
     showDropdowns:true,
-
+    //autoApply:true,
+    autoUpdateInput:true,
     locale: {
       format: 'YYYY-MM-DD',
       "weekLabel": "W",
@@ -274,12 +287,20 @@ $(document).ready(function(){
             "Diciembre"
         ],
     }
-    },FormatearFecha);
+    });
+
+    $('input[name="fechas"]').on('apply.daterangepicker', function(ev, picker) {
+        FormatearFechaDeInput();
+    });
+
 
     var start = moment().subtract(7, 'months');
     var end = moment();
 
-    FormatearFecha(start,end);
+    //FormatearFecha(start,end);
+    FormatearFechaDeInput();
+
+
    
     
     $("#MuestraAvanzada a").click(function(e){
@@ -344,7 +365,15 @@ $(document).ready(function(){
     $("body").on("click",".iconSet a",function(e){
         e.preventDefault();
         e.stopPropagation();
-        let href = $(this).attr("href");      
+        let href = $(this).attr("href"); 
+        
+
+        let isFB = $(this).hasClass("followBtn");
+        if(isFB){
+            Follow(this);
+            return false;
+        }
+
         
         $.ajax({
             url:href,
@@ -355,6 +384,13 @@ $(document).ready(function(){
         });          
 
     });
+
+
+
+
+
+
+
 
 
     Querystring();
@@ -562,8 +598,29 @@ function FormatearFechaDate(start,end,label){
     month: "long",
     day: "numeric",
     };
+    console.log(end);
     let v = start.toLocaleDateString("es-MX",options)+" - "+end.toLocaleDateString("es-MX",options);
     $("#MuestraFecha").text(v);
+}
+function FormatearFechaDeInput(){
+    let completo = $("input[name='fechas']").val();
+    let partes = completo.split(' - ');
+    let miStart = new Date(partes[0]+" 00:00:00");
+    let miEnd = new Date(partes[1] + " 23:59:59");
+    console.log(partes);
+    console.log(miStart);
+    console.log(miEnd);
+    console.log("FormatearFechaDate");
+    FormatearFechaDate(miStart,miEnd);
+    /*
+    const options = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    };
+    let v = start._d.toLocaleDateString("es-MX",options)+" - "+end._d.toLocaleDateString("es-MX",options);
+    $("#MuestraFecha").text(v);
+    */
 }
 
 function MuestraIconFiltros(es){
@@ -575,8 +632,50 @@ function MuestraIconFiltros(es){
 }
 
 function LimpiaFiltros(){
+    let fechaVal = $("[name='fechas']").val();
+    
     document.getElementById("fbuscar").reset();  
+    //alert("Limpia");
+    $("[name='fechas']").val(fechaVal);
+    FormatearFechaDeInput();
 }
+
+
+
+
+function Follow(ob){
+    let hrefyes = $(ob).attr("href");
+    let hrefno = $(ob).attr("hrefno");
+    let isno = $(ob).hasClass("no");
+
+    if(isno){
+        AjaxGetJson(hrefno,FollowNoRespuesta);
+        $(ob).removeClass("no");
+        $(ob).attr("title","Dejar de seguir");
+    }else{
+        AjaxGetJson(hrefyes,FollowRespuesta);
+        $(ob).addClass("no");
+        $(ob).attr("title","A mis pedidos");
+    }
+    
+}
+
+function FollowRespuesta(json){
+    if(json.status == 1){
+
+    }else{
+        alert(json.errors);
+    }
+}
+function FollowNoRespuesta(json){
+    if(json.status == 1){
+
+    }else{
+        alert(json.errors);
+    }
+}
+
+
 
 </script>
 

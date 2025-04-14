@@ -29,16 +29,10 @@ class HomeController extends Controller
      */
     public function index()
     {
-        //var_dump($orders = Order::all()->count());
-      
         $status = 0;
         if( auth()->user()->role->name == 'Administrador' ){
-          
-            //$orders = Order::all()->count();
-            $orders = Order::countAll();
-            //$orders=0;
-            $users = User::countAll();
-         
+            $orders = Order::all()->count();
+            $users = User::all()->count();
             $logs = Log::orderBy('created_at','DESC')->paginate(15);
         }
         if( auth()->user()->role->name == 'Empleado' ){
@@ -71,7 +65,7 @@ class HomeController extends Controller
             $logs = Log::orderBy('created_at','DESC')->paginate(15);
         }
         if( auth()->user()->role->name == 'Cliente' ){
-            $orders = Order::countAll();
+            $orders = Order::all()->count();
             $users = User::all()->count();
             $logs = Log::orderBy('created_at','DESC')->paginate(15);
         }
@@ -81,18 +75,12 @@ class HomeController extends Controller
 
         return view('dashboard', compact('orders', 'users', 'logs', 'status', 'plural'));
     }
-    
-    public function prueba(Request $request){
-        //$orders = Order::all();
-        $orders = User::all()->count();
-        var_dump($orders);
-    }
 
     public function search(Request $request)
     {
         // dd($request->all());
-        $orders = Order::countAll();
-        $users = User::countAll();//User::all()->count();
+        $orders = Order::all()->count();
+        $users = User::all()->count();
         $logs = Log::orderBy('created_at','DESC')->paginate(15);
         // dd($order);
         $plural = 0;

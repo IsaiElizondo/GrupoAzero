@@ -2,63 +2,61 @@
 
 @section('content')
 
-<?php 
 
+<?php
 $desde = new DateTime();
 $hoyf= $desde->format("d/m/Y");
 $desde->modify("-7 month");
 $desdef = $desde->format("d/m/Y");
-
 ?>
-<link rel="stylesheet" href="{{ asset('js/drp/daterangepicker.css') }}" />
-  <div class="content">
+
+<div class="content">
     <div class="container-fluid">
       <div class="row">
+
 
         <div class="card">
             <div class="card-header card-header-primary">
                 <div class="row">
                     <div class="col-md-4 col-sm-12 col-xs-12 text-left">
-                        <h4 class="card-title ">Reportes</h4>
-                        <p class="card-category"> Reportes adicionales de la plataforma</p>
+                        <h4 class="card-title ">Tiempos de subprocesos</h4>
+                        <p class="card-category"> </p>
                     </div>
-                    <div class="col-md-8 col-sm-12 col-xs-12 ">
-                        
-                        <!--  
-                        <a href="{{ route('roles.create') }}" class="btn btn-sm btn-primary">
-                            <span class="material-icons">
-                                add_circle_outline
-                            </span>
-                            Nuevo Reporte
-                        </a>
-                        -->
-                    </div>
+                    <!-- <div class="col-md-8 col-sm-12 col-xs-12 "></div> -->
                 </div>
             </div>
-            
-            
-            </div>
-            
-            <div class="card-body">
-                
-                <main>
+        </div>
 
-                <aside class="ListaReportes">            
+        <main>
+        <p class="tallrow">
+<a class="button" href="{{ url('reportes') }}">&laquo; Regresar</a>
 
-<a href="{{  url('reportes/subprocesos') }}">Subprocesos</a>
+        </p>
+        <form action="{{ url('reportes/reporte_subprocesos') }}" method='POST' >
+                            @csrf
 
-<a href="{{  url('reportes/participaciones') }}">Participaciones</a>
+            <section class="FormularioCampos">
 
-</aside>
+                <div class="Campo">
+                    <input type="text" name="fechas" value="<?= ($desdef ." - ". $hoyf) ?>" maxlength="13" size="21" class="form-control" readonly />
+                    <label>Rango de fechas</label>
+                </div>
 
-                </main>
+            </section>           
 
+            <br/>
+            <div class="">
+            <button class="bot" id="botConsultar" >Consultar</button>
+            </div>                     
+                     
+        </form>
+</main>
 
-            </div>
-            
-    	</div>
-	</div>
+        </div>
+    </div>
 </div>
+
+<link rel="stylesheet" href="{{ asset('js/drp/daterangepicker.css') }}" />
 
 <link rel="stylesheet" href="{{ url('/') }}/css/reportes.css?x=<?= rand(0,999) ?>">
 
@@ -77,12 +75,7 @@ $desdef = $desde->format("d/m/Y");
 
  $(document).ready(function(){
 
- 	$("[name='tipo']").change(function(){
-	var val = $(this).val();
-	if(val==""){return;}
-	$("#botConsultar").prop("disabled",false);
 
- 	});
 
  	
  	 $('.datetimepicker').datetimepicker({

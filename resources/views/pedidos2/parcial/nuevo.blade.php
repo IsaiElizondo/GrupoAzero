@@ -3,7 +3,7 @@ $estatuses = [6=>"Entregado"];
     if($user->role_id==1 ||  in_array($user->department_id, [4,8])){
         $estatuses[4]="Generado";
     }
-    if($user->role_id==1 || in_array($user->department_id, [4,8])){
+    if($user->role_id==1 || in_array($user->department_id, [8])){
         $estatuses[5]="En Puerta";
     }
     if($user->role_id==1 || in_array($user->department_id, [4])){

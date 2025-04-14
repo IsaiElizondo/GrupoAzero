@@ -14,7 +14,8 @@ use App\Libraries\Tools;
             </td>
             <td>
                 <div>{{ Tools::fechaMedioLargo($li->created_at)  }} <b>{{ $fechaOb->format("H:i") }}</b></div>
-                <div>{{ $li->thisUser()->name }}</div>
+                <div style="line-height: .9;">{{ $li->userName }}</div>
+                <div style="line-height: .9; color:#999"><small>{{ $li->department }} <em>{{ $li->thisUser()->office }}</em></small></div>
             </td>
         </tr>
     @endforeach    

@@ -26,10 +26,9 @@
     </nav> --}}
     <div class="copyright float-center">
       &copy;
-      <script>
-        document.write(new Date().getFullYear())
-      </script>, made with <i class="material-icons">favorite</i> by
-      <a href="#" target="_blank">Ricardo Monroy</a>
+
+      {{ date("Y") }}, <span>by FPA for Ferreteria y Aceros 2000</span>
+
     </div>
   </div>
 </footer>

@@ -19,7 +19,7 @@ $estatuses = [1=>"En Proceso", 5=>"En Puerta",6=>"Entregada",7=>"Cancelada"];
 
 
     <div rel='ed'>
-    @if ($user->role_id == 1 || in_array($user->department_id,[4]))
+    @if ($user->role_id == 1 || in_array($user->department_id,[4,7]))
     <a class="btn editarrequisicion" href="{{ url('pedidos2/requisicion_edit/'.$ob->id) }}">Editar</a>
     @endif
     </div>

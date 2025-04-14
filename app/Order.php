@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     protected $fillable = [
-        'office', 'invoice', 'invoice_number', 'invoice_document','client', 'credit', 'status_id', 'delete','origin'
+        'office', 'invoice', 'invoice_number', 'invoice_document','client', 'credit', 'status_id', 'delete',
+        'origin','embarques_by','end_at','created_by'
     ];
     
     public static function countAll()
@@ -88,4 +89,10 @@ class Order extends Model
     {
         return Quote::where("order_id",$this->id)->first(); 
     }
+
+    public function embarques_office() : string {
+        $usr = \App\User::where("id", $this->embarques_by)->first();
+        return !empty($usr) ? $usr->office : "";
+    }
+
 }

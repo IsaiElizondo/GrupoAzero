@@ -1,3 +1,7 @@
+<?php
+use \App\Pedidos2;
+$origenes=[""=>"N/S","C"=>"Cotización","F"=>"Factura","R"=>"Requisición Stock"];
+?>
 @extends('layouts.app', ['activePage' => 'follows', 'titlePage' => __('Mis favoritos')])
 
 @section('content')
@@ -30,6 +34,7 @@
                         <thead>
                             <tr>
                                 {{-- <th>No</th> --}}
+                                <th>Origen</th>
                                 <th>Orden</th>
                                 <th>Status</th>
                                 <th>Cliente</th>
@@ -41,17 +46,20 @@
                                 <tr>
                                     {{-- <td>{{ $follow->id }}</td> --}}
                                     <td>
-                                        <a href="{{ route('orders.show', $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
-                                            <p style="font-size: 1.3em">{{ $follow->order->invoice }}</p>
+                                        <p style="font-size: 1.3em">{{ $origenes[$follow->order->origin] }}</p>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url('pedidos2/pedido/'. $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
+                                            <p style="font-size: 1.3em">{{ Pedidos2::CodigoDe($follow->order)  }}</p>
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{{ route('orders.show', $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
+                                        <a href="{{ url('pedidos2/pedido/'. $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
                                             <p style="font-size: 1.3em">{{ $follow->order->status->name }}</p>
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{{ route('orders.show', $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
+                                        <a href="{{ url('pedidos2/pedido/'. $follow->order->id) }}" class="btn btn-primary btn-link btn-sm">
                                             <p style="font-size: 1.3em">{{ $follow->order->client }}</p>
                                         </a>
                                     </td>

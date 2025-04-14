@@ -31,13 +31,13 @@
                 @endif
 
 
-                @if ($user->role_id ==1 || in_array($user->department_id,[3,4,8]) )
-                <button class="Tipo" rel="C">Cotización</button>
+                @if ($user->role_id ==1 || in_array($user->department_id,[3,4]) )
+                <button class="Tipo" rel="C" title="Cotización">Pedido</button>
                 @endif
 
 
 
-                @if ($user->role_id ==1 || in_array($user->department_id,[4,7]) )
+                @if ($user->role_id ==1 || in_array($user->department_id,[7]) )
                 <button class="Tipo" rel="R">Requisición Stock</button>
                 @endif
             

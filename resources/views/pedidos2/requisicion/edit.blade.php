@@ -71,7 +71,7 @@ if($user->role_id==1 || in_array($user->department_id,[7])){
                 </div>
             @endif
             </div>   
-            @if($user->role_id == 1 || in_array($user->department_id, [5,7]) )
+            @if($user->role_id == 1 || in_array($user->department_id, [4,5,7]) )
             <div><input type="file" name="requisition" class="form-control" /> </div>
             @endif
         </div>

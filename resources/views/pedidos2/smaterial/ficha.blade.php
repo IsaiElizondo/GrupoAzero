@@ -15,7 +15,7 @@ $estatuses = [4 => "Elaborada", 5=>"En Puerta", 6=>"Entregado", 7=>"Cancelado"];
     
 
     <div rel='ed'>
-    @if ($user->role_id == 1 || in_array($user->department_id,[4]) || 
+    @if ($user->role_id == 1 || in_array($user->department_id,[4,8]) || 
     ($user->department_id==6 && $ob->status_id < 6 )
      ) 
     <a class="btn editarsm" href="{{ url('pedidos2/smaterial_edit/'.$ob->id) }}">Editar</a>

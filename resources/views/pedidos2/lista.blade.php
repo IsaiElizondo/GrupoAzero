@@ -14,7 +14,7 @@ echo Paginacion::render_largo(url("pedidos2/lista"));
 
 @foreach ($lista as $item)
 
-{{ view("pedidos2.pedido_item",compact("item","estatuses")) }}
+{{ view("pedidos2.pedido_item",compact("item","estatuses","user")) }}
 
 @endforeach
 
