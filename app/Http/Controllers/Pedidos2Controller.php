@@ -1719,6 +1719,19 @@ class Pedidos2Controller extends Controller
         else{
             return "?cat";
         }      
+
+        //EXCEPCION PERMITIR ELIMINAR EN PRIMER PASO
+       // if($catalog=="shipments" && $stage==0){$stage=1;}
+
+
+        $eliminable = false;
+        //$eliminable = ($user->role_id==1) ? true : false ;
+        if($user->role_id == 1){$eliminable=true;}
+        else if( $stage== 1 && in_array($user->department_id, [8]) ) {
+            $eliminable=true;
+
+        }
+
         
         $urlParams = [];
         $urlParams["rel"]=$rel;

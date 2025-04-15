@@ -150,7 +150,7 @@ class Pedidos2 extends Model
         FROM orders o 
         LEFT JOIN quotes q ON q.order_id = o.id 
         LEFT JOIN stockreq r ON r.order_id = o.id 
-        WHERE ". $wherestring));
+        WHERE ". $wherestring);
 
         self::$total = !empty($listt) ? $listt[0]->tot : 0 ;
 
