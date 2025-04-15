@@ -23,7 +23,7 @@ class Pedidos2 extends Model
         FROM orders o
         JOIN statuses s ON s.id = o.status_id 
         WHERE o.id = '$order_id'";
-        $list = DB::selected($q);
+        $list = DB::select($q);
         //$list = DB::select(DB::raw($q));
        // $list = DB::table('orders')->where("id",$order_id)->get();
         return !empty($list) ? $list[0] : [];
