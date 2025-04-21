@@ -94,5 +94,8 @@ Route::middleware('auth')->group(function () {
 	Route::get('pedidos2/parcial_desestatus/{id}/{status_id}', [Pedidos2Controller::class, 'parcial_desestatus']);
 	Route::get('pedidos2/ordenf_desestatus/{id}/{status_id}', [Pedidos2Controller::class]);
 
+	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardarEtiquetas'])->name('pedido.etiquetas.guardar');
+
+
 });
 	

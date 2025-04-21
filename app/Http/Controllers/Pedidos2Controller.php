@@ -174,10 +174,50 @@ class Pedidos2Controller extends Controller
         $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
        // var_dump($purchaseOrder);
        
+        $etiquetasAsignadas = DB::table('pedido_etiquetas')
+            ->where('pedido_id', $id)
+            ->pluck('nombre')
+            ->toArray();
+        $etiquetasDisponibles = [
+            'CLIENTE RECOGE',
+            'INFORMACION PENDIENTE',
+            'MATERIAL PENDIENTE',
+            'PENDIENTE DE ENTREGA',
+            'RESGUARDO CORTO',
+            'RESGUARDO MAYOR AL MES',
+
+        ];
+
+        $data['etiquetasAsignadas'] = $etiquetasAsignadas;
+        $data['etiquetasDisponibles'] = $etiquetasDisponibles;
+
+
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-        "statuses","rebilling","reasons","stockreq","notes","smateriales_num"));
+        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "etiquetasAsignadas", "etiquetasDisponibles"));
+    }
+
+
+    public function guardarEtiquetas(Request $request, $id)
+    {
+
+        dd('Método ejecutar → OK', $request->all());
+
+        DB::table('pedido_etiquetas')->where('pedido_id', $id)->delete();
+
+        $etiquetas = $request->input('etiquetas', []);
+
+        foreach ($etiquetas as $etiqueta) {
+            DB::table('pedido_etiquetas')->insert([
+                'pedido_id' => $id,
+                'nombre' => $etiqueta,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
     }
 
 

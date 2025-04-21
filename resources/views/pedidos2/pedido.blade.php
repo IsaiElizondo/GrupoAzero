@@ -506,6 +506,92 @@ $pedidoStatusId = $pedido->status_id;
 
 
 
+<form method="POST" action="{{ route('pedido.etiquetas.guardar', ['id' => $id]) }}">
+    @csrf
+
+    <div class="card etiquetas-card">
+        <div class="headersub">Etiquetas de Seguimiento</div>
+        <div class="Eleccion">
+
+            @foreach ($etiquetasDisponibles as $etiqueta)
+                @php
+                    $etiquetaId = 'etiqueta_' . $loop->index;
+                    $checked = in_array(trim($etiqueta), $etiquetasAsignadas);
+                @endphp
+
+                <div class="etiqueta-item">
+                    <input type="checkbox"
+                        name="etiquetas[]"
+                        value="{{ trim($etiqueta) }}"
+                        id="{{ $etiquetaId }}"
+                        class="etiqueta-checkbox"
+                        {{ $checked ? 'checked' : '' }}>
+
+                    <label class="Candidato etiqueta-label {{ $checked ? 'active' : '' }}" for="{{ $etiquetaId }}">
+                        {{ strtoupper($etiqueta) }}
+                    </label>
+                </div>
+            @endforeach
+
+        </div>
+    </div>
+
+    <br>
+    <button class="btn btn-dark" type="submit">Guardar</button>
+</form>
+
+
+<style>
+    .etiqueta-item {
+        display: inline-flex;
+        align-items: center;
+        margin: 5px;
+    }
+
+    .etiqueta-checkbox {
+        margin-right: 8px;
+        transform: scale(1.2); 
+        cursor: pointer;
+    }
+
+    .etiqueta-label {
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .etiqueta-label.active {
+        background-color: #444;
+        color: #fff;
+        border-color: #444;
+    }
+</style>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.etiqueta-checkbox').forEach(checkbox => {
+            const label = document.querySelector('label[for="' + checkbox.id + '"]');
+
+            checkbox.addEventListener('change', function () {
+                if (checkbox.checked) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
 
 @if ($user->role_id == 1 || in_array($user->department->id,[2, 3, 5])  
     || ($user->department_id==7 && $pedido->origin == "R" )

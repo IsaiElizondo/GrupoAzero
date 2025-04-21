@@ -317,14 +317,15 @@ $texto = isset($texto) ? $texto :"";
 
                                         {{-- 7- Cancelaciones --}}
                                             {{-- Subir foto de nota de devolución o crédito --}}
-                                            @if ( ($order->status_id == 7) && $role->name == "Administrador" && ($order->cancelation->repayments->count() == 0) )
+                                            
+                                            @if ( ($order->status_id == 7) && $role->name == "Administrador" && $order->cancelation!=null && $order->cancelation->repayments->count() == 0 )
                                                 <a href="{{ route('orders.show', $order->id) }}" type="submit" class="btn btn-sm btn-danger btn-link btn-sm" data-toggle="tooltip" data-placement="top" title="Subir foto de reembolso o  de devolucipon de crédito">
                                                     <span class="material-icons">
                                                         photo_camera
                                                     </span>
                                                 </a>
                                             @endif
-                                            @if ( ($order->status_id == 7) && $role->name == "Administrador" && ($order->cancelation->repayments->count() > 0) )
+                                            @if ( ($order->status_id == 7) && $role->name == "Administrador" && $order->cancelation!=null && $order->cancelation->repayments->count() > 0 )
                                                 <a href="{{ route('orders.show', $order->id) }}" type="submit" class="btn btn-sm btn-primary btn-link btn-sm" data-toggle="tooltip" data-placement="top" title="{{$order->cancelation->repayments->count()}} Fotos">
                                                     <span class="material-icons">
                                                         photo_camera
@@ -334,14 +335,14 @@ $texto = isset($texto) ? $texto :"";
                                             @endif
                                             {{-- fin subir foto de nota de devolución o créditon --}}
                                             {{-- Evidencia de Cancelación --}}
-                                            @if ( $order->status_id == 7 && $role->name == "Administrador" && $order->cancelation->evidences->count() == 0 )
+                                            @if ( $order->status_id == 7 && $role->name == "Administrador" && $order->cancelation!=null && $order->cancelation->evidences->count() == 0 )
                                                 <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-danger btn-link btn-sm" data-toggle="tooltip" data-placement="top" title="Subir evicencia cancelación">
                                                     <span class="material-icons">
                                                         description
                                                     </span>
                                                 </a>
                                             @endif
-                                            @if ( $order->status_id == 7 && $role->name == "Administrador" && $order->cancelation->evidences->count() > 0 )
+                                            @if ( $order->status_id == 7 && $role->name == "Administrador" && $order->cancelation!=null && $order->cancelation->evidences->count() > 0 )
                                                 <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-primary btn-link btn-sm tte" data-placement="top" title="Existe evicencia o razón de cancelación">
                                                     <span class="material-icons">
                                                         description
