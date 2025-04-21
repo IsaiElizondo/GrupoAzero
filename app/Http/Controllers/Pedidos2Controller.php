@@ -174,23 +174,15 @@ class Pedidos2Controller extends Controller
         $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
        // var_dump($purchaseOrder);
        
-        $etiquetasAsignadas = DB::table('pedido_etiquetas')
+       $etiquetasDisponibles = DB::table('etiquetas')->get();
+
+       $etiquetasAsignadas = DB::table('etiqueta_pedido')
             ->where('pedido_id', $id)
-            ->pluck('nombre')
+            ->pluck('etiqueta_id')
             ->toArray();
-        $etiquetasDisponibles = [
-            'CLIENTE RECOGE',
-            'INFORMACION PENDIENTE',
-            'MATERIAL PENDIENTE',
-            'PENDIENTE DE ENTREGA',
-            'RESGUARDO CORTO',
-            'RESGUARDO MAYOR AL MES',
 
-        ];
-
-        $data['etiquetasAsignadas'] = $etiquetasAsignadas;
         $data['etiquetasDisponibles'] = $etiquetasDisponibles;
-
+        $data['etiquetasAsignadas'] = $etiquetasAsignadas;
 
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
@@ -202,23 +194,25 @@ class Pedidos2Controller extends Controller
     public function guardarEtiquetas(Request $request, $id)
     {
 
-        dd('Método ejecutar → OK', $request->all());
+    
 
-        DB::table('pedido_etiquetas')->where('pedido_id', $id)->delete();
+        DB::table('etiqueta_pedido')->where('pedido_id', $id)->delete();
 
         $etiquetas = $request->input('etiquetas', []);
 
-        foreach ($etiquetas as $etiqueta) {
-            DB::table('pedido_etiquetas')->insert([
+
+        foreach($etiquetas as $etiqueta_id){
+            DB::table('etiqueta_pedido')->insert([
                 'pedido_id' => $id,
-                'nombre' => $etiqueta,
+                'etiqueta_id' => $etiqueta_id,
                 'created_at' => now(),
-                'updated_at' => now(),
+                'updated_at' => now()
             ]);
         }
-
-        return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
+            return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
+                
     }
+
 
 
     public function nuevo(){
@@ -2836,4 +2830,4 @@ class Pedidos2Controller extends Controller
 
 
 
-}
+ }

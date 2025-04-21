@@ -513,28 +513,23 @@ $pedidoStatusId = $pedido->status_id;
         <div class="headersub">Etiquetas de Seguimiento</div>
         <div class="Eleccion">
 
-            @foreach ($etiquetasDisponibles as $etiqueta)
-                @php
-                    $etiquetaId = 'etiqueta_' . $loop->index;
-                    $checked = in_array(trim($etiqueta), $etiquetasAsignadas);
-                @endphp
+        @foreach ($etiquetasDisponibles as $etiqueta)
+    <div class="etiqueta-item">
+        <input type="checkbox"
+            name="etiquetas[]"
+            value="{{ $etiqueta->id }}"
+            id="etiqueta_{{ $etiqueta->id }}"
+            class="etiqueta-checkbox"
+            {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
 
-                <div class="etiqueta-item">
-                    <input type="checkbox"
-                        name="etiquetas[]"
-                        value="{{ trim($etiqueta) }}"
-                        id="{{ $etiquetaId }}"
-                        class="etiqueta-checkbox"
-                        {{ $checked ? 'checked' : '' }}>
-
-                    <label class="Candidato etiqueta-label {{ $checked ? 'active' : '' }}" for="{{ $etiquetaId }}">
-                        {{ strtoupper($etiqueta) }}
-                    </label>
-                </div>
-            @endforeach
-
-        </div>
+        <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'active' : '' }}"
+            for="etiqueta_{{ $etiqueta->id }}">
+            {{ strtoupper($etiqueta->nombre) }}
+        </label>
     </div>
+@endforeach
+
+    
 
     <br>
     <button class="btn btn-dark" type="submit">Guardar</button>
