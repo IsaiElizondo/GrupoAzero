@@ -132,6 +132,13 @@ use App\Http\Controllers\Pedidos2Controller;
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
                 </fieldset>
+
+                <fieldset>
+                    <legend>Sucursal</legend>
+                    <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
+                    <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
+                </fieldset>
+                
                 </div>
                 <div class="Fila center">
                     <input type="button" class="form-control btnGrande" value="Buscar" onclick="GetLista()" /> 

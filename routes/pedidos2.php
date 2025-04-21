@@ -97,13 +97,14 @@ Route::middleware('auth')->group(function () {
 	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardarEtiquetas'])->name('pedido.etiquetas.guardar');
 
 	//CRUD ETIQUETAS
-	Route::get('/etiquetas', [Pedidos2Controller::class, 'indexEtiquetas'])->name('etiquetas.index');
-	Route::get('/etiquetas/create', [Pedidos2Controller::class, 'createEtiqueta'])->name('etiquetas.create');
-	Route::post('/etiquetas/store', [Pedidos2Controller::class, 'storeEtiqueta'])->name('etiquetas.store');
-	Route::get('/etiquetas/edit/{id}', [Pedidos2Controller::class, 'editEtiqueta'])->name('etiquetas.edit');
-	Route::post('/etiquetas/update/{id}', [Pedidos2Controller::class, 'updateEtiqueta'])->name('etiquetas.update');
-	Route::get('/etiquetas/delete/{id}', [Pedidos2Controller::class, 'deleteEtiqueta'])->name('etiquetas.delete');
-	
+	Route::middleware(['auth'])->group(function () {
+		Route::get('/etiquetas', [Pedidos2Controller::class, 'indexEtiquetas'])->name('etiquetas.index');
+		Route::get('/etiquetas/create', [Pedidos2Controller::class, 'createEtiqueta'])->name('etiquetas.create');
+		Route::post('/etiquetas/store', [Pedidos2Controller::class, 'storeEtiqueta'])->name('etiquetas.store');
+		Route::get('/etiquetas/edit/{id}', [Pedidos2Controller::class, 'editEtiqueta'])->name('etiquetas.edit');
+		Route::post('/etiquetas/update/{id}', [Pedidos2Controller::class, 'updateEtiqueta'])->name('etiquetas.update');
+		Route::post('/etiquetas/{id}/delete', [Pedidos2Controller::class, 'deleteEtiqueta'])->name('etiquetas.delete');
+	});
 
 
 });

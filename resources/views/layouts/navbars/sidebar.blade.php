@@ -181,6 +181,16 @@
                 </li>
             @endif
 
+            @if ( auth()->user()->role_id == 1 )
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('etiquetas.index') }}">
+                        <i class="material-icons">label</i>
+                        <p>Etiquetas</p>
+                    </a>
+                </li>
+            @endif
+
+
 
 
         </ul>

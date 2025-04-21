@@ -213,6 +213,102 @@ class Pedidos2Controller extends Controller
                 
     }
 
+    // CRUD de etiquetas (respetando roles, vistas y retorno limpio)
+
+public function indexEtiquetas()
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    $etiquetas = DB::table('etiquetas')->get();
+    $activePage = 'etiquetas';
+    $titlePage = 'Gestión de Etiquetas';
+
+    return view('pedidos2.etiquetas.index', compact('etiquetas', 'activePage', 'titlePage'));
+}
+
+public function createEtiqueta()
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    $activePage = 'etiquetas';
+    $titlePage = 'Nueva Etiqueta';
+    return view('pedidos2.etiquetas.create', compact('activePage', 'titlePage'));
+}
+
+public function storeEtiqueta(Request $request)
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    $request->validate([
+        'nombre' => 'required|unique:etiquetas|max:255',
+        'descripcion' => 'nullable|max:255',
+    ]);
+
+    DB::table('etiquetas')->insert([
+        'nombre' => $request->nombre,
+        'descripcion' => $request->descripcion,
+        'created_at' => now(),
+        'updated_at' => now()
+    ]);
+
+    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta creada correctamente.');
+}
+
+public function editEtiqueta($id)
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    $etiqueta = DB::table('etiquetas')->where('id', $id)->first();
+    $activePage = 'etiquetas';
+    $titlePage = 'Editar Etiqueta';
+
+    return view('pedidos2.etiquetas.edit', compact('etiqueta', 'activePage', 'titlePage'));
+}
+
+public function updateEtiqueta(Request $request, $id)
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    $request->validate([
+        'nombre' => 'required|max:255|unique:etiquetas,nombre,' . $id,
+        'descripcion' => 'nullable|max:255',
+    ]);
+
+    DB::table('etiquetas')->where('id', $id)->update([
+        'nombre' => $request->nombre,
+        'descripcion' => $request->descripcion,
+        'updated_at' => now()
+    ]);
+
+    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta actualizada correctamente.');
+}
+
+public function deleteEtiqueta($id)
+{
+    $user = auth()->user();
+    if ($user->role->id != 1) {
+        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+    }
+
+    DB::table('etiquetas')->where('id', $id)->delete();
+    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta eliminada correctamente.');
+}
+
 
 
     public function nuevo(){
