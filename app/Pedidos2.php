@@ -34,12 +34,14 @@ class Pedidos2 extends Model
 
     public static function Lista(int $pag, string $termino, string $desde, string $hasta, 
     array $status=[], array $subprocesos=[], array $origen=[], array $sucursal=[], array $subpstatus=[], 
-    array $recogido=[], array $suborigen=[], int $user_id=0) : array {
+    array $recogido=[], array $suborigen=[], int $user_id=0, array $etiquetas = []
+    ) : array {
 
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
         $wheres=["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
+        
         if(!empty($termino)){
             $wheres[]="(o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%' 
             OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%' 
@@ -132,6 +134,11 @@ class Pedidos2 extends Model
             }      
         $wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";      
         }
+
+        if (!empty($etiquetas)) {
+            $wheres[] = "(SELECT COUNT(*) FROM etiqueta_pedido ep WHERE ep.pedido_id = o.id AND ep.etiqueta_id IN (" . implode(',', $etiquetas) . ")) > 0";
+        }
+        
 
         if(!empty($suborigen)){            
             foreach($suborigen as $subor){

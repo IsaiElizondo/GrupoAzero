@@ -134,10 +134,15 @@ use App\Http\Controllers\Pedidos2Controller;
                 </fieldset>
 
                 <fieldset>
-                    <legend>Sucursal</legend>
-                    <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
-                    <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
+                    <legend>Etiquetas</legend>
+                    @foreach ($etiquetas as $etiqueta)
+                        <div class="checkpair">
+                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{ $etiqueta->id }}">
+                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre }}</label>
+                        </div>
+                    @endforeach
                 </fieldset>
+                
                 
                 </div>
                 <div class="Fila center">

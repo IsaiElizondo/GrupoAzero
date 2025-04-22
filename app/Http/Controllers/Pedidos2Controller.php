@@ -56,9 +56,11 @@ class Pedidos2Controller extends Controller
 
         $queryString = Session::get(self::QS);
         $pag = Session::get(self::PAG,1);
+        $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
 
 
-        return view('pedidos2.index', compact('reasons','department','role','queryString','user','pag'));
+
+        return view('pedidos2.index', compact('reasons','department','role','queryString','user','pag', 'etiquetas'));
     }
 
 
@@ -96,10 +98,14 @@ class Pedidos2Controller extends Controller
         $subprocesos = (array)$request->query("sp");
         $origen = (array)$request->query("or");
         $sucursal = (array)$request->query("suc");
+        
 
         $subpstatus = (array)$request->query("spsub");
         $recogido = (array)$request->query("rec");
         $orsub = (array)$request->query("orsub");
+
+        $etiquetas = (array)$request->query("etiquetas");
+
 
         $pag = $request->query("p",0);
         $pag = intval($pag);
@@ -116,7 +122,7 @@ class Pedidos2Controller extends Controller
 
         if($excel == 1){
             Pedidos2::$rpp=2010;
-            $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id);
+            $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id, $etiquetas);
 
             // $eParams=compact("termino","desde","hasta","status","subprocesos","origen","sucursal","subpstatus","recogido","orsub");
             $RC = new ReportesController();
@@ -126,7 +132,7 @@ class Pedidos2Controller extends Controller
          }
 
 
-         $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id);
+         $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id, $etiquetas);
 
          $statuses = Status::all();
          $estatuses = [];
@@ -183,7 +189,7 @@ class Pedidos2Controller extends Controller
 
         $data['etiquetasDisponibles'] = $etiquetasDisponibles;
         $data['etiquetasAsignadas'] = $etiquetasAsignadas;
-
+        
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
@@ -213,6 +219,10 @@ class Pedidos2Controller extends Controller
                 
     }
 
+
+
+
+
     // CRUD de etiquetas (respetando roles, vistas y retorno limpio)
 
 public function indexEtiquetas()
@@ -229,6 +239,8 @@ public function indexEtiquetas()
     return view('pedidos2.etiquetas.index', compact('etiquetas', 'activePage', 'titlePage'));
 }
 
+
+
 public function createEtiqueta()
 {
     $user = auth()->user();
@@ -240,6 +252,8 @@ public function createEtiqueta()
     $titlePage = 'Nueva Etiqueta';
     return view('pedidos2.etiquetas.create', compact('activePage', 'titlePage'));
 }
+
+
 
 public function storeEtiqueta(Request $request)
 {
@@ -263,6 +277,8 @@ public function storeEtiqueta(Request $request)
     return redirect()->route('etiquetas.index')->with('success', 'Etiqueta creada correctamente.');
 }
 
+
+
 public function editEtiqueta($id)
 {
     $user = auth()->user();
@@ -276,6 +292,8 @@ public function editEtiqueta($id)
 
     return view('pedidos2.etiquetas.edit', compact('etiqueta', 'activePage', 'titlePage'));
 }
+
+
 
 public function updateEtiqueta(Request $request, $id)
 {
@@ -298,6 +316,10 @@ public function updateEtiqueta(Request $request, $id)
     return redirect()->route('etiquetas.index')->with('success', 'Etiqueta actualizada correctamente.');
 }
 
+
+
+
+
 public function deleteEtiqueta($id)
 {
     $user = auth()->user();
@@ -308,6 +330,9 @@ public function deleteEtiqueta($id)
     DB::table('etiquetas')->where('id', $id)->delete();
     return redirect()->route('etiquetas.index')->with('success', 'Etiqueta eliminada correctamente.');
 }
+
+
+
 
 
 
