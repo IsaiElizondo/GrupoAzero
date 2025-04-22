@@ -52,7 +52,7 @@
                                         <td>
                                             <a href="#" class="btn btn-danger btn-link btn-sm"
                                                 onclick="event.preventDefault(); 
-                                                if (confirm('¿Seguro que quieres eliminar esta etiqueta?')) {
+                                                if (confirm('¿Seguro que quieres eliminar esta etiqueta? Al eliminarla no podrás recuperarla.')) {
                                                     document.getElementById('delete-form-{{ $etiqueta->id }}').submit();
                                                 }">
                                                 <span class="material-icons">delete</span>
