@@ -21,6 +21,8 @@ $follow = Follow::where( ["user_id"=> $user->id, "order_id" => $pedido->id] )->f
 <link rel="stylesheet" href="{{ asset('css/attachlist.css?x='.rand(0,999)) }}" />
 <link rel="stylesheet" href="{{ asset('css/piedramuda.css?x='.rand(0,999)) }}" />
 
+<link rel="stylesheet" href="{{ asset('css/etiquetas/etiquetas.css?x='.rand(0,999)) }}" />
+
 <main class="content">
 
 
@@ -501,9 +503,7 @@ $pedidoStatusId = $pedido->status_id;
 
 
 
-
-
-
+{{-- NUEVA SECCIÓN DE ETIQUETADO --}}
 
 
 <form method="POST" action="{{ route('pedido.etiquetas.guardar', ['id' => $id]) }}">
@@ -514,69 +514,28 @@ $pedidoStatusId = $pedido->status_id;
         <div class="Eleccion">
 
         @foreach ($etiquetasDisponibles as $etiqueta)
-    <div class="etiqueta-item">
-        <input type="checkbox"
-            name="etiquetas[]"
-            value="{{ $etiqueta->id }}"
-            id="etiqueta_{{ $etiqueta->id }}"
-            class="etiqueta-checkbox"
-            {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
+            <div class="etiqueta-item">
+                <input type="checkbox"
+                    name="etiquetas[]"
+                    value="{{ $etiqueta->id }}"
+                    id="etiqueta_{{ $etiqueta->id }}"
+                    class="etiqueta-checkbox"
+                    {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
 
-        <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'active' : '' }}"
-            for="etiqueta_{{ $etiqueta->id }}">
-            {{ strtoupper($etiqueta->nombre) }}
-        </label>
-    </div>
-@endforeach
+                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'active' : '' }}"
+                    for="etiqueta_{{ $etiqueta->id }}">
+                    {{ strtoupper($etiqueta->nombre) }}
+                </label>
+            </div>
+        @endforeach
 
-    
-
+        </div>
     <br>
     <button class="btn btn-dark" type="submit">Guardar</button>
 </form>
 
 
-<style>
-    .etiqueta-item {
-        display: inline-flex;
-        align-items: center;
-        margin: 5px;
-    }
 
-    .etiqueta-checkbox {
-        margin-right: 8px;
-        transform: scale(1.2); 
-        cursor: pointer;
-    }
-
-    .etiqueta-label {
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .etiqueta-label.active {
-        background-color: #444;
-        color: #fff;
-        border-color: #444;
-    }
-</style>
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.etiqueta-checkbox').forEach(checkbox => {
-            const label = document.querySelector('label[for="' + checkbox.id + '"]');
-
-            checkbox.addEventListener('change', function () {
-                if (checkbox.checked) {
-                    label.classList.add('active');
-                } else {
-                    label.classList.remove('active');
-                }
-            });
-        });
-    });
-</script>
 
 
 
@@ -635,6 +594,8 @@ $pedidoStatusId = $pedido->status_id;
 <script type="text/javascript" src="{{asset('js/jquery.form.js')}}"></script>
 <script type="text/javascript" src="{{asset('js/piedramuda.js?x='.rand(0,999))}}"></script>
 <script type="text/javascript" src="{{asset('js/attachlist2.js?x='.rand(0,999))}}"></script>
+
+<script type="text/javascript" src="{{asset('js/etiquetas/etiquetas.js?x='.rand(0,999))}}"></script>
 <script>
 $(document).ready(function(){
     
