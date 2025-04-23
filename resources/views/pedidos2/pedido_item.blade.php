@@ -5,6 +5,8 @@ use App\Partial;
 use App\PurchaseOrder;
 use App\Smaterial;
 
+
+
 $estatusCodes=[1=>"GEN",2=>"EMB",3=>"FAB", 4=>"FAB", 5=>"PUE", 6=>"ENT", 7=>"CNC",8=>"REF",9=>"DEV",10=>"AUD"];
     if($item->origin == "R"){
         $estatusCodes[6]="SUR";
@@ -30,6 +32,10 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 //var_dump($partials);
 
 ?>
+
+<link rel="stylesheet" href="{{ asset('css/etiquetas/etiquetasM.css?x='.rand(0,999)) }}" />
+
+
 <aside class="Pedido">
 
     <div class="EsquinaOrigen" title="Origen: {{ $origenes[$item->origin] }}">{{ $item->origin }}</div>
@@ -175,32 +181,42 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 
 
             </div>
+            @if (!empty($item->etiquetas_render))
+                <div class="etiquetas-mini">
+                    @foreach ($item->etiquetas_render as $etq)
+                        <span class="etiqueta-circulo" style="background-color: {{ $etq['color'] }};" title="{{ $etq['nombre'] }}">
+                            {{ $etq['iniciales'] }}
+                        </span>
+                    @endforeach
+                </div>
+            @endif
+
         </a>
 
 
 
 
-            <div class="SuperElemento conIconos">
-                
-                <div rel="icons" >
-                    <div class='iconSet'>
-                    <!--
-                        <a class="parciales" title="Parciales" href="{{ url('pedidos2/fragmento/'.$item->id.'/parciales') }}"></a>
-                        <a class="ordenf" title="Ordenes de Manufactura" href="{{ url('pedidos2/fragmento/'.$item->id.'/ordenf')}}"></a>
+                    <div class="SuperElemento conIconos">
                         
-                    -->
-                        <a class="historial" title="Más Información" href="{{ url('pedidos2/masinfo/'.$item->id) }}"></a>
-                        <a class="notas" title="Notas" href="{{ url('pedidos2/fragmento/'.$item->id.'/notas')}}"></a>
+                        <div rel="icons" >
+                            <div class='iconSet'>
+                            <!--
+                                <a class="parciales" title="Parciales" href="{{ url('pedidos2/fragmento/'.$item->id.'/parciales') }}"></a>
+                                <a class="ordenf" title="Ordenes de Manufactura" href="{{ url('pedidos2/fragmento/'.$item->id.'/ordenf')}}"></a>
+                                
+                            -->
+                                <a class="historial" title="Más Información" href="{{ url('pedidos2/masinfo/'.$item->id) }}"></a>
+                                <a class="notas" title="Notas" href="{{ url('pedidos2/fragmento/'.$item->id.'/notas')}}"></a>
+                                
+                                <a class="followBtn {{ (($item->follows > 0) ? '':'no') }}" title="A mis favoritos"  
+                                href="{{ url('pedidos2/set_followno/'.$item->id.'/'.$user->id)}}" hrefno="{{ url('pedidos2/set_follow/'.$item->id.'/'.$user->id)}}"></a>
+                            </div>                    
+
+                        </div>
+
                         
-                        <a class="followBtn {{ (($item->follows > 0) ? '':'no') }}" title="A mis favoritos"  
-                        href="{{ url('pedidos2/set_followno/'.$item->id.'/'.$user->id)}}" hrefno="{{ url('pedidos2/set_follow/'.$item->id.'/'.$user->id)}}"></a>
-                    </div>                    
+                    </div>
 
-                </div>
-
-                
             </div>
-
-    </div>
 
 </aside>

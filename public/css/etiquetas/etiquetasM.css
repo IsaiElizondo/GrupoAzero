@@ -1,0 +1,20 @@
+.etiquetas-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    margin-top: 4px;
+}
+
+.etiqueta-circulo {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    line-height: 22px;
+    font-weight: bold;
+    box-shadow: 0 0 3px rgba(0,0,0,0.2);
+}

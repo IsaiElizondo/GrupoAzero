@@ -515,15 +515,20 @@ $pedidoStatusId = $pedido->status_id;
 
         @foreach ($etiquetasDisponibles as $etiqueta)
             <div class="etiqueta-item">
-                <input type="checkbox"
+                <input
+                    type="checkbox"
                     name="etiquetas[]"
                     value="{{ $etiqueta->id }}"
                     id="etiqueta_{{ $etiqueta->id }}"
                     class="etiqueta-checkbox"
-                    {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
+                    {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}
+                >
 
-                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'active' : '' }}"
-                    for="etiqueta_{{ $etiqueta->id }}">
+                <label
+                    class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}"
+                    for="etiqueta_{{ $etiqueta->id }}"
+                    style="background-color: {{$etiqueta->color ?? '#CCCCCC'}}; color: white;"
+                >
                     {{ strtoupper($etiqueta->nombre) }}
                 </label>
             </div>

@@ -42,6 +42,14 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div style="margin-bottom: 10px;">
+                                    <label class="col-sm-2 col-form-label">Color</label>
+                                    <div class="col-sm-7">
+                                        <div class="form-group bmd-form-group is-filled">
+                                            <input type="color" name="color" id="color" value="{{ old('color', $etiqueta->color ?? '#000000') }}">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-footer ml-auto mr-auto">
                                 <button type="submit" class="btn btn-primary">Actualizar</button>

@@ -87,7 +87,7 @@ Route::middleware('auth')->group(function () {
 	
 	Route::post('pedidos2/add_nota/{id}', [Pedidos2Controller::class]);
 
-	Route::get('pedidos2/set_follow/{id_pedido}/{id_usuarios}', [Pedidos2Controller::class, 'setclass_follow']);
+	Route::get('pedidos2/set_follow/{id_pedido}/{id_usuarios}', [Pedidos2Controller::class, 'set_follow']);
 	Route::get('pedidos2/set_followno/{id_pedido}/{id_usuario}', [Pedidos2Controller::class, 'set_followno']);
 
 	Route::get('pedidos2/smaterial2/smaterial_desestatus/{id}/{status_id}', [Pedidos2Controller::class]);

@@ -135,6 +135,31 @@ class Pedidos2Controller extends Controller
 
          $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id, $etiquetas);
 
+         foreach ($lista as $item){
+            $item->etiquetas_render = [];
+
+            if (!empty($item->etiquetas_coloreadas)) {
+                $pairs = explode(',', $item->etiquetas_coloreadas);
+
+                foreach ($pairs as $p) {
+                    if (str_contains($p, '|')) {
+                        [$nombre, $color] = explode('|', trim($p));
+
+                        $iniciales = implode('', array_map(function($word) {
+                            return mb_substr($word, 0, 1);
+                        }, explode(' ', $nombre)));
+
+                        $item->etiquetas_render[] = [
+                            'nombre' => $nombre,
+                            'color' => $color,
+                            'iniciales' => strtoupper($iniciales),
+                        ];
+                    }
+                }
+            }
+        }
+
+
          $statuses = Status::all();
          $estatuses = [];
          foreach($statuses as $st){
@@ -301,9 +326,12 @@ public function storeEtiqueta(Request $request)
         'descripcion' => 'nullable|max:255',
     ]);
 
+    $color = $request->color ?: sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+
     DB::table('etiquetas')->insert([
         'nombre' => $request->nombre,
         'descripcion' => $request->descripcion,
+        'color' => $color,
         'created_at' => now(),
         'updated_at' => now()
     ]);
@@ -344,6 +372,7 @@ public function updateEtiqueta(Request $request, $id)
     DB::table('etiquetas')->where('id', $id)->update([
         'nombre' => $request->nombre,
         'descripcion' => $request->descripcion,
+        'color' => $request->color,
         'updated_at' => now()
     ]);
 

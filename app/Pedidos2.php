@@ -164,6 +164,11 @@ class Pedidos2 extends Model
         //QUERY MAIN***********
         $q = "SELECT 
         o.*,
+        (SELECT GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ')
+        FROM etiqueta_pedido ep
+        JOIN etiquetas e ON e.id = ep.etiqueta_id
+        WHERE ep.pedido_id = o.id
+        )AS etiquetas_coloreadas,
         (SELECT p.number FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_code,      
         (SELECT p.document FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS document,
         (SELECT p.requisition FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_document,
