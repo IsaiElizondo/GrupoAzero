@@ -26,6 +26,7 @@ use App\User;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -197,27 +198,60 @@ class Pedidos2Controller extends Controller
     }
 
 
-    public function guardarEtiquetas(Request $request, $id)
-    {
-
     
+public function guardarEtiquetas(Request $request, $id)
+{
+    $etiquetas = $request->input('etiquetas', []);
 
-        DB::table('etiqueta_pedido')->where('pedido_id', $id)->delete();
+    // Primero se obtienen las etiquetas anteriores
+    $etiquetasAnteriores = DB::table('etiqueta_pedido')
+        ->where('pedido_id', $id)
+        ->pluck('etiqueta_id')
+        ->toArray();
 
-        $etiquetas = $request->input('etiquetas', []);
+    // Detectar cuáles se agregaron y cuáles se eliminaron
+    $nuevas = array_diff($etiquetas, $etiquetasAnteriores);
+    $eliminadas = array_diff($etiquetasAnteriores, $etiquetas);
 
+    // Reemplazar las etiquetas del pedido
+    DB::table('etiqueta_pedido')->where('pedido_id', $id)->delete();
 
-        foreach($etiquetas as $etiqueta_id){
-            DB::table('etiqueta_pedido')->insert([
-                'pedido_id' => $id,
-                'etiqueta_id' => $etiqueta_id,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-            return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
-                
+    foreach ($etiquetas as $etiquetas_id) {
+        DB::table('etiqueta_pedido')->insert([
+            'pedido_id' => $id,
+            'etiqueta_id' => $etiquetas_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
+
+    //Registrar en el historial
+    foreach ($nuevas as $nueva) {
+        $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
+        DB::table('logs')->insert([
+            'order_id' => $id,
+            'user_id' => Auth::id(),
+            'action' => "Añadió etiqueta",
+            'status' => 'Etiqueta añadida: '.$nombreEtiqueta,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    foreach ($eliminadas as $eliminada) {
+        $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
+        DB::table('logs')->insert([
+            'order_id' => $id,
+            'user_id' => Auth::id(),
+            'action' => "Eliminó etiqueta",
+            'status' => 'Etiqueta eliminada: '.$nombreEtiqueta,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
+}
 
 
 

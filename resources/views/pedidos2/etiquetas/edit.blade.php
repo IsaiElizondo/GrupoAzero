@@ -7,7 +7,7 @@
                 <div class="col-md-12">
                     <form method="post" action="{{ route('etiquetas.update', $etiqueta->id) }}">
                         @csrf
-                        @method('put')
+                        @method('POST')
                         <div class="card">
                             <div class="card-header card-header-primary">
                                 <div class="row">
