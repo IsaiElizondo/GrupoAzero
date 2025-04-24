@@ -135,6 +135,9 @@ class Pedidos2Controller extends Controller
 
          $lista = Pedidos2::Lista($pag, $termino, $desde, $hasta, $status, $subprocesos, $origen, $sucursal,$subpstatus,$recogido,$orsub, $user->id, $etiquetas);
 
+
+         //Vista de etiquetas
+         
          foreach ($lista as $item){
             $item->etiquetas_render = [];
 
