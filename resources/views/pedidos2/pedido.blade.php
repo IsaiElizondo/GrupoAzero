@@ -35,7 +35,13 @@ var_dump($pedido);
 
     <div class="card Fila">
 
-        <center> <a class="regresar" href="{{ url('pedidos2') }}">&laquo; Regresar</a> </center>
+        <center> <a class="regresar" href="{{ url('pedidos2') }}">&laquo; Regresar a Pedidos</a> </center>
+        
+    </div>
+    <div class="card Fila">
+
+        <center><a class="regresar" href="{{ url('pedidos2/dashboard') }}">&laquo;Regresar al Dashboard</a>
+        
     </div>
 
 

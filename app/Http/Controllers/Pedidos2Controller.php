@@ -226,7 +226,7 @@ class Pedidos2Controller extends Controller
     }
 
 
-    
+// Guardar etiquetas en la tabla intermedia
 public function guardarEtiquetas(Request $request, $id)
 {
     $etiquetas = $request->input('etiquetas', []);
@@ -253,7 +253,14 @@ public function guardarEtiquetas(Request $request, $id)
         ]);
     }
 
-    //Registrar en el historial
+
+
+
+
+    //-----------------------------------------------------------------------//
+    //------------------------Registrar en el historial----------------------//
+    //-----------------------------------------------------------------------//
+
     foreach ($nuevas as $nueva) {
         $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
         DB::table('logs')->insert([
@@ -280,17 +287,24 @@ public function guardarEtiquetas(Request $request, $id)
 
     return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
 }
+    //----------------------------------------------------------------------------------------------------------//
+    //-------------------------------FIN GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA------------------------------//
+    //---------------------------------------------------------------------------------------------------------//
 
 
 
 
 
-    // CRUD de etiquetas (respetando roles, vistas y retorno limpio)
+    //----------------------------------------------------------------------------------------------------------//
+    //----------------------CRUD de etiquetas (respetando roles, vistas y retorno limpio)----------------------//
+    //----------------------------------------------------------------------------------------------------------//
 
 public function indexEtiquetas()
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
@@ -303,10 +317,14 @@ public function indexEtiquetas()
 
 
 
+
 public function createEtiqueta()
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+    
+    
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
@@ -317,10 +335,13 @@ public function createEtiqueta()
 
 
 
+
 public function storeEtiqueta(Request $request)
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
@@ -344,10 +365,13 @@ public function storeEtiqueta(Request $request)
 
 
 
+
 public function editEtiqueta($id)
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
@@ -360,10 +384,13 @@ public function editEtiqueta($id)
 
 
 
+
 public function updateEtiqueta(Request $request, $id)
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
@@ -385,18 +412,144 @@ public function updateEtiqueta(Request $request, $id)
 
 
 
-
 public function deleteEtiqueta($id)
 {
     $user = auth()->user();
-    if ($user->role->id != 1) {
+    $rolesPermitidos = [1, 4];
+
+    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
         return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
     }
 
     DB::table('etiquetas')->where('id', $id)->delete();
     return redirect()->route('etiquetas.index')->with('success', 'Etiqueta eliminada correctamente.');
 }
+//-----------------------------------------------------------------------------------------------------------//
+//------------------------------ FIN DEL CRUD DE ETIQUETAS---------------------------------------------------//
+//-----------------------------------------------------------------------------------------------------------//
 
+
+
+//-----------------------------------------------------------------------------------------------------------//
+//-------------------------------DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS---------------------------//
+//-----------------------------------------------------------------------------------------------------------//
+
+public function dashboard()
+{
+
+    $user = auth()->user();
+
+    $departamentosPermitidos =[2,3,4];
+    $rolesPermitidos = [1,4];
+
+    if (!in_array($user->department_id, $departamentosPermitidos) && (!in_array($user->role_id, $rolesPermitidos))) {
+        abort(403, 'No tienes permiso para acceder a esta sección.'); 
+    }
+    
+        $estatuses = Pedidos2::StatusesCat();
+        $estatusCodes = Pedidos2::StatusCodes();
+        $estatusesSM = Pedidos2::StatusesSmaterial();
+        $estatusesSP = Pedidos2::StatusesPartial();
+        $origenes = Pedidos2::OrigenesCat();
+
+        $pedidos = Pedidos2::where('status_id', 2)
+            ->where('office', $user->office)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($pedidos as $pedido) {
+            $pedido->partials = Partial::where('order_id', $pedido->id)->get();
+            $pedido->ordersf = ManufacturingOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+            $pedido->smateriales = Smaterial::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+            $pedido->requisitions = PurchaseOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+
+            $etiquetas = DB::table('etiqueta_pedido as ep')
+                ->join('etiquetas as e', 'ep.etiqueta_id', '=', 'e.id')
+                ->where('ep.pedido_id', $pedido->id)
+                ->select('e.nombre', 'e.color')
+                ->get();
+
+            $etiquetas_render = [];
+
+            foreach ($etiquetas as $etiqueta){
+
+                
+                    $etiquetas_render[] =[
+
+                        'nombre' => $etiqueta->nombre,
+                        'color' => $etiqueta->color,
+                        'inicales' => strtoupper(mb_substr($etiqueta->nombre, 0, 1)),
+                    
+                ];
+            }     
+            
+            $pedido->etiquetas_render = $etiquetas_render;
+            
+        }
+
+        return view('dashboard.index', compact('pedidos', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes'));
+
+
+   }
+
+
+
+
+public function dashboardLista(Request $request){
+
+    $user = auth()->user();
+    
+    $estatuses = Pedidos2::StatusesCat();
+    $estatusCodes = Pedidos2::StatusCodes();
+    $estatusesSM = Pedidos2::StatusesSmaterial();
+    $estatusesSP = Pedidos2::StatusesPartial();
+    $origenes = Pedidos2::OrigenesCat();
+
+    $pedidos = Pedidos2::where('status_id', 2)
+        ->where('office', $user->office)
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    foreach ($pedidos as $pedido){
+
+        $pedido->partials = Partial::where('order_id', $pedido->id)->get();
+        $pedido->ordersf = ManufacturingOrder::where('order_id',$pedido->id)->orderBy('id', 'desc')->get();
+        $pedido->smateriales = Smaterial::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+        $pedido->requisitions = PurchaseOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+
+        $etiquetas = DB::table('etiqueta_pedido as ep')
+            ->join('etiquetas as e', 'ep.etiqueta_id', '=', 'e.id')
+            ->where('ep.pedido_id', $pedido->id)
+            ->select('e.nombre', 'e.color')
+            ->get();
+
+        $etiquetas_render = [];
+
+        foreach ($etiquetas as $etiqueta){
+
+            $etiquetas_render[] = [
+
+                'nombre' => $etiqueta->nombre,
+                'color' => $etiqueta->color,
+                'iniciales' => strtoupper(mb_substr($etiqueta->nombre, 0, 1)),
+                
+            ];
+
+        }
+
+        $pedido->etiquetas_render = $etiquetas_render;
+        
+    }
+
+        return view('dashboard.lista', compact( 'pedidos', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes' ));
+
+}
+        
+    
+    //-----------------------------------------------------------------------------------------------------------//
+    //--------------------------FIN DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS----------------------------//
+    //-----------------------------------------------------------------------------------------------------------//
+    
 
 
 

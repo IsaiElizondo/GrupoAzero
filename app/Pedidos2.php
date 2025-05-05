@@ -16,6 +16,8 @@ class Pedidos2 extends Model
      //   'file', 'order_id', 'created_at'
     ];
 
+    protected $table = 'orders';
+
 
     public static function uno(int $order_id=0) : object {
         $q="SELECT o.*,
@@ -164,11 +166,13 @@ class Pedidos2 extends Model
         //QUERY MAIN***********
         $q = "SELECT 
         o.*,
+        
         (SELECT GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ')
         FROM etiqueta_pedido ep
         JOIN etiquetas e ON e.id = ep.etiqueta_id
         WHERE ep.pedido_id = o.id
         )AS etiquetas_coloreadas,
+
         (SELECT p.number FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_code,      
         (SELECT p.document FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS document,
         (SELECT p.requisition FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_document,
@@ -210,6 +214,54 @@ class Pedidos2 extends Model
         }
     return $arr;
     }
+
+    
+    public static function StatusCodes() : array
+{
+    return [
+        1 => "GEN",
+        2 => "EMB",
+        3 => "FAB",
+        4 => "FAB",
+        5 => "PUE",
+        6 => "ENT",
+        7 => "CNC",
+        8 => "REF",
+        9 => "DEV",
+        10 => "AUD",
+    ];
+}
+
+// Devuelve estatus para salidas de materiales (modifica el estatus 4)
+public static function StatusesSmaterial() : array
+{
+    $estatuses = self::StatusesCat();
+    if (isset($estatuses[4])) {
+        $estatuses[4] = "Elaborado";
+    }
+    return $estatuses;
+}
+
+// Devuelve estatus para parciales (modifica el estatus 4)
+public static function StatusesPartial() : array
+{
+    $estatuses = self::StatusesCat();
+    if (isset($estatuses[4])) {
+        $estatuses[4] = "Generado";
+    }
+    return $estatuses;
+}
+
+// Devuelve los tipos de origen de pedidos
+public static function OrigenesCat() : array
+{
+    return [
+        "" => "",
+        "C" => "Cotización",
+        "F" => "Factura",
+        "R" => "Requisición",
+    ];
+}
 
     public static function Events() : array {
         return DB::table('events')->get()->toArray();

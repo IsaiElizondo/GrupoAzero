@@ -24,7 +24,7 @@ Route::middleware('auth')->group(function () {
 	Route::get('pedidos2/set_parcial_status/{id}', [Pedidos2Controller::class, 'set_parcial_status']);
 	Route::get('pedidos2/unset_entregado/{id}', [Pedidos2Controller::class, 'unset_entregado']);
 
-	Route::get('pedidos2/parcial_nuevo/{id]', [Pedidos2Controller::class, 'parcial_nuevo']);
+	Route::get('pedidos2/parcial_nuevo/{id}', [Pedidos2Controller::class, 'parcial_nuevo']);
 	Route::post('pedidos2/parcial_crear/{id}', [Pedidos2Controller::class, 'parcial_crear']);
 	Route::get('pedidos2/parcial_edit/{id}', [Pedidos2Controller::class, 'parcial_edit']);
 	Route::post('pedidos2/parcial_update/{id}', [Pedidos2Controller::class, 'parcial_update']);
@@ -106,6 +106,11 @@ Route::middleware('auth')->group(function () {
 		Route::post('/etiquetas/{id}/delete', [Pedidos2Controller::class, 'deleteEtiqueta'])->name('etiquetas.delete');
 	});
 
+	//DASHBOARD
+	Route::middleware(['auth'])->group(function () {
+		Route::get('pedidos2/dashboard', [Pedidos2Controller::class, 'dashboard'])->name('dashboard');
+		Route::get('pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboardLista']);
+	});
 
 });
 	

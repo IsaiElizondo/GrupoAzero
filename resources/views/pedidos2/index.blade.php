@@ -18,7 +18,7 @@ use App\Http\Controllers\Pedidos2Controller;
     <div class="card-header card-header-primary">
         <div class="Fila">
             <h4 class="card-title">Pedidos</h4>
-            <div class="card-category">Versión 2</div>
+            <div class="card-category">Bienvenido {{auth()->user()->name }} </div>
         </div>
     </div>
 
@@ -227,7 +227,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
         <section id="Lista">
 
-
+            <p>Cargando...</p>
 
         </section>
 

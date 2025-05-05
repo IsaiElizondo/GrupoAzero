@@ -27,7 +27,16 @@
 
 
 
-            
+            {{-- SECCIÓN NUEVA DASHBOARD--}}
+
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques"]))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('dashboard') }}">
+                        <i class=material-icons>dashboard</i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+            @endif
 
 
 
@@ -183,7 +192,8 @@
 
             {{-- SECCIÓN NUEVA DE ETIQUETAS  --}}
 
-            @if ( auth()->user()->role_id == 1 )
+           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]))
+          
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('etiquetas.index') }}">
                         <i class="material-icons">label</i>
@@ -192,6 +202,7 @@
                 </li>
             @endif
 
+            
 
 
 
