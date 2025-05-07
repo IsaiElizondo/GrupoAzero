@@ -65,7 +65,7 @@ class Pedidos2Controller extends Controller
     }
 
 
-
+//FUNCIÓN PARA LA BÚSQUEDA AVANZADA
     public function lista(Request $request){
         $user = auth()->user();
 
@@ -434,118 +434,197 @@ public function deleteEtiqueta($id)
 //-------------------------------DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS---------------------------//
 //-----------------------------------------------------------------------------------------------------------//
 
-public function dashboard()
-{
+public function dashboard(){
 
     $user = auth()->user();
 
-    $departamentosPermitidos =[2,3,4];
+    $departamentosPermitidos = [2, 3, 4];
     $rolesPermitidos = [1,4];
 
-    if (!in_array($user->department_id, $departamentosPermitidos) && (!in_array($user->role_id, $rolesPermitidos))) {
-        abort(403, 'No tienes permiso para acceder a esta sección.'); 
+    if(!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)){
+
+        abort(403, 'No tienes permiso para acceder a esta sección');
     }
+
+    //Prefiltros
+
+    $termino = "";
+    $desde = now()->subDays(7)->format("Y-m-d 00:00:00");
+    $hasta = now()->format("Y-m-d 23:59:59");
+    $pag = 1;
     
-        $estatuses = Pedidos2::StatusesCat();
-        $estatusCodes = Pedidos2::StatusCodes();
-        $estatusesSM = Pedidos2::StatusesSmaterial();
-        $estatusesSP = Pedidos2::StatusesPartial();
-        $origenes = Pedidos2::OrigenesCat();
+    $status = [];
+    $subprocesos = [];
+    $origen =[];
+    $sucursal = [];
+    $subpstatus = [];
+    $recogido = [];
+    $orsub = [];
+    $etiquetas = [];
+    
 
-        $pedidos = Pedidos2::where('status_id', 2)
-            ->where('office', $user->office)
-            ->orderBy('created_at', 'desc')
-            ->get();
+    $lista = collect(Pedidos2::Lista(
+        $pag,
+        $termino,
+        $desde,
+        $hasta,
+        $status,
+        $subprocesos,
+        $origen,
+        $sucursal,
+        $subpstatus,
+        $recogido,
+        $orsub,
+        $user->id,
+        $etiquetas
+    ))->filter(function($pedido) use ($user){
 
-        foreach ($pedidos as $pedido) {
-            $pedido->partials = Partial::where('order_id', $pedido->id)->get();
-            $pedido->ordersf = ManufacturingOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
-            $pedido->smateriales = Smaterial::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
-            $pedido->requisitions = PurchaseOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
+        return $pedido->status_id == 2 && $pedido->office == $user->office;
+        
+    })->values();
 
-            $etiquetas = DB::table('etiqueta_pedido as ep')
-                ->join('etiquetas as e', 'ep.etiqueta_id', '=', 'e.id')
-                ->where('ep.pedido_id', $pedido->id)
-                ->select('e.nombre', 'e.color')
-                ->get();
+    foreach($lista as $item){
 
-            $etiquetas_render = [];
+        $item->etiquetas_render = [];
 
-            foreach ($etiquetas as $etiqueta){
+        if(!empty($item->etiquetas_coloreadas)){
 
-                
-                    $etiquetas_render[] =[
+            $pairs = explode(',', $item->etiquetas_coloreadas);
 
-                        'nombre' => $etiqueta->nombre,
-                        'color' => $etiqueta->color,
-                        'inicales' => strtoupper(mb_substr($etiqueta->nombre, 0, 1)),
-                    
-                ];
-            }     
-            
-            $pedido->etiquetas_render = $etiquetas_render;
-            
+            foreach($pairs as $p){
+
+                if(str_contains($p, '|')){
+
+                    [$nombre, $color] = explode('|', trim($p));
+                    $iniciales = implode('', array_map(fn($w)=>mb_substr($w, 0, 1), explode(' ', $nombre)));
+
+                    $item->etiquetas_render[] = [
+
+                        'nombre' => $nombre,
+                        'color' => $color,
+                        'iniciales' =>strtoupper($iniciales),
+
+                    ];
+
+                }
+
+            }
+
         }
 
-        return view('dashboard.index', compact('pedidos', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes'));
+    }
 
-
-   }
-
-
-
-
-public function dashboardLista(Request $request){
-
-    $user = auth()->user();
-    
     $estatuses = Pedidos2::StatusesCat();
     $estatusCodes = Pedidos2::StatusCodes();
     $estatusesSM = Pedidos2::StatusesSmaterial();
     $estatusesSP = Pedidos2::StatusesPartial();
     $origenes = Pedidos2::OrigenesCat();
+    $events = DB::table('events')->pluck('name', 'id')->toArray();
+    $etiquetas = DB::table('etiquetas')->select('id', 'nombre')->get();
 
-    $pedidos = Pedidos2::where('status_id', 2)
-        ->where('office', $user->office)
-        ->orderBy('created_at', 'desc')
-        ->get();
+    return view('dashboard.index', compact( 'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes', 'events', 'etiquetas', 'user'));
 
-    foreach ($pedidos as $pedido){
+}
 
-        $pedido->partials = Partial::where('order_id', $pedido->id)->get();
-        $pedido->ordersf = ManufacturingOrder::where('order_id',$pedido->id)->orderBy('id', 'desc')->get();
-        $pedido->smateriales = Smaterial::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
-        $pedido->requisitions = PurchaseOrder::where('order_id', $pedido->id)->orderBy('id', 'desc')->get();
 
-        $etiquetas = DB::table('etiqueta_pedido as ep')
-            ->join('etiquetas as e', 'ep.etiqueta_id', '=', 'e.id')
-            ->where('ep.pedido_id', $pedido->id)
-            ->select('e.nombre', 'e.color')
-            ->get();
+public function dashboardLista(Request $request){
 
-        $etiquetas_render = [];
+    $user = auth()->user();
 
-        foreach ($etiquetas as $etiqueta){
+    $termino = (string)$request->query("termino", "");
+    $fechas = (string)$request->query("fechas", "");
+    $fechaspts = explode(" - ", $fechas);
 
-            $etiquetas_render[] = [
+    if(count($fechaspts) == 2){
 
-                'nombre' => $etiqueta->nombre,
-                'color' => $etiqueta->color,
-                'iniciales' => strtoupper(mb_substr($etiqueta->nombre, 0, 1)),
-                
-            ];
+        $desde = (new \DateTime(trim($fechaspts[0])))->format("Y-m-d");
+        $hasta = (new \DateTime(trim($fechaspts[1])))->format("Y-m-d");
 
-        }
+    } else{
 
-        $pedido->etiquetas_render = $etiquetas_render;
+        $hasta = now()->format("Y-m-d 23:59:59");
+        $desde = now()->subDays(30)->format("Y-m-d 00:00:00");
         
     }
 
-        return view('dashboard.lista', compact( 'pedidos', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes' ));
+    $status = (array)$request->query("st");
+    $subprocesos = (array)$request->query("sp");
+    $origen = (array)$request->query("or");
+    $sucursal = (array)$request->query("suc");
+    $subpstatus = (array)$request->query("spsub");
+    $recogido = (array)$request->query("rec");
+    $orsub = (array)$request->query("orsob");
+    $etiquetas = (array)$request->query("etiquetas");
+
+    $pag = max(1, (int)$request->query("p", 1));
+
+    $lista = collect(Pedidos2::Lista(
+
+        $pag, 
+        $termino,
+        $desde,
+        $hasta,
+        $status,
+        $subprocesos,
+        $origen,
+        $sucursal,
+        $subpstatus,
+        $recogido,
+        $orsub,
+        $user->id,
+        $etiquetas
+
+    ))->filter(function ($pedido)use ($user){
+
+        return $pedido->status_id == 2 && $pedido->office == $user->office;
+
+    })->values();
+
+    foreach($lista as $item){
+
+        $item->etiquetas_render = [];
+
+        if(!empty($item->etiquetas_coloreadas)){
+            
+            $pairs = explode(',', $item->etiquetas_coloreadas);
+            foreach($pairs as $p){
+
+                if(str_contains($p, '|')){
+
+                    [$nombre, $color] = explode('|', trim($p));
+                    $iniciales = implode('', array_map(fn($w)=>mb_substr($w, 0, 1), explode(' ', $nombre)));
+
+                    $item->etiquetas_render[] = [
+
+                        'nombre' => $nombre,
+                        'color' => $color,
+                        'iniciales' => strtoupper($iniciales),
+
+                    ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    $statuses = Status::all();
+    $estatuses = [];
+
+    foreach($statuses as $st){
+
+        $estatuses[$st ->id]= $st->name;
+    }
+
+    $total = Pedidos2::$total;
+    $rpp = Pedidos2::$rpp;
+
+    return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
 
 }
-        
-    
+
     //-----------------------------------------------------------------------------------------------------------//
     //--------------------------FIN DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS----------------------------//
     //-----------------------------------------------------------------------------------------------------------//

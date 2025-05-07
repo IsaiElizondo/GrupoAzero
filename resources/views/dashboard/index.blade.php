@@ -5,7 +5,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
 ?>
 
-@extends('layouts.app', ['activePage' => 'dashboard', 'titlePage' => __('Dashboard')])
+@extends('layouts.app', ['activePage' => 'dashboard', 'titlePage' => __('Pendientes')])
 
 @section('content')
     <link rel="stylesheet" href="{{ asset('css/pedidos2/general.css') }}" />
@@ -47,7 +47,8 @@ use App\Http\Controllers\Pedidos2Controller;
                 <div class="col-md-3">
                     <input type="text" name="termino" class="form-control form-control-sm" placeholder="Buscar...">
                 </div>
-
+                
+                
                 <div class="col-md-3">
                     <label for="fechas"><span id="MuestraFecha"></span></label>
                     <input type="text" name="fechas" id="fechas" class="form-control form-control-sm"
@@ -72,6 +73,8 @@ use App\Http\Controllers\Pedidos2Controller;
 
             <div class="row" id="Lista">
 
+                
+
             </div>
             
             <input type="hidden" name="listaUrl" value="{{ url('pedidos2/dashboard/lista') }}" />
@@ -92,8 +95,89 @@ use App\Http\Controllers\Pedidos2Controller;
                         </button>
                     </div>
                     <div class="modal-body">
-                        {{-- AQUI VAN LOS FILTROS AVANZADOS --}}
-                    </div> 
+                        
+                    <div class="AvanzadosSet">
+                                <fieldset>
+                                    <legend>Status</legend>
+                            
+                                    @foreach ($estatuses as $k=>$v)
+                                        @if ( !in_array($k, [3,4,9] ))
+                                        <div class="checkpair"><input type="checkbox" name="st[]" value="{{ $k }}" id="st_{{ $v }}"> <label for="st_{{ $v }}">{{ $v }}</label></div>
+
+                                        @endif
+                                    @endforeach 
+
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Subprocesos</legend>
+                                    @foreach ($events as $k=>$v)
+                                        @if ($k == "refacturar")
+                                            @continue
+                                        @endif 
+                                    <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>
+                                            @if ($k =="ordenc") 
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_1" id="spsub_{{$k}}_1"> <label for="spsub_{{$k}}_1">Elaborada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_5" id="spsub_{{$k}}_5"> <label for="spsub_{{$k}}_5">En puerta</label></div>                            
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_6" id="spsub_{{$k}}_6"> <label for="spsub_{{$k}}_6">Entregada</label></div>   
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_7" id="spsub_{{$k}}_7"> <label for="spsub_{{$k}}_7">Cancelada</label></div>   
+                                            
+                                            @elseif ($k =="ordenf") 
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_1" id="spsub_{{$k}}_1"> <label for="spsub_{{$k}}_1">Elaborada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_3" id="spsub_{{$k}}_3"> <label for="spsub_{{$k}}_3">En fabricación</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_4" id="spsub_{{$k}}_4"> <label for="spsub_{{$k}}_4">Fabricada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_7" id="spsub_{{$k}}_7"> <label for="spsub_{{$k}}_7">Cancelado</label></div>
+                                            
+                                            @elseif ($k =="parcial") 
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_4" id="spsub_{{$k}}_4"> <label for="spsub_{{$k}}_4">Elaborada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_5" id="spsub_{{$k}}_5"> <label for="spsub_{{$k}}_5">En puerta</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_6" id="spsub_{{$k}}_6"> <label for="spsub_{{$k}}_6">Entregada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_7" id="spsub_{{$k}}_7"> <label for="spsub_{{$k}}_7">Cancelada</label></div>
+
+                                            @elseif ($k =="sm") 
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_4" id="spsub_{{$k}}_4"> <label for="spsub_{{$k}}_4">Elaborada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_5" id="spsub_{{$k}}_5"> <label for="spsub_{{$k}}_5">En puerta</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_6" id="spsub_{{$k}}_6"> <label for="spsub_{{$k}}_6">Entregada</label></div>
+                                            <div class="checkpair sub" parent="{{$k}}"><input type="checkbox" name="spsub[]" value="{{$k}}_7" id="spsub_{{$k}}_7"> <label for="spsub_{{$k}}_7">Cancelada</label></div>
+                                            @endif
+
+                                    @endforeach
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Origen</legend>
+                                    <div class="checkpair parent" rel="C"><input type="checkbox" name="or[]" value="C" id="or_C"> <label for="or_C">Cotización</label></div>
+                                        <div class="checkpair sub" parent="C"><input type="checkbox" name="orsub[]" value="C_0" id="orsub_C_0"> <label for="orsub_C_0">Sin Factura</label></div>
+                                        <div class="checkpair sub" parent="C"><input type="checkbox" name="orsub[]" value="C_1" id="orsub_C_1"> <label for="orsub_C_1">Con Factura</label></div>
+                                    
+                                    <div class="checkpair"><input type="checkbox" name="or[]" value="F" id="or_F"> <label for="or_F">Factura</label></div>
+
+
+                                    <div class="checkpair" ><input type="checkbox" name="or[]" value="R" id="or_R"> <label for="or_R">Requisición Stock</label></div>
+                                
+
+
+                                    <legend>Recolección</legend>
+                                    <div class="checkpair"><input type="checkbox" name="rec[]" value="1" id="rec_1"> <label for="rec_1">Chofer Entrega</label></div>
+                                    <div class="checkpair"><input type="checkbox" name="rec[]" value="2" id="rec_2"> <label for="rec_2">Cliente recoge</label></div>
+
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Sucursal</legend>
+                                    <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
+                                    <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend>Etiquetas</legend>
+                                    @foreach ($etiquetas as $etiqueta)
+                                        <div class="checkpair">
+                                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{ $etiqueta->id }}">
+                                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre }}</label>
+                                        </div>
+                                    @endforeach
+                                </fieldset>
+                                
+                                
+                    </div>
                 </div> 
             </div> 
         </div> 

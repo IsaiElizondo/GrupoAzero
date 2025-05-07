@@ -33,7 +33,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('dashboard') }}">
                         <i class=material-icons>dashboard</i>
-                        <p>Dashboard</p>
+                        <p>Pendientes</p>
                     </a>
                 </li>
             @endif
