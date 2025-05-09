@@ -40,7 +40,7 @@ var_dump($pedido);
     </div>
     <div class="card Fila">
 
-        <center><a class="regresar" href="{{ url('pedidos2/dashboard') }}">&laquo;Regresar al Dashboard</a>
+        <center><a class="regresar" href="{{ url('pedidos2/dashboard') }}">&laquo;Regresar a Mis Pendientes</a>
         
     </div>
 

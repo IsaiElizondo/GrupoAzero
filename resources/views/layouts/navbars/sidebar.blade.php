@@ -29,11 +29,11 @@
 
             {{-- SECCIÓN NUEVA DASHBOARD--}}
 
-            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques"]))
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques", "Fabricación"]))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('dashboard') }}">
                         <i class=material-icons>dashboard</i>
-                        <p>Pendientes</p>
+                        <p>Mis Pendientes</p>
                     </a>
                 </li>
             @endif

@@ -33,6 +33,8 @@ use Carbon\Carbon;
 use App\Libraries\Paginacion;
 use App\Libraries\Tools;
 use Illuminate\Support\Str;
+
+use Illuminate\Support\Facades\Log as LaravelLog;
 //use App\Paginacion;
 
 class Pedidos2Controller extends Controller
@@ -438,7 +440,7 @@ public function dashboard(){
 
     $user = auth()->user();
 
-    $departamentosPermitidos = [2, 3, 4];
+    $departamentosPermitidos = [2, 3, 4, 5];
     $rolesPermitidos = [1,4];
 
     if(!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)){
@@ -479,7 +481,48 @@ public function dashboard(){
         $etiquetas
     ))->filter(function($pedido) use ($user){
 
-        return $pedido->status_id == 2 && $pedido->office == $user->office;
+
+        //Filtros generales para todos los usuarios
+        $statusExcluidos = [6, 7, 8, 9, 10];
+
+        $statusDahsboard = [2, 5];
+
+        //FILTROS GENERALES PARA TODOS LOS USUARIOS
+        if(in_array($pedido->status_id, $statusExcluidos)){
+
+            return false;
+
+        }
+
+
+        //Para usuarios de embarques vean solo lo "Recibido por embarques"
+        if($user->role_id == 2 && $user->department_id == 4){
+
+            return $pedido->status_id == 2 && $pedido->office == $user->office;
+
+        }
+
+        //Para usuarios de ventas vean solo sus pedidos
+        if($user->role_id == 2 && $user->department_id == 3){
+
+            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
+
+        }
+
+        //Para usuarios de fabricación
+        if($user->role_id == 2 && $user->department_id == 5){
+
+            return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
+
+        }
+
+        //usuarios de administración
+        if($user->role_id == 1 || $user->department_id == 2){
+
+            return true;
+
+        }
+
         
     })->values();
 
@@ -521,6 +564,9 @@ public function dashboard(){
     $origenes = Pedidos2::OrigenesCat();
     $events = DB::table('events')->pluck('name', 'id')->toArray();
     $etiquetas = DB::table('etiquetas')->select('id', 'nombre')->get();
+
+
+    
 
     return view('dashboard.index', compact( 'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes', 'events', 'etiquetas', 'user'));
 
@@ -576,7 +622,53 @@ public function dashboardLista(Request $request){
 
     ))->filter(function ($pedido)use ($user){
 
-        return $pedido->status_id == 2 && $pedido->office == $user->office;
+        /* LaravelLog::info('Filtro user_id vs auth_id', [
+            'pedido_id' => $pedido->id,
+            'pedido_user_id' => $pedido->user_id ?? 'NO DEFINIDO',
+            'auth_id' => $user->id
+        ]); */
+
+        //Filtros generales para todos los usuarios
+        $statusExcluidos = [6, 7, 8, 9, 10];
+        $statusDahsboard = [2, 5];
+
+        if(in_array($pedido->status_id, $statusExcluidos)){
+
+            return false;
+                
+        }
+
+
+        //Para que embarques vea solo el estatus "Recibido por embarques"
+        if($user->role_id == 2 && $user->department_id == 4){
+
+            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
+
+        }
+
+        //Para usuarios de ventas vean solo sus pedidos
+        if($user->role_id == 2 && $user->department_id == 3){
+
+            return $pedido->user_id == $user->id;
+
+        }
+
+         //Para usuarios de fabricación
+         if($user->role_id == 2 && $user->department_id == 5){
+
+            return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
+
+        }
+
+
+        //Usuarios de administración
+        if($user->role_id == 1 || $user->department_id == 2){
+
+            return true;
+
+        }
+
+
 
     })->values();
 
@@ -621,6 +713,9 @@ public function dashboardLista(Request $request){
     $total = Pedidos2::$total;
     $rpp = Pedidos2::$rpp;
 
+    //LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
+
+        
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
 
 }

@@ -80,6 +80,8 @@ use App\Http\Controllers\Pedidos2Controller;
                                     <div class="modal-body">
                                         
                                     <div class="AvanzadosSet">
+
+                                        @if(in_array(auth()->user()->role->name,["Administrador", "ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name,["Administrador", "Ventas"]))
                                                 <fieldset>
                                                     <legend>Status</legend>
                                             
@@ -88,7 +90,8 @@ use App\Http\Controllers\Pedidos2Controller;
                                                         <div class="checkpair"><input type="checkbox" name="st[]" value="{{ $k }}" id="st_{{ $v }}"> <label for="st_{{ $v }}">{{ $v }}</label></div>
 
                                                         @endif
-                                                    @endforeach 
+                                                    @endforeach
+                                        @endif 
 
                                                 </fieldset>
                                                 <fieldset>
@@ -143,11 +146,14 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     <div class="checkpair"><input type="checkbox" name="rec[]" value="2" id="rec_2"> <label for="rec_2">Cliente recoge</label></div>
 
                                                 </fieldset>
+
+                                            @if(in_array(auth()->user()->role->name,["Administrador", "ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name,["Administrador", "Ventas"]))
                                                 <fieldset>
                                                     <legend>Sucursal</legend>
                                                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
                                                     <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
                                                 </fieldset>
+                                            @endif
 
                                                 <fieldset>
                                                     <legend>Etiquetas</legend>
@@ -167,7 +173,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
             </form>
             
-
+            <h5> Total de Pedidos: <span id="contador-pedidos">{{ count($lista) }}</span></h5>
 
             <!-- SECCION DE PEDIDOS -->
 
@@ -464,6 +470,8 @@ console.log("GetLista");
         LimpiaFiltros();
         $("#fbuscar [name='p']").val(1);
         $("#Lista").tooltip();
+        
+        ActualizaContadorPedidos();
 
         }
     });
@@ -644,6 +652,15 @@ function FollowNoRespuesta(json){
     }else{
         alert(json.errors);
     }
+}
+
+
+//Función para actualizar el contador de pedidos
+function ActualizaContadorPedidos(){
+
+    const total = document.querySelectorAll('#Lista .pedido-item').length; 
+    document.getElementById('contador-pedidos').textContent = total;
+
 }
 
 

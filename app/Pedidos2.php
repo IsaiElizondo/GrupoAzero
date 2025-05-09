@@ -166,7 +166,8 @@ class Pedidos2 extends Model
         //QUERY MAIN***********
         $q = "SELECT 
         o.*,
-        
+        (SELECT l.user_id FROM logs l WHERE l.order_id = o.id AND l.action LIKE '%crea%' ORDER BY l.created_at ASC LIMIT 1) AS user_id,
+
         (SELECT GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ')
         FROM etiqueta_pedido ep
         JOIN etiquetas e ON e.id = ep.etiqueta_id
