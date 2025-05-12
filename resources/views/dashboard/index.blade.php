@@ -43,10 +43,10 @@ use App\Http\Controllers\Pedidos2Controller;
                 @endphp
 
                 <div class="col-md-3">
-                    <input type="text" name="termino" class="form-control form-control-sm" placeholder="Buscar...">
+                    <input type="text" name="termino" class="form-control form-control-sm" placehoder="Buscar..." onkeydown="if(event.key == 'Enter'){envent.preventDefault(); $('#buscarBoton').click();}">
                 </div>
                 
-                
+                {{--
                 <div class="col-md-3">
                     <label for="fechas"><span id="MuestraFecha"></span></label>
                     <input type="text" name="fechas" id="fechas" class="form-control form-control-sm"
@@ -54,10 +54,12 @@ use App\Http\Controllers\Pedidos2Controller;
                         placeholder="Rango de Fechas">
                     <small class="form-text text-muted">Selecciona primero la fecha inicial y después la final</small>
                 </div>
+                --}}
 
                 <div class="col-md-2">
                     <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                 </div>
+                
 
                     <div class="col-md-2">
                         <button type="button" class="btn btn-sm btn-secondary w-100" data-toggle="modal" data-target="#modalBusquedaAvanzada">
@@ -207,7 +209,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
 <script type="text/javascript" src="{{ asset('js/drp/moment.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('js/jquery.form.js') }}"></script>
-<script type="text/javascript" src="{{ asset('js/drp/daterangepicker.js') }}"></script>
+{{--<script type="text/javascript" src="{{ asset('js/drp/daterangepicker.js') }}"></script>--}} 
 <script type="text/javascript" src="{{ asset('jqueryui/jquery-ui.min.js') }}"></script>
  <script type="text/javascript" src="{{ asset('js/piedramuda.js') }}"></script> 
 
@@ -217,9 +219,10 @@ $manana->modify("+1 day");
 $mananaString = $manana->format("Y-m-d");
 ?>
 <script type="text/javascript" >
-    
-$(document).ready(function(){
 
+
+$(document).ready(function(){
+/*
     $('input[name="fechas"]').daterangepicker({
     timePicker: false,
     minDate: new Date("2021-10-11"),
@@ -270,7 +273,7 @@ $(document).ready(function(){
 
     //FormatearFecha(start,end);
     FormatearFechaDeInput();
-
+*/
 
    
     
@@ -356,6 +359,11 @@ $(document).ready(function(){
 
     });
 
+    $("#fbuscar").on("submit", function(e){
+
+        e.preventDefault();
+
+    })
 
 
 
@@ -465,13 +473,18 @@ console.log("GetLista");
         url: href,
         error:function(err){alert(err.statusText);},
         success:function(h){
-        $("#Lista").html(h);
 
-        LimpiaFiltros();
-        $("#fbuscar [name='p']").val(1);
-        $("#Lista").tooltip();
-        
-        ActualizaContadorPedidos();
+            $("#Lista").html(h);
+
+            setTimeout(()=>{
+
+                ActualizaContadorPedidos();
+
+            }, 10);
+
+            LimpiaFiltros();
+            $("#fbuscar [name='p']").val(1);
+            $("#Lista").tooltip();
 
         }
     });

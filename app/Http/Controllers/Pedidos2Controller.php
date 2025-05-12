@@ -451,7 +451,7 @@ public function dashboard(){
     //Prefiltros
 
     $termino = "";
-    $desde = now()->subDays(7)->format("Y-m-d 00:00:00");
+    $desde = "2000-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
     $pag = 1;
     
@@ -526,6 +526,8 @@ public function dashboard(){
         
     })->values();
 
+     LaravelLog::info(count($lista));
+
     foreach($lista as $item){
 
         $item->etiquetas_render = [];
@@ -577,21 +579,9 @@ public function dashboardLista(Request $request){
 
     $user = auth()->user();
 
-    $termino = (string)$request->query("termino", "");
-    $fechas = (string)$request->query("fechas", "");
-    $fechaspts = explode(" - ", $fechas);
-
-    if(count($fechaspts) == 2){
-
-        $desde = (new \DateTime(trim($fechaspts[0])))->format("Y-m-d");
-        $hasta = (new \DateTime(trim($fechaspts[1])))->format("Y-m-d");
-
-    } else{
-
-        $hasta = now()->format("Y-m-d 23:59:59");
-        $desde = now()->subDays(30)->format("Y-m-d 00:00:00");
-        
-    }
+    $termino = $request->query("termino", "");
+    $desde = "2000-01-01 00:00:00";
+    $hasta = now()->format("Y-m-d 23:59:59");
 
     $status = (array)$request->query("st");
     $subprocesos = (array)$request->query("sp");
@@ -671,6 +661,8 @@ public function dashboardLista(Request $request){
 
 
     })->values();
+
+    LaravelLog::info(count($lista));
 
     foreach($lista as $item){
 
