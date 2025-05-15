@@ -263,6 +263,18 @@ $pedidoStatusId = $pedido->status_id;
 
     <p>&nbsp;</p>
 </div>
+<div class="card Fila">
+    <div class="FormRow">
+        <label>Fecha de entrega programada</label>
+        <form method="POST" action="{{ url('pedidos2/entrega-programada/'.$pedido->id) }}">
+            @csrf
+            <div class="flex-start">
+                <input type="date" name="entrega_programada_at" class="form-control" value="{{ $pedido->entrega_programada_at ? \Carbon\Carbon::parse($pedido->entrega_programada_at)->format('Y-m-d') : '' }}">
+                <input type="submit" class="form-control" value="Guardar" style="width:150px; margin-left:10px;" />
+            </div>
+        </form>
+    </div>
+</div>
 
 
 

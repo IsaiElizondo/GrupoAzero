@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Ramsey\Collection\AbstractArray;
 use Illuminate\Support\Facades\DB;
 use App\Log;
-
+use Illuminate\Support\Facades\Log as LaravelLog;
 class Pedidos2 extends Model
 {
     public static $total = 0;
@@ -42,8 +42,7 @@ class Pedidos2 extends Model
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
         $wheres=["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
-
-        
+                
         if(!empty($termino)){
             $wheres[]="(o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%' 
             OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%' 
@@ -196,8 +195,15 @@ class Pedidos2 extends Model
         WHERE 
         ". $wherestring  ." ORDER BY updated_at DESC LIMIT ".$ini.", ". self::$rpp;
      //echo $q;
+
+        //LaravelLog::info("Consulta generada: $q");
     
         $list = DB::select($q);
+/*
+        foreach ($list as $pedido) {
+    LaravelLog::info("Pedido recibido: ID={$pedido->id}, Origen={$pedido->origin}, Status={$pedido->status_id}");
+}
+    */
         
     return $list;
     }

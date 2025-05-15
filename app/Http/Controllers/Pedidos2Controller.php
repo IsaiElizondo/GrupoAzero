@@ -454,6 +454,7 @@ public function dashboard(){
     $desde = "2000-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
     $pag = 1;
+   // Pedidos2::$rpp = 9999999;
     
     $status = [];
     $subprocesos = [];
@@ -463,6 +464,7 @@ public function dashboard(){
     $recogido = [];
     $orsub = [];
     $etiquetas = [];
+    
     
 
     $lista = collect(Pedidos2::Lista(
@@ -498,7 +500,7 @@ public function dashboard(){
         //Para usuarios de embarques vean solo lo "Recibido por embarques"
         if($user->role_id == 2 && $user->department_id == 4){
 
-            return $pedido->status_id == 2 && $pedido->office == $user->office;
+            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
 
         }
 
@@ -526,7 +528,7 @@ public function dashboard(){
         
     })->values();
 
-     LaravelLog::info(count($lista));
+     //LaravelLog::info(count($lista));
 
     foreach($lista as $item){
 
@@ -593,7 +595,10 @@ public function dashboardLista(Request $request){
     $etiquetas = (array)$request->query("etiquetas");
 
     $pag = max(1, (int)$request->query("p", 1));
-
+    
+    //LaravelLog::info('Origen recibido: ',['origen' => $origen]);
+    Pedidos2::$rpp = 9999999;
+    
     $lista = collect(Pedidos2::Lista(
 
         $pag, 
@@ -629,7 +634,7 @@ public function dashboardLista(Request $request){
         }
 
 
-        //Para que embarques vea solo el estatus "Recibido por embarques"
+         //Para usuarios de embarques vean solo lo "Recibido por embarques"
         if($user->role_id == 2 && $user->department_id == 4){
 
             return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
@@ -662,7 +667,7 @@ public function dashboardLista(Request $request){
 
     })->values();
 
-    LaravelLog::info(count($lista));
+    //LaravelLog::info(count($lista));
 
     foreach($lista as $item){
 
@@ -718,6 +723,27 @@ public function dashboardLista(Request $request){
     
 
 
+    //-----------------------------------------------------------------------------------------------------------//
+    //-----------------------------------------------------------------------------------------------------------//
+    //-----------------------------------------------------------------------------------------------------------//
+public function guardarEntregaProgramada(Request $request, $id){
+
+    $pedido = Order::find($id);
+
+    if(!$pedido){
+
+        return back()->with('error', 'Pedido no encontrado');
+
+    }
+
+    $fecha = $request->input('entrega_programada_at');
+    $pedido->entrega_programada_at = $fecha;
+    $pedido->updated_at = now();
+    $pedido->save();
+
+    return back()->with('success', 'Fecha de entrega programada actualizada correctamente');
+
+}
 
 
 
@@ -2769,10 +2795,17 @@ public function dashboardLista(Request $request){
             ];
         Shipment::where("id", $id)->update($data); 
         $shipment = Shipment::where("id",$id)->first();
-        $order = Order::where("id",$shipment->order_id)->first();
-        $codigo = Pedidos2::CodigoDe($order);
 
-        Pedidos2::Log($id,"Shipment", "Cambio en el embarque de '$codigo'", $order->status_id, $user);
+        $order = Order::find($shipment->order_id);
+
+        if ($order){
+
+            $codigo = Pedidos2::CodigoDe($order);
+            Pedidos2::Log($order->id,"Shipment", "Cambio en el emabrque de '$codigo'", $order->status_id, $user);
+
+        }
+
+        
         Feedback::j(1);
         return;
     }
@@ -3186,14 +3219,21 @@ public function dashboardLista(Request $request){
                 $data["embarques_by"]= $user->id;
             }
 
-        Order::where("id", $id)->update($data);      
-        $order = Order::where("id", $id)->first();     
+        Order::where("id", $id)->update($data);
+        $order = Order::find($id);
+
+        if($status_id == 2 && $order->recibido_embarques_at == null){
+
+            $order->recibido_embarques_at = now();
+            $order->save();
+        }
 
         $idLog = Pedidos2::CodigoDe($order);
+        Pedidos::Log($id, "Order", "Cambio de status " . $estatuses[$status_id] . " en el pedido #{$idLog}", $status_id, $user);
 
-        Pedidos2::Log($id, "Order", "Cambio de status ".$estatuses[$status_id]." en el pedido #{$idLog}", $status_id, $user);
         Feedback::j(1);
-        return;       
+        return;
+        
     }
 
 

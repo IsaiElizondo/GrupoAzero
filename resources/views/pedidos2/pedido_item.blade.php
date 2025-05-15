@@ -90,7 +90,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 
                 <div class="datito" rel="sucursal"> <label>Sucursal</label> {{$item->office}}  </div>
  
- 
+                
                 <!--
                 <div class="datito detalles" rel="fab">
                     <div class="head">Fabricacion</div>
@@ -148,6 +148,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                          
 
             </div>
+            
             
 
             </div>
@@ -210,7 +211,60 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                                 
                                 <a class="followBtn {{ (($item->follows > 0) ? '':'no') }}" title="A mis favoritos"  
                                 href="{{ url('pedidos2/set_followno/'.$item->id.'/'.$user->id)}}" hrefno="{{ url('pedidos2/set_follow/'.$item->id.'/'.$user->id)}}"></a>
-                            </div>                    
+                            </div>   
+
+
+                        @if($item->recibido_embarques_at && !in_array($item->status_id, [1, 3, 4, 5, 6, 7, 8, 9, 10]))
+                            <div class="datito">
+                                <label>Días desde que se recibio</label>
+                                <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">
+                                    <center>{{ (int) \Carbon\Carbon::parse($item->recibido_embarques_at)->diffInDays(now()) }}</center>
+
+                                </span>
+                            </div>
+
+                            {{--MODAL--}}
+
+                            <div class="modal fade" id="modalDias{{$item->id}}" tabindex="-1" role="dialog" aria-labelledby="modalLabel{{$item->id}}" aria-hidden="true">
+                                <div class="modal-dialog modal-sm" role="document">
+                                    <div class="modal-content p-3">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title"> Siguimiento de entrega </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body p-2">
+                                            <table class="table table-bordered table-sm mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Recibido por embarques</th>
+                                                        <th>Días</th>
+                                                        <th>Entrega Programada</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::parse($item->recibido_embarques_at)->format('d-m-Y') }}</td>
+                                                        <td>{{ (int) \Carbon\Carbon::parse($item->recibido_embarques_at)->diffInDays(now()) }}</td>
+                                                        <td>{{ $item->entrega_programada_at 
+                                                            ? \Carbon\Carbon::parse($item->entrega_programada_at)->format('d-m-Y') 
+                                                            : 'No programada' }}</td>   
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+
+                                            @if($item->entrega_programada_at && \Carbon\Carbon::parse($item->entrega_programada_at)->isPast())
+                                                <div class="alert alert-danger mt-2 p-1">
+                                                    <strong>¡Atención!</strong> La entrega programada ya pasó.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>                                       
+                            </div>
+                        @endif    
+                        
+                        
 
                         </div>
 
