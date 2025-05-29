@@ -56,16 +56,28 @@ use App\Http\Controllers\Pedidos2Controller;
                 </div>
                 --}}
 
-                <div class="col-md-2">
-                    <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
-                </div>
+                
                 
 
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <button type="button" class="btn btn-sm btn-secondary w-100" data-toggle="modal" data-target="#modalBusquedaAvanzada">
                             Búsqueda Avanzada
                         </button>
                     </div>
+
+                    <div class="col-md-2">
+                        <select name="orden_recibido" class="form-control form-control-sm">
+                            <option value="">Ordenar por recibido</option>
+                            <option value="asc" {{ request('orden_recibido') == 'asc' ? 'selected' : '' }}>Más antiguo primero</option>
+                            <option value="desc" {{ request('orden_recibido') == 'desc' ? 'selected' : '' }}>Más reciente primero</option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
+                    </div>
+
                 </div>
 
                                 {{-- MODAL PARA BUSQUEDA AVANZADA --}}
@@ -423,6 +435,10 @@ function Querystring(){
         for(i in qsob.suc){
             $("[name='suc[]'][value='"+qsob.suc[i]+"']").prop("checked",true);  
         }   
+    }
+
+    if(typeof(qsob.orden_recibido) != "undefined"){
+        $("[name='orden_recibido']").val(qsob.orden_recibido);
     }
 
 

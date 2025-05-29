@@ -1,0 +1,58 @@
+.dropdown-checkbox{
+
+    position: relative;
+    display: inline-block;
+
+}
+
+.dropdown-toggle{
+
+    padding: 8px 12px;
+    background-color: #444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+}
+
+.dropdown-menu-checkboxes{
+
+    display: none;
+    position: absolute;
+    z-index: 10;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    width: 250px;
+
+}
+
+.dropdown-checkbox.open .dropdown-menu-checkboxes{
+
+    display: block;
+
+}
+
+.dropdown-item-checkbox{
+
+    display:flex;
+    align-items: center;
+    margin-bottom: 5px;
+
+}
+
+.etiqueta-color{
+
+    margin-left: 6px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+
+}

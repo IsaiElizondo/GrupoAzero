@@ -218,7 +218,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                             <div class="datito">
                                 <label>Días desde que se recibio</label>
                                 <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">
-                                    <center>{{ (int) \Carbon\Carbon::parse($item->recibido_embarques_at)->diffInDays(now()) }}</center>
+                                    <center>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 1) }}</center>
 
                                 </span>
                             </div>
@@ -246,7 +246,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                                                 <tbody>
                                                     <tr>
                                                         <td>{{ \Carbon\Carbon::parse($item->recibido_embarques_at)->format('d-m-Y') }}</td>
-                                                        <td>{{ (int) \Carbon\Carbon::parse($item->recibido_embarques_at)->diffInDays(now()) }}</td>
+                                                        <td>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 1)}}</td>
                                                         <td>{{ $item->entrega_programada_at 
                                                             ? \Carbon\Carbon::parse($item->entrega_programada_at)->format('d-m-Y') 
                                                             : 'No programada' }}</td>   
