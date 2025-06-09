@@ -55,7 +55,9 @@ $statuses = Pedidos2::StatusesCat();
 
         <div class="center" style="margin-bottom: 15px;">
             <button type="button" class="btn btn-secondary" id="modoEstatus"> Cambiar estatus</button>
-            <button type="button" class="btn btn-secondary" id="modoEtiquetas"> Cambiar etiquetas</button>
+            @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
+                <button type="button" class="btn btn-secondary" id="modoEtiquetas"> Cambiar etiquetas</button>
+            @endif
         </div>
 
         {{-- FORMULARIO INICIA AQUÍ --}}

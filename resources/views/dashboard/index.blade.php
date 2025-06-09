@@ -33,6 +33,7 @@ use App\Http\Controllers\Pedidos2Controller;
             
                 <input type="hidden" name="p" value="1">
                 <input type="hidden" name="excel" value="0">
+                <input type="hidden" name="excel_dashboard" value="0">
                 <input type="hidden" name="querystring" value="{}">
 
                 <div class="row align-items-center mb-3">
@@ -42,7 +43,7 @@ use App\Http\Controllers\Pedidos2Controller;
                     $inicio = (new DateTime())->modify("-7 month")->format("Y-m-d");
                 @endphp
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <input type="text" name="termino" class="form-control form-control-sm" placehoder="Buscar..." onkeydown="if(event.key == 'Enter'){envent.preventDefault(); $('#buscarBoton').click();}">
                 </div>
                 
@@ -77,6 +78,12 @@ use App\Http\Controllers\Pedidos2Controller;
                     <div class="col-md-2">
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                     </div>
+                    
+                   @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 3, 4]))
+                    <div class="col-md-3">
+                        <button type="button" id="nuevoExcelBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
+                    </div>
+                    @endif
 
                 </div>
 
@@ -95,12 +102,13 @@ use App\Http\Controllers\Pedidos2Controller;
                                         
                                     <div class="AvanzadosSet">
 
-                                        @if(in_array(auth()->user()->role->name,["Administrador", "ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name,["Administrador", "Ventas"]))
+                                        @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2,3,5,6,7,8,9]))
+
                                                 <fieldset>
                                                     <legend>Status</legend>
                                             
                                                     @foreach ($estatuses as $k=>$v)
-                                                        @if ( !in_array($k, [3,4,9] ))
+                                                        @if ( !in_array($k, [6, 7, 8,9, 10] ))
                                                         <div class="checkpair"><input type="checkbox" name="st[]" value="{{ $k }}" id="st_{{ $v }}"> <label for="st_{{ $v }}">{{ $v }}</label></div>
 
                                                         @endif
@@ -306,6 +314,47 @@ $(document).ready(function(){
         GetLista();
     });
 
+ 
+$("#nuevoExcelBtn").click(function (e) {
+    e.preventDefault();
+
+    let raw = $("input[name='querystring']").val();
+
+    let filtros = {};
+    if (raw && raw !== "{}") {
+        filtros = JSON.parse(raw);
+    } else {
+
+        filtros = {};
+        const fromForm = $("#fbuscar").serializeArray();
+        for (let i = 0; i < fromForm.length; i++) {
+            let name = fromForm[i].name;
+            let value = fromForm[i].value;
+
+            if (name.endsWith("[]")) {
+                name = name.slice(0, -2);
+                if (!filtros[name]) {
+                    filtros[name] = [];
+                }
+                filtros[name].push(value);
+            } else {
+                filtros[name] = value;
+            }
+        }
+
+    }
+
+    filtros._ = Date.now(); 
+    const queryString = $.param(filtros);
+    const url = "{{ route('dashboard.exportar.excel') }}?" + queryString;
+
+    //console.log("Exportando Excel con:", queryString);
+    window.location.href = url;
+});
+
+
+
+
     //paginacion
     $("body").on("click", ".paginacion a", function(e){
         e.preventDefault();
@@ -470,59 +519,82 @@ function MuestraSimple(){
 
 
 
-function GetLista(p){
-    if(typeof(p)=="undefined"){p=0;}
-console.log("GetLista");
-    if(p != 0){
+function GetLista(p) {
+    if (typeof (p) === "undefined") { p = 0; }
+    console.log("GetLista");
+
+    if (p !== 0) {
         $("#fbuscar [name='p']").val(p);
     }
 
-
     $("#Lista").html("<p>Cargando...</p>");
-
     MuestraSimple();
 
     let href = $("[name='listaUrl']").val();
 
     $("#fbuscar").ajaxSubmit({
-        
         url: href,
-        error:function(err){alert(err.statusText);},
-        success:function(h){
-
+        error: function (err) {
+            alert(err.statusText);
+        },
+        success: function (h) {
             $("#Lista").html(h);
 
-            setTimeout(()=>{
-
+            setTimeout(() => {
                 ActualizaContadorPedidos();
-
             }, 10);
 
-            LimpiaFiltros();
             $("#fbuscar [name='p']").val(1);
             $("#Lista").tooltip();
 
+           
+            let filtrosActuales = $("#fbuscar").serializeArray();
+            let queryObject = {};
+
+            for (let i = 0; i < filtrosActuales.length; i++) {
+                let name = filtrosActuales[i].name;
+                let value = filtrosActuales[i].value;
+
+                if (name.endsWith("[]")) {
+                    name = name.slice(0, -2);
+                    if (!queryObject[name]) {
+                        queryObject[name] = [];
+                    }
+                    queryObject[name].push(value);
+                } else {
+                    if (queryObject[name]) {
+                        if (!Array.isArray(queryObject[name])) {
+                            queryObject[name] = [queryObject[name]];
+                        }
+                        queryObject[name].push(value);
+                    } else {
+                        queryObject[name] = value;
+                    }
+                }
+            }
+
+            $("[name='querystring']").val(JSON.stringify(queryObject));
+            //console.log("querystring actualizado:", queryObject);
+
+          
+            LimpiaFiltros();
         }
     });
 
     
-    //Subfiltros
     $(".checkpair.sub").hide();
-    $(".checkpair.parent").click(function(){
+    $(".checkpair.parent").click(function () {
         let ch = $(this).find(":checkbox").is(":checked");
         let rel = $(this).attr("rel");
-        if(ch){
-            $(".checkpair.sub[parent='"+rel+"']").show();
-        }else{
-            $(".checkpair.sub[parent='"+rel+"']").hide();
-        }       
+        if (ch) {
+            $(".checkpair.sub[parent='" + rel + "']").show();
+        } else {
+            $(".checkpair.sub[parent='" + rel + "']").hide();
+        }
     });
-
-
-    //$("#Lista").tooltip();
-
-  //  CuentaFiltros();
 }
+
+
 
 
 function GetListaExcel(){

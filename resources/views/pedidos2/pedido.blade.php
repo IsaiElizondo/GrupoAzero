@@ -263,6 +263,8 @@ $pedidoStatusId = $pedido->status_id;
 
     <p>&nbsp;</p>
 </div>
+
+@if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
 <div class="card Fila">
     <div class="FormRow">
         <label>Fecha de entrega programada</label>
@@ -275,7 +277,7 @@ $pedidoStatusId = $pedido->status_id;
         </form>
     </div>
 </div>
-
+@endif
 
 
 
@@ -523,6 +525,7 @@ $pedidoStatusId = $pedido->status_id;
 
 {{-- NUEVA SECCIÓN DE ETIQUETADO --}}
 
+@if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
 
 <form method="POST" action="{{ route('pedido.etiquetas.guardar', ['id' => $id]) }}">
     @csrf
@@ -556,6 +559,9 @@ $pedidoStatusId = $pedido->status_id;
     <br>
     <button class="btn btn-dark" type="submit">Guardar</button>
 </form>
+@endif
+
+{{-- FIN DE SECCIÓN DE ETIQUETADO --}}
 
 
 

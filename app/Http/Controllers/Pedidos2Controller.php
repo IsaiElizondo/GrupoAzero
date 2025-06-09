@@ -669,6 +669,7 @@ public function dashboardLista(Request $request){
 
     })->values();
 
+    
     if(in_array($ordenRecibido,['asc', 'desc'])){
 
         $conStatus2 = $lista->filter(fn($p) => $p->status_id == 2);
@@ -677,9 +678,10 @@ public function dashboardLista(Request $request){
         $ordenados = $ordenRecibido == 'asc' ? $conStatus2->sortBy('recibido_embarques_at') : $conStatus2->sortByDesc('recibido_embarques_at');
 
         $lista = $ordenados->merge($sinStatus2)->values();
-
+        
     }
 
+    
     //LaravelLog::info(count($lista));
 
     foreach($lista as $item){
@@ -712,6 +714,15 @@ public function dashboardLista(Request $request){
 
     }
 
+    if($request->query('excel_dashboard')==1){
+
+            $RC = new ReportesController();
+            $RC->ExcelDashboard($lista);
+            return;
+
+        }
+
+
     $statuses = Status::all();
     $estatuses = [];
 
@@ -725,7 +736,8 @@ public function dashboardLista(Request $request){
 
     //LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
 
-        
+    //LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
+
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
 
 }
