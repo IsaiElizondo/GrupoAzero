@@ -256,7 +256,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                                                 <tbody>
                                                     <tr>
                                                         <td>{{ \Carbon\Carbon::parse($item->recibido_embarques_at)->format('d-m-Y') }}</td>
-                                                        <td>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 1) }}
+                                                        <td>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 2) }}
 </td>
                                                         <td>{{ $item->entrega_programada_at 
                                                             ? \Carbon\Carbon::parse($item->entrega_programada_at)->format('d-m-Y') 

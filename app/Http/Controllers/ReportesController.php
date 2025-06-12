@@ -730,180 +730,191 @@ class ReportesController extends Controller
 
 
     public function ExcelDashboard(Request $request){
-        
-    $user = auth()->user();
-
-    $termino = $request->query("termino", "");
-    $desde = "2000-01-01 00:00:00";
-    $hasta = now()->format("Y-m-d 23:59:59");
-    $status = (array)$request->query("st");
-    $subprocesos = (array)$request->query("sp");
-    $origen = (array)$request->query("or");
-    $sucursal = (array)$request->query("suc");
-    $subpstatus = (array)$request->query("spsub");
-    $recogido = (array)$request->query("rec");
-    $orsub = (array)$request->query("orsob");
-    $etiquetas = (array)$request->query("etiquetas");
-
-    Pedidos2::$rpp = 9999999;
-
-    $lista = collect(Pedidos2::Lista(
-        1,
-        $termino,
-        $desde,
-        $hasta,
-        $status,
-        $subprocesos,
-        $origen,
-        $sucursal,
-        $subpstatus,
-        $recogido,
-        $orsub,
-        $user->id,
-        $etiquetas
-    ))->filter(function ($pedido) use ($user) {
-        $statusExcluidos = [6, 7, 8, 9, 10];
-        $statusDahsboard = [2, 5];
-
-        if (in_array($pedido->status_id, $statusExcluidos)) return false;
-
-        if ($user->role_id == 2 && $user->department_id == 4)
-            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
-
-        if ($user->role_id == 2 && $user->department_id == 3)
-            return $pedido->user_id == $user->id;
-
-        if ($user->role_id == 2 && $user->department_id == 5)
-            return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
-
-        return $user->role_id == 1 || $user->department_id == 2;
-    })->values();
-
-    \Log::info("IDs exportados Excel:", $lista->pluck('id')->toArray());
-
-
-        $header = [
-
-            'Tipo de Pedido' => 'string',
-            'Folio de Pedido' => 'string',
-            'Fecha de emisión' => 'string',
-            'Hora de emisión' => 'string',
-            'Código de cliente' => 'string',
-            'Vendedor' => 'string',
-            'Fecha/Hora Recibido por EMbarques' => 'DD/MM/YYYY HH:MM',
-            'Etiquetas' => 'string',
-            'Estatus' => 'string',
-            'Subprocesos' => 'string',
-            'SP Estatus' => 'string',
-            'SM Estatus' => 'string',
-            'Fecha de entrega Programada' => 'string',
-            'Días en embarques' => 'integer',
-            'Chofer entrega/Cliente recoge' =>'string' 
-
-        ];
-
-        $estatuses = \App\Status::pluck('name', 'id')->toArray();
-        $entregas = [1 => "Entrega chofer interno", 2 => "Cliente recoger"];
-
-        $wExcel = new \Ellumilel\ExcelWriter();
-        $wExcel->writeSheetHeader('Sheet1', $header);
-        $wExcel->setAuthor('Excel Mis Pendientes');
-
-        //\Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
-
-
-        foreach($lista as $li){
-
-            $fechaCreacion = !empty($li->created_at) ? (new \DateTime($li->created_at))->format('d/m/Y') : '';
-            $horaCreacion = !empty($li->created_at) ? (new \DateTime($li->created_at))->format('H:i') : '';
-
-            $fechaEntrega = !empty($li->entrega_programada_at) ? (new \DateTime($li->entrega_programada_at))->format('d/m/Y') : '';
-
-
-            $vendedor = \App\Note::where('order_id', $li->id)
-                ->orderBy('created_at', 'asc')
-                ->first()?->user->name ?? '';
-
-            $etiquetas = DB::table('etiqueta_pedido')
-                ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-                ->where('etiqueta_pedido.pedido_id', $li->id)
-                ->pluck('etiquetas.nombre')
-                ->toArray();
-            $etiquetas_string = implode(',', $etiquetas);
-
-            $diasEnEmbarques = '';
-            if(!empty($li->recibido_embarques_at)){
-
-                $start = new \DateTime($li->recibido_embarques_at);
-                $now = new \DateTime();
-                $diasEnEmbarques = $start->diff($now)->days;
-
-            }
-
-            $subprocesos = \App\Partial::where('order_id', $li->id)->first();
-            $sp_status = $subprocesos ? ($estatuses[$subprocesos->status_id] ?? '') : '';
-
-            $smaterial = \App\Smaterial::where('order_id', $li->id)->first();
-            $sm_estatus = $smaterial ? ($estatuses[$smaterial->status_id] ?? '') : '';
-
-            $shipment = \App\Shipment::where('order_id', $li->id)->first();
-            $modoEntrega = $shipment ? ($entregas[$shipment->type] ?? '') : '';
-
-            $stockReq = \App\Stockreq::where("order_id", $li->id)->first();
-            
-            $tipoPedido = '';
-            $folioPedido = '';
-
-            if(!empty($li->invoice_number)){
-
-                $tipoPedido = 'Factura';
-                $folioPedido = $li->invoice_number;
-           
-            }elseif(!empty($li->invoice)){
-
-                $tipoPedido = 'Cotización';
-                $folioPedido = $li->invoice;
                 
-            }elseif(!empty($stockReq)){
+        $user = auth()->user();
 
-                $tipoPedido = 'Requisición Stock';
-                $folioPedido = $stockReq->number;
+        $termino = $request->query("termino", "");
+        $desde = "2000-01-01 00:00:00";
+        $hasta = now()->format("Y-m-d 23:59:59");
+        $status = (array)$request->query("st");
+        $subprocesos = (array)$request->query("sp");
+        $origen = (array)$request->query("or");
+        $sucursal = (array)$request->query("suc");
+        $subpstatus = (array)$request->query("spsub");
+        $recogido = (array)$request->query("rec");
+        $orsub = (array)$request->query("orsob");
+        $etiquetas = (array)$request->query("etiquetas");
 
-            }
+        Pedidos2::$rpp = 9999999;
+
+        $lista = collect(Pedidos2::Lista(
+            1,
+            $termino,
+            $desde,
+            $hasta,
+            $status,
+            $subprocesos,
+            $origen,
+            $sucursal,
+            $subpstatus,
+            $recogido,
+            $orsub,
+            $user->id,
+            $etiquetas
+        ))->filter(function ($pedido) use ($user) {
+            $statusExcluidos = [6, 7, 8, 9, 10];
+            $statusDahsboard = [2, 5];
+
+            if (in_array($pedido->status_id, $statusExcluidos)) return false;
+
+            if ($user->role_id == 2 && $user->department_id == 4)
+                return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
+
+            if ($user->role_id == 2 && $user->department_id == 3)
+                return $pedido->user_id == $user->id;
+
+            if ($user->role_id == 2 && $user->department_id == 5)
+                return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
+
+            return $user->role_id == 1 || $user->department_id == 2;
+        })->values();
+
+        \Log::info("IDs exportados Excel:", $lista->pluck('id')->toArray());
 
 
-            $row = [
+            $header = [
 
-                $tipoPedido,
-                $folioPedido,
-                $fechaCreacion,
-                $horaCreacion,
-                $li->client ?? '',
-                $vendedor,
-                $li->recibido_embarques_at ?? '',
-                $etiquetas_string,
-                $estatuses[$li->status_id] ?? '',
-                $subprocesos ?->name ?? '',
-                $sp_status,
-                $sm_estatus,
-                $fechaEntrega,
-                $diasEnEmbarques,
-                $modoEntrega
-
+                'Tipo de Pedido' => 'string',
+                'Folio de Pedido' => 'string',
+                'Fecha de emisión' => 'string',
+                'Hora de emisión' => 'string',
+                'Código de cliente' => 'string',
+                'Vendedor' => 'string',
+                'Fecha/Hora Recibido por EMbarques' => 'DD/MM/YYYY HH:MM',
+                'Etiquetas' => 'string',
+                'Estatus' => 'string',
+                'Subprocesos' => 'string',
+                'SP Estatus' => 'string',
+                'SM Estatus' => 'string',
+                'Fecha de entrega Programada' => 'string',
+                'Días en embarques' => 'integer',
+                'Chofer entrega/Cliente recoge' =>'string' 
 
             ];
 
-            $wExcel->writeSheetRow('Sheet1', $row);
+            $estatuses = \App\Status::pluck('name', 'id')->toArray();
+            $entregas = [1 => "Entrega chofer interno", 2 => "Cliente recoger"];
 
-        }
+            $wExcel = new \Ellumilel\ExcelWriter();
+            $wExcel->writeSheetHeader('Sheet1', $header);
+            $wExcel->setAuthor('Excel Mis Pendientes');
+
+            //\Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
 
 
-        
+            foreach($lista as $li){
 
-       $nombreArchivo = "Dashboard_Export_" . date("Y-m-d_H-i-s") . "_" . uniqid() . ".xlsx";
+                $fechaCreacion = !empty($li->created_at) ? (new \DateTime($li->created_at))->format('d/m/Y') : '';
+                $horaCreacion = !empty($li->created_at) ? (new \DateTime($li->created_at))->format('H:i') : '';
+
+                $fechaEntrega = !empty($li->entrega_programada_at) ? (new \DateTime($li->entrega_programada_at))->format('d/m/Y') : '';
 
 
-       return  $this->MandaReporte($wExcel, $nombreArchivo);
+                $vendedor = \App\Note::where('order_id', $li->id)
+                    ->orderBy('created_at', 'asc')
+                    ->first()?->user->name ?? '';
+
+                $etiquetas = DB::table('etiqueta_pedido')
+                    ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                    ->where('etiqueta_pedido.pedido_id', $li->id)
+                    ->pluck('etiquetas.nombre')
+                    ->toArray();
+                $etiquetas_string = implode(',', $etiquetas);
+
+                $diasEnEmbarques = '';
+                if(!empty($li->recibido_embarques_at)){
+
+                    $start = new \DateTime($li->recibido_embarques_at);
+                    $now = new \DateTime();
+                    $diasEnEmbarques = $start->diff($now)->days;
+
+                }
+
+                $subprocesos_full = \App\Partial::where('order_id', $li->id)
+                    ->orderByDesc('status_id')
+                    ->get();
+
+                $subprocesos_string = $subprocesos_full->pluck('invoice')->unique()->implode(' / ');
+
+                $sp_status = '';
+                if($subprocesos_full->count() > 0){
+
+                    $mejor_sp = $subprocesos_full->first();
+                    $sp_status = $estatuses[$mejor_sp->status_id] ?? '';
+
+                }
+
+                $smaterial = \App\Smaterial::where('order_id', $li->id)->first();
+                $sm_estatus = $smaterial ? ($estatuses[$smaterial->status_id] ?? '') : '';
+
+                $shipment = \App\Shipment::where('order_id', $li->id)->first();
+                $modoEntrega = $shipment ? ($entregas[$shipment->type] ?? '') : '';
+
+                $stockReq = \App\Stockreq::where("order_id", $li->id)->first();
+                
+                $tipoPedido = '';
+                $folioPedido = '';
+
+                if(!empty($li->invoice_number)){
+
+                    $tipoPedido = 'Factura';
+                    $folioPedido = $li->invoice_number;
+            
+                }elseif(!empty($li->invoice)){
+
+                    $tipoPedido = 'Cotización';
+                    $folioPedido = $li->invoice;
+                    
+                }elseif(!empty($stockReq)){
+
+                    $tipoPedido = 'Requisición Stock';
+                    $folioPedido = $stockReq->number;
+
+                }
+
+
+                $row = [
+
+                    $tipoPedido,
+                    $folioPedido,
+                    $fechaCreacion,
+                    $horaCreacion,
+                    $li->client ?? '',
+                    $vendedor,
+                    $li->recibido_embarques_at ?? '',
+                    $etiquetas_string,
+                    $estatuses[$li->status_id] ?? '',
+                    $subprocesos_string,
+                    $sp_status,
+                    $sm_estatus,
+                    $fechaEntrega,
+                    $diasEnEmbarques,
+                    $modoEntrega
+
+
+                ];
+
+                $wExcel->writeSheetRow('Sheet1', $row);
+
+            }
+
+
+            
+
+        $nombreArchivo = "Dashboard_Export_" . date("Y-m-d_H-i-s") . "_" . uniqid() . ".xlsx";
+
+
+        return  $this->MandaReporte($wExcel, $nombreArchivo);
 
     }
 

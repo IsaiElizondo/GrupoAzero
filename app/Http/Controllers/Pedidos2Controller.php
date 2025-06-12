@@ -1146,7 +1146,16 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         if($accion == "recibido"){
 
+            if($order && !$order->recibido_embarques_at){
+
+                $order->recibido_embarques_at = now();
+                $order->status_id = 2;
+                $order->save();
+                
+            }
+
             return view("pedidos2/accion/recibido",compact("id"));
+
         }
         if($accion == "fabricado"){
 
@@ -3203,7 +3212,8 @@ public function guardarEntregaProgramada(Request $request, $id){
     //CONDICIONES DE BÚSQUEDA
     $wseg = (strlen($term) > 1 ) ? "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')" : "" ;
     $wsegmo = (strlen($term) > 1 ) ? "AND mo.`number` LIKE '%{$term}%' " : "" ;
-
+    
+   
    
     LaravelLog::info('Llamada a multie_lista', [
         'modo' => $modo,
@@ -3213,8 +3223,15 @@ public function guardarEntregaProgramada(Request $request, $id){
 
     //MODO ETIQUETA SIN ESTATUS
     if ($modo == "etiquetas") {
+
+         //ESTATUS OCULTOS
+        $estatus_ocultos = [6, 7, 8, 9, 10];
+        $estatus_ocultos = implode(',' , $estatus_ocultos);
+
         $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
-              FROM orders WHERE 1=1 $wseg LIMIT 50";
+              FROM orders 
+              WHERE status_id NOT IN ($estatus_ocultos) $wseg
+              LIMIT 50";
 
         $shipments = DB::select($q);
 

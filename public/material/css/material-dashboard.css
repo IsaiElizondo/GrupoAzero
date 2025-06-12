@@ -4241,6 +4241,8 @@ tbody.collapse.show {
   background-color: transparent;
   border: 1px solid transparent;
   border-radius: 0.25rem;
+  background-color: #a8a2a28c !important;
+  
 }
 
 .navbar-toggler:hover,
@@ -18908,5 +18910,5 @@ Copyright (c) 2015 Daniel Eden
     list-style: none;
 }
 
-
+}
 /*# sourceMappingURL=dashboard-free.css.map */

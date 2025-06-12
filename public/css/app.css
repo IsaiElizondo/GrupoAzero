@@ -4601,6 +4601,8 @@ input[type=button].btn-block {
   background-color: transparent;
   border: 1px solid transparent;
   border-radius: 0.25rem;
+  background-color: #000 !important;
+  border-color: #000 !important;
 }
 
 .navbar-toggler:hover,
@@ -4615,6 +4617,7 @@ input[type=button].btn-block {
   vertical-align: middle;
   content: "";
   background: 50%/100% 100% no-repeat;
+  background-color: #000;
 }
 
 .navbar-nav-scroll {

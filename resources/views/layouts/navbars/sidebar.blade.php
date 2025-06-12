@@ -30,7 +30,7 @@
             {{-- SECCIÓN NUEVA DASHBOARD--}}
 
             @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques", "Fabricación"]))
-                <li class="nav-item">
+                <li class="nav-item{{ $activePage == 'dashboard' ? ' active' : '' }}">
                     <a class="nav-link" href="{{ route('dashboard') }}">
                         <i class=material-icons>dashboard</i>
                         <p>Mis Pendientes</p>
@@ -192,9 +192,9 @@
 
             {{-- SECCIÓN NUEVA DE ETIQUETAS  --}}
 
-           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]))
+           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
           
-                <li class="nav-item">
+                <li class="nav-item{{ $activePage == 'etiquetas' ? ' active' : '' }}">
                     <a class="nav-link" href="{{ route('etiquetas.index') }}">
                         <i class="material-icons">label</i>
                         <p>Etiquetas</p>
@@ -203,7 +203,30 @@
             @endif
 
             
+            {{-- SECCIÓN CERRADO DE SESIÓN  --}}
+            <div class="d-lg-none mt-2">
+                <ul class="navbar-nav ml-auto">
 
+                    <li class="nav-item">
+                    <a class="nav-link" href="{{ route('profile.edit') }}">
+                        <i class="material-icons">person</i> {{ __('Perfil') }}
+                    </a>
+                    </li>
+
+                    <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="material-icons">settings</i> {{ __('Settings') }}
+                    </a>
+                    </li>
+
+                    <li class="nav-item">
+                    <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+                        <i class="material-icons">exit_to_app</i> {{ __('Log out') }}
+                    </a>
+                    </li>
+                    
+                </ul>
+            </div>
 
 
         </ul>
