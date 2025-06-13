@@ -53,7 +53,7 @@
         </li> --}}
         <li class="nav-item dropdown">
           <a class="nav-link" href="#pablo" id="navbarDropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="material-icons">person</i>
+            <img src="{{ asset('img/Persona-Icon-Nuevo.png') }}" alt="Icono" style="height: 80px; width: 60px;">
             <p class="d-lg-none d-md-block">
               {{ __('Account') }}
             </p>
