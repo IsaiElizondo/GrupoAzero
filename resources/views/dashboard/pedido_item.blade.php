@@ -226,9 +226,23 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                             
                             @if($item->recibido_embarques_at && !in_array($item->status_id, [1, 3, 4, 5, 6, 7, 8, 9, 10]))
                             <div class="datito">
-                                <label>Días desde que se recibio</label>
+                                <label>Tiempo desde que se recibio</label>
                                 <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">
-                                    <center>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 2) }}</center>
+                                    <center>
+                                        @php
+                                            $recibido = \Carbon\Carbon::parse($item->recibido_embarques_at);
+                                            $horas = $recibido->diffInHours(now());
+                                        @endphp
+
+                                        @if ($horas < 24)
+                                            {{ number_format($horas, 2) }} {{ $horas == 1 ? 'hr' : 'hrs' }}
+                                        @else
+                                            @php
+                                                $dias = $recibido->floatDiffInRealDays(now());
+                                            @endphp
+                                            {{ number_format($dias, 2) }} {{ round($dias, 2) == 1.00 ? 'día' : 'días' }}
+                                        @endif
+                                    </center>
 
                                 </span>
                             </div>
@@ -256,11 +270,27 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                                                 <tbody>
                                                     <tr>
                                                         <td>{{ \Carbon\Carbon::parse($item->recibido_embarques_at)->format('d-m-Y') }}</td>
-                                                        <td>{{ number_format(\Carbon\Carbon::parse($item->recibido_embarques_at)->floatDiffInRealDays(now()), 2) }}
-</td>
-                                                        <td>{{ $item->entrega_programada_at 
+                                                        <td>
+                                                             @php
+                                                                $recibido = \Carbon\Carbon::parse($item->recibido_embarques_at);
+                                                                $horas = $recibido->diffInHours(now());
+                                                            @endphp
+
+                                                            @if ($horas < 24)
+                                                                {{ number_format($horas, 2) }} {{ $horas == 1 ? 'hr' : 'hrs' }}
+                                                            @else
+                                                                @php
+                                                                    $dias = $recibido->floatDiffInRealDays(now());
+                                                                @endphp
+                                                                {{ number_format($dias, 2) }} {{ round($dias, 2) == 1.00 ? 'día' : 'días' }}
+                                                            @endif
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $item->entrega_programada_at 
                                                             ? \Carbon\Carbon::parse($item->entrega_programada_at)->format('d-m-Y') 
-                                                            : 'No programada' }}</td>   
+                                                            : 'No programada' }}
+                                                        </td>   
                                                     </tr>
                                                 </tbody>
                                             </table>

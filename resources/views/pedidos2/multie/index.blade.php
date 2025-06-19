@@ -250,6 +250,7 @@ $("#confirmarEtiquetasBtn").click(function(){
     $("#ResultsEtiquetas").hide().html("");
     $("[name='etiquetas[]']").prop("checked", false);
     $("#confirmButton").val("Confirmar estatus");
+    $("[name='term']").val("");
 });
 
     //CAMBIAR A MODO ETIQUETAS
@@ -264,6 +265,7 @@ $("#confirmarEtiquetasBtn").click(function(){
     $("#ResultsEtiquetas").show();
     $("[name='estatus']").val("");
     $("#confirmButton").val("Aplicar etiquetas");
+    $("[name='term']").val("");
 });
 
 });

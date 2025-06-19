@@ -61,7 +61,7 @@ class Pedidos2Controller extends Controller
         $pag = Session::get(self::PAG,1);
         $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
 
-
+        
 
         return view('pedidos2.index', compact('reasons','department','role','queryString','user','pag', 'etiquetas'));
     }
@@ -670,10 +670,12 @@ public function dashboardLista(Request $request){
     })->values();
 
     
+    //ORDEN POR RECIBIDO
     if(in_array($ordenRecibido,['asc', 'desc'])){
 
-        $conStatus2 = $lista->filter(fn($p) => $p->status_id == 2);
-        $sinStatus2 = $lista->reject(fn($p) => $p->status_id == 2);
+        $conStatus2 = $lista->filter(fn($p) => in_array($p->status_id, [2, 5]));
+
+        $sinStatus2 = $lista->reject(fn($p) => in_array($p->status_id, [2, 5]));
 
         $ordenados = $ordenRecibido == 'asc' ? $conStatus2->sortBy('recibido_embarques_at') : $conStatus2->sortByDesc('recibido_embarques_at');
 
@@ -3196,37 +3198,32 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
-   public function multie_lista(Request $request){
+   public function multie_lista(Request $request)
+{
     $user = auth()->user();
     $role = $user->role;
 
-    //MODO RECIBIDO
-    $modo = $request->get("modo", "estatus"); 
+    // MODO DE OPERACIÓN
+    $modo = $request->get("modo", "estatus");
 
+    // Término de búsqueda
     $term = $request->get("term");
-    $term = Tools::_string($term,16);
+    $term = Tools::_string($term, 16);
 
-    $estatus= $request->get("estatus");
-    $estatus = Tools::_int($estatus);
+    // Inicializar variables de búsqueda
+    $wseg = "";
+    $wsegmo = "";
+    $estatus = null;
 
-    //CONDICIONES DE BÚSQUEDA
-    $wseg = (strlen($term) > 1 ) ? "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')" : "" ;
-    $wsegmo = (strlen($term) > 1 ) ? "AND mo.`number` LIKE '%{$term}%' " : "" ;
-    
-   
-   
-    LaravelLog::info('Llamada a multie_lista', [
-        'modo' => $modo,
-        'term' => $term,
-        'estatus' => $estatus
-    ]);
+    // Lógica de filtrado según modo
+    if ($modo === "etiquetas") {
+        // Aplicar búsqueda solo para modo etiquetas
+        if (strlen($term) > 1) {
+            $wseg = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
+        }
 
-    //MODO ETIQUETA SIN ESTATUS
-    if ($modo == "etiquetas") {
-
-         //ESTATUS OCULTOS
         $estatus_ocultos = [6, 7, 8, 9, 10];
-        $estatus_ocultos = implode(',' , $estatus_ocultos);
+        $estatus_ocultos = implode(',', $estatus_ocultos);
 
         $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
               FROM orders 
@@ -3235,7 +3232,6 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         $shipments = DB::select($q);
 
-        
         $pedido_ids = array_column($shipments, 'id');
 
         $etiquetas_por_pedido = DB::table('etiqueta_pedido')
@@ -3245,17 +3241,23 @@ public function guardarEntregaProgramada(Request $request, $id){
             ->get()
             ->groupBy('pedido_id');
 
-        //LISTA DE ESTATUS
         $statusesq = Status::all();
         $statuses = [];
-        foreach($statusesq as $st){
+        foreach ($statusesq as $st) {
             $statuses[$st->id] = $st->name;
         }
 
         return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
     }
 
-    //MODO ESTATUS ("NORMAL")
+    // Si el modo es "estatus", limpia los filtros de etiquetas y aplica búsqueda para estatus
+    $estatus = Tools::_int($request->get("estatus"));
+
+    if (strlen($term) > 1) {
+        $wseg = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
+        $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
+    }
+
     $q = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
 
     $qo = "SELECT mo.*, o.invoice_number, o.invoice 
@@ -3265,11 +3267,11 @@ public function guardarEntregaProgramada(Request $request, $id){
 
     $statusesq = Status::all();
     $statuses = [];
-    foreach($statusesq as $st){
+    foreach ($statusesq as $st) {
         $statuses[$st->id] = $st->name;
     }
 
-    if($estatus == 2 || $estatus == 10){
+    if ($estatus == 2 || $estatus == 10) {
         $shipments = DB::select($q);
         return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses'));
     } else {
@@ -3277,6 +3279,7 @@ public function guardarEntregaProgramada(Request $request, $id){
         return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
     }
 }
+
 
 
     public function set_status($id, Request $request){

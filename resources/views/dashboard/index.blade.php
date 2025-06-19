@@ -66,6 +66,7 @@ use App\Http\Controllers\Pedidos2Controller;
                         </button>
                     </div>
 
+                    @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
                     <div class="col-md-2">
                         <select name="orden_recibido" class="form-control form-control-sm">
                             <option value="">Ordenar por recibido</option>
@@ -74,6 +75,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
                         </select>
                     </div>
+                    @endif
 
                     <div class="col-md-2">
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
