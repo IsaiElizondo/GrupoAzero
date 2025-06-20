@@ -13,9 +13,9 @@ Route::group (['middleware' => 'auth'], function (){
     Route::get('reportes/participaciones', [ReportesController::class, 'participaciones']);
     Route::get('reportes/feed_usuarios', [ReportesController::class, 'feed_usuarios']);
     
-    Route::post('reportes/participaciones', [ReportesController::class, 'participaciones_post']);
-    Route::post('reportes/feed_usuarios', [ReportesController::class, 'feed_usuarios_post']);
-
+    Route::post('reportes/reporte_subprocesos', [ReportesController::class, 'reporte_subprocesos']);    
+    Route::post('reportes/reporte_participaciones', [ReportesController::class, 'reporte_participaciones']);
+    
     Route::get('/dashboard/exportar-excel', [ReportesController::class, 'ExcelDashboard'])->name('dashboard.exportar.excel');
 
 

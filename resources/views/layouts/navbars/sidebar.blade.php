@@ -59,6 +59,18 @@
                     </a>
                 </li>
             {{-- @endif --}}
+          
+             {{-- SECCIÓN NUEVA DE ETIQUETAS  --}}
+
+           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
+          
+                <li class="nav-item{{ $activePage == 'etiquetas' ? ' active' : '' }}">
+                    <a class="nav-link" href="{{ route('etiquetas.index') }}">
+                        <i class="material-icons">label</i>
+                        <p>Etiquetas</p>
+                    </a>
+                </li>
+            @endif
 
 
             @if ( auth()->user()->role->name == "Administrador" || in_array(auth()->user()->department_id, [3,4,5,7,9]) )
@@ -190,17 +202,7 @@
                 </li>
             @endif
 
-            {{-- SECCIÓN NUEVA DE ETIQUETAS  --}}
-
-           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
-          
-                <li class="nav-item{{ $activePage == 'etiquetas' ? ' active' : '' }}">
-                    <a class="nav-link" href="{{ route('etiquetas.index') }}">
-                        <i class="material-icons">label</i>
-                        <p>Etiquetas</p>
-                    </a>
-                </li>
-            @endif
+           
 
             
             {{-- SECCIÓN CERRADO DE SESIÓN  --}}

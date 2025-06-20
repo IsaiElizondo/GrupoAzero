@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Pedidos2Controller;
+Route::middleware(['auth', 'bloquear_rol_departamento'])->group(function(){
 Route::middleware('auth')->group(function () {
 
     Route::get('pedidos2/', [Pedidos2Controller::class, 'index']);
@@ -115,4 +116,5 @@ Route::middleware('auth')->group(function () {
 	Route::post('pedidos2/entrega-programada/{id}', [Pedidos2Controller::class, 'guardarEntregaProgramada']);
 
 });
-	
+
+});

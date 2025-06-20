@@ -42,8 +42,9 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/home/prueba', [HomeController::class, 'prueba']);
 
 Auth::routes();
-
-Route::get('/home', [Pedidos2Controller::class, 'index'])->name('home')->middleware('auth');
+Route::middleware(['auth', 'bloquear_rol_departamento'])->group(function(){
+    Route::get('/home', [Pedidos2Controller::class, 'index'])->name('home')->middleware('auth');
+});
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

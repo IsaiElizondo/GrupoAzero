@@ -46,6 +46,8 @@ class Pedidos2Controller extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $role = $user->role;
+        $department = $user->department;
 
         //$order = Order::find($id);
         $role = $user->role;
@@ -653,7 +655,7 @@ public function dashboardLista(Request $request){
          //Para usuarios de fabricación
          if($user->role_id == 2 && $user->department_id == 5){
 
-            return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
+            return in_array($pedido->ordenf_status_id, [1, 3] ) && $pedido->office == $user->office;
 
         }
 
