@@ -179,15 +179,49 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 </fieldset>
                                             @endif
 
+                                            @if(in_array(auth()->user()->department->name, ["Administrador", "Embarques", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                                                 <fieldset>
-                                                    <legend>Etiquetas</legend>
-                                                    @foreach ($etiquetas as $etiqueta)
+                                                    <legend>Etiquetas embarques</legend>
+                                                    @foreach($etiquetas as $etiqueta)
                                                         <div class="checkpair">
-                                                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{ $etiqueta->id }}">
-                                                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre }}</label>
+                                                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
                                                         </div>
                                                     @endforeach
-                                                </fieldset>                   
+                                                </fieldset>
+                                            @endif
+
+                                            @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
+                                                <fieldset>
+                                                    <legend>Etiquetas fabricación</legend>
+                                                    @foreach($etiquetas as $etiqueta)
+                                                        @if (in_array($etiqueta->nombre, ['N1', 'N2', 'Parcialmente Terminado']))
+                                                            <div class="checkpair">
+                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </fieldset>
+                                            @endif
+
+                                            @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
+                                                <fieldset>
+                                                    <legend>Etiquetas fabricación</legend>
+                                                    @foreach($etiquetas as $etiqueta)
+                                                        @if (in_array($etiqueta->nombre, ['N3', 'N4', 'Parcialmente Terminado']))
+                                                            <div class="checkpair">
+                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </fieldset>
+                                            @endif
+                                            
+                                            
+
+
                                     </div>
                                 </div> 
                             </div> 

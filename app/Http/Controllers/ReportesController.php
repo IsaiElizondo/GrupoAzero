@@ -730,6 +730,10 @@ class ReportesController extends Controller
 
 
     public function ExcelDashboard(Request $request){
+
+       
+
+        //dd(class_exists(\Ellumilel\ExcelWriter::class));
                 
         $user = auth()->user();
 
@@ -805,11 +809,11 @@ class ReportesController extends Controller
             $estatuses = \App\Status::pluck('name', 'id')->toArray();
             $entregas = [1 => "Entrega chofer interno", 2 => "Cliente recoger"];
 
-            $wExcel = new \Ellumilel\ExcelWriter();
+            $wExcel = new ExcelWriter();
             $wExcel->writeSheetHeader('Sheet1', $header);
             $wExcel->setAuthor('Excel Mis Pendientes');
 
-            //\Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
+            \Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
 
 
             foreach($lista as $li){

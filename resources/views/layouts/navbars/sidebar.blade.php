@@ -29,7 +29,7 @@
 
             {{-- SECCIÓN NUEVA DASHBOARD--}}
 
-            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques", "Fabricación"]))
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Embarques", "Fabricación", "Auditoria"]))
                 <li class="nav-item{{ $activePage == 'dashboard' ? ' active' : '' }}">
                     <a class="nav-link" href="{{ route('dashboard') }}">
                         <i class=material-icons>dashboard</i>

@@ -214,7 +214,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                             </div>   
 
 
-                        @if($item->recibido_embarques_at && !in_array($item->status_id, [1, 3, 4, 5, 6, 7, 8, 9, 10]))
+                       @if($item->recibido_embarques_at && in_array($item->status_id, [2, 5]))
                             <div class="datito">
                                 <label>Días desde que se recibio</label>
                                 <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">

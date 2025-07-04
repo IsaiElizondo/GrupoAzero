@@ -4,6 +4,7 @@ use App\ManufacturingOrder;
 use App\Partial;
 use App\PurchaseOrder;
 use App\Smaterial;
+use App\Log;
 
 
 
@@ -64,42 +65,43 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
               
             <div class="Elementos" href="{{ url('pedidos2/pedido/'.$item->id) }}">
                 
-                
-                @if (!empty($item->invoice_number)) 
-                <div class="datito" rel="main"><label>Factura</label>{{$item->invoice_number}}</div>
-                @elseif (!empty($item->invoice)) 
-                <div class="datito" rel="main"><label>Cotización</label>{{$item->invoice}}</div>
-                @else
-                <div class="datito" rel="main"> &nbsp;</div>
-                @endif
-
-
-                @if (!empty($item->stockreq_id))
-                
-                <div class="datito" rel="sec"> 
-                    @if (!empty($item->stockreq_document))
-                    <label>Requisición Stock</label>
-                    <span>{{$item->stockreq_number}} </span> 
-                    @else 
-                    <label>Requisición Stock</label><span> {{$item->stockreq_number}} </span>
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department_id != 5)
+               
+                    @if (!empty($item->invoice_number)) 
+                    <div class="datito" rel="main"><label>Factura</label>{{$item->invoice_number}}</div>
+                    @elseif (!empty($item->invoice)) 
+                    <div class="datito" rel="main"><label>Cotización</label>{{$item->invoice}}</div>
+                    @else
+                    <div class="datito" rel="main"> &nbsp;</div>
                     @endif
-                </div>
-                
-                @else 
 
-                <div class="datito" rel="sec">
-                    <!-- <label>Requisición</label><span>{{$item->requisition_code}}</span> -->
-                </div>
-                
-                @endif
-                
-                
-                
-                <div class="datito" rel="cliente"><label>Cliente</label> {{$item->client}} </div>
 
-                <div class="datito" rel="sucursal"> <label>Sucursal</label> {{$item->office}}  </div>
- 
- 
+                    @if (!empty($item->stockreq_id))
+                    
+                    <div class="datito" rel="sec"> 
+                        @if (!empty($item->stockreq_document))
+                        <label>Requisición Stock</label>
+                        <span>{{$item->stockreq_number}} </span> 
+                        @else 
+                        <label>Requisición Stock</label><span> {{$item->stockreq_number}} </span>
+                        @endif
+                    </div>
+                    
+                    @else 
+
+                    <div class="datito" rel="sec">
+                        <!-- <label>Requisición</label><span>{{$item->requisition_code}}</span> -->
+                    </div>
+                    
+                    @endif
+                    
+                    
+                    
+                    <div class="datito" rel="cliente"><label>Cliente</label> {{$item->client}} </div>
+
+                    <div class="datito" rel="sucursal"> <label>Sucursal</label> {{$item->office}}  </div>
+            @endif
+
                 <!--
                 <div class="datito detalles" rel="fab">
                     <div class="head">Fabricacion</div>
@@ -168,25 +170,55 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
         <a href="{{ url('pedidos2/pedido/'.$item->id) }}">  
             <div class="SuperElemento conSubprocesos">
 
-            @foreach ($requisitions as $re)
-            <div class="estatus E{{ $re->status_id }}" title="Requisición #{{$re->number}} {{ (isset($estatuses[$re->status_id])?$estatuses[$re->status_id]:0) }}"> <b>RE</b>:{{ (isset($estatusCodes[$re->status_id])?$estatusCodes[$re->status_id]:$re->status_id) }} 
-                <small>{{$re->number}}</small>
-            </div>
-            @endforeach
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department_id != 5)
+                @foreach ($requisitions as $re)
+                <div class="estatus E{{ $re->status_id }}" title="Requisición #{{$re->number}} {{ (isset($estatuses[$re->status_id])?$estatuses[$re->status_id]:0) }}"> <b>RE</b>:{{ (isset($estatusCodes[$re->status_id])?$estatusCodes[$re->status_id]:$re->status_id) }} 
+                    <small>{{$re->number}}</small>
+                </div>
+                @endforeach
+            @endif
+            
+            {{--VISTA PARA FABRICACIÓN--}}
+            
+            @php
+                
+                $ordersf = ManufacturingOrder::with('creador')
+                    ->where('order_id', $item->id)
+                    ->orderBy('id', 'DESC')
+                    ->get();
+            
+            @endphp
 
-            @foreach ($ordersf as $of)
-            <div class="estatus E{{ $of->status_id }}" title="Orden de fabricación #{{$of->number}} {{ (isset($estatuses[$of->status_id])?$estatuses[$of->status_id]:0) }}"> <b>OF</b>:{{ (isset($estatusCodes[$of->status_id])?$estatusCodes[$of->status_id]:$of->status_id) }} 
-                <small>{{$of->number}}</small>
-            </div>
-            @endforeach
+            @foreach($ordersf as $of)
+                @php
+                    $mostrar = true;
 
-            @foreach ($partials as $par)
-            <div class="estatus E{{ $par->status_id }}" title="Parcial #{{$par->invoice}} {{ $estatusesSP[$par->status_id] }}"><b>SP</b>:{{ $estatusCodesSP[$par->status_id] }} <small>{{$par->invoice}}</small></div>
-            @endforeach
+                    if(auth()->user()->department_id == 5){
 
-            @foreach ($smateriales as $sm)
-            <div class="estatus E{{ $sm->status_id }}" title="Salida de Materiales #{{$sm->code}} {{ $estatusesSM[$sm->status_id] }}"><b>SM</b>:{{ $estatusCodesSM[$sm->status_id] }} <small>{{$sm->code}}</small></div>
+                        $mostrar = in_array($of->status_id, [1,3]) && $of->officeCreated() == auth()->user()->office;
+
+                    }
+                @endphp
+
+                @if($mostrar)
+                    <div class="estatus E{{ $of->status_id }}"
+                        tittle="Orden de fabricación #{{ $of->number }} {{ $estatuses[$of->status_id] ?? 'N/A'}}">
+                        <b>OF</b>: {{ $estatusCodes[$of->status_id] ?? $of->status_id}}
+                        <small>{{ $of->number }}</small>
+                    </div>
+                @endif
             @endforeach
+            
+            
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department_id != 5)
+                @foreach ($partials as $par)
+                <div class="estatus E{{ $par->status_id }}" title="Parcial #{{$par->invoice}} {{ $estatusesSP[$par->status_id] }}"><b>SP</b>:{{ $estatusCodesSP[$par->status_id] }} <small>{{$par->invoice}}</small></div>
+                @endforeach
+
+                @foreach ($smateriales as $sm)
+                <div class="estatus E{{ $sm->status_id }}" title="Salida de Materiales #{{$sm->code}} {{ $estatusesSM[$sm->status_id] }}"><b>SM</b>:{{ $estatusCodesSM[$sm->status_id] }} <small>{{$sm->code}}</small></div>
+                @endforeach
+            @endif
 
 
             </div>
@@ -224,28 +256,32 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                                 
                             </div>     
                             
-                            @if($item->recibido_embarques_at && !in_array($item->status_id, [1, 3, 4, 5, 6, 7, 8, 9, 10]))
-                            <div class="datito">
-                                <label>Tiempo desde que se recibio</label>
-                                <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">
-                                    <center>
-                                        @php
-                                            $recibido = \Carbon\Carbon::parse($item->recibido_embarques_at);
-                                            $horas = $recibido->diffInHours(now());
-                                        @endphp
+                            @if($item->recibido_embarques_at && in_array($item->status_id, [2, 5]))
+                                @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department_id != 5)
 
-                                        @if ($horas < 24)
-                                            {{ number_format($horas, 2) }} {{ $horas == 1 ? 'hr' : 'hrs' }}
-                                        @else
-                                            @php
-                                                $dias = $recibido->floatDiffInRealDays(now());
-                                            @endphp
-                                            {{ number_format($dias, 2) }} {{ round($dias, 2) == 1.00 ? 'día' : 'días' }}
-                                        @endif
-                                    </center>
+                                    <div class="datito">
+                                        <label>Tiempo desde que se recibio</label>
+                                        <span class="dias-contador text-primary abrir-modal" style= "cursor:pointer;" data-toggle="modal" data-target= "#modalDias{{$item->id}}">
+                                            <center>
+                                                @php
+                                                    $recibido = \Carbon\Carbon::parse($item->recibido_embarques_at);
+                                                    $horas = $recibido->diffInHours(now());
+                                                @endphp
 
-                                </span>
-                            </div>
+                                                @if ($horas < 24)
+                                                    {{ number_format($horas, 2) }} {{ $horas == 1 ? 'hr' : 'hrs' }}
+                                                @else
+                                                    @php
+                                                        $dias = $recibido->floatDiffInRealDays(now());
+                                                    @endphp
+                                                    {{ number_format($dias, 2) }} {{ round($dias, 2) == 1.00 ? 'día' : 'días' }}
+                                                @endif
+                                            </center>
+
+                                        </span>
+                                    
+                                    </div>
+                                 @endif
 
                             {{--MODAL--}}
 

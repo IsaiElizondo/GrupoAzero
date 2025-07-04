@@ -23,20 +23,33 @@ class ManufacturingOrder extends Model
         'end_at'
     ];
 
-    public function order()
+     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-
-    public function office() : string {
-        $usr = \App\User::where("id",$this->manufactured_by)->first();
-        return (!empty($usr) && !empty($user->office)) ? $usr->office : "";
+    // Relación con el usuario que creó la orden
+    public function creador()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function officeCreated() : string {
-        $usr = \App\User::where("id",$this->created_by)->first();
-        return (!empty($usr) && !empty($user->office))  ? $usr->office : "";
+    // Relación con el usuario que manufacturó
+    public function manufacturador()
+    {
+        return $this->belongsTo(User::class, 'manufactured_by');
+    }
+
+    // Método para obtener la sucursal del creador
+    public function officeCreated(): string
+    {
+        return $this->creador && $this->creador->office ? $this->creador->office : '';
+    }
+
+    // Método para obtener la sucursal del manufacturador
+    public function office(): string
+    {
+        return $this->manufacturador && $this->manufacturador->office ? $this->manufacturador->office : '';
     }
 
 

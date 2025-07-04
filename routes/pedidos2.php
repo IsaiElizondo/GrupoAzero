@@ -84,7 +84,7 @@ Route::middleware('auth')->group(function () {
 	Route::post('pedidos2/set_accion_desauditoria/{id}', [Pedidos2Controller::class, 'set_accion_desauditoria']);
 	Route::post('pedidos2/add_nota/{id}', [Pedidos2Controller::class, 'add_nota']);
 	
-	Route::post('pedidos2/set-acccion_audita/{id}', [Pedidos2Controller::class, 'set_accion_audita']); 
+	Route::post('pedidos2/set_accion_audita/{id}', [Pedidos2Controller::class, 'set_accion_audita']); 
 	
 	Route::post('pedidos2/add_nota/{id}', [Pedidos2Controller::class, 'add_nota']);
 

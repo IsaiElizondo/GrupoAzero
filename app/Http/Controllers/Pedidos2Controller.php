@@ -180,8 +180,6 @@ class Pedidos2Controller extends Controller
     }
 
 
- 
-
 
     public function pedido($id){
 
@@ -230,67 +228,113 @@ class Pedidos2Controller extends Controller
     }
 
 
-// Guardar etiquetas en la tabla intermedia
-public function guardarEtiquetas(Request $request, $id)
-{
-    $etiquetas = $request->input('etiquetas', []);
+    //----------------------------------------------------------------------------------------------------------//
+    //------------------------------- GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA------------------------------//
+    //---------------------------------------------------------------------------------------------------------//
 
-    // Primero se obtienen las etiquetas anteriores
-    $etiquetasAnteriores = DB::table('etiqueta_pedido')
-        ->where('pedido_id', $id)
-        ->pluck('etiqueta_id')
-        ->toArray();
 
-    // Detectar cuáles se agregaron y cuáles se eliminaron
-    $nuevas = array_diff($etiquetas, $etiquetasAnteriores);
-    $eliminadas = array_diff($etiquetasAnteriores, $etiquetas);
+    public function guardarEtiquetas(Request $request, $id){
+    
+        $user = auth()->user();
 
-    // Reemplazar las etiquetas del pedido
-    DB::table('etiqueta_pedido')->where('pedido_id', $id)->delete();
+        $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
-    foreach ($etiquetas as $etiquetas_id) {
-        DB::table('etiqueta_pedido')->insert([
-            'pedido_id' => $id,
-            'etiqueta_id' => $etiquetas_id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        //Obtener etiquetas ya activas
+        $etiquetasAsignadas = DB::table('etiqueta_pedido')
+            ->where('pedido_id', $id)
+            ->pluck('etiqueta_id');
+
+        //Obtener las etiquetas nuevas de fabricación
+        $etiquetasPermitidas = DB::table('etiquetas')
+            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3','N4', 'Parcialmente Terminado']))
+            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'Parcialmente Terminado']))
+            ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
+            ->pluck('id');
+
+        //Etiquetas que no puede modificar
+        $etiquetasNoModificables = $etiquetasAsignadas->diff($etiquetasPermitidas);
+
+        //Etiquetas que si puede modificar
+        $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
+
+        $eliminadas = $etiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
+        $nuevas = $etiquetasFiltradas->diff($etiquetasAsignadas);
+
+        //Eliminar solo las etiquetas Permitidas
+        DB::table('etiqueta_pedido')
+            ->where('pedido_id', $id)
+            ->whereIN('etiqueta_id', $etiquetasPermitidas)
+            ->delete();
+
+        //Volver a poner las nuevas etiquetas permitidas
+        foreach($etiquetasFiltradas as $etiqueta_id){
+
+            DB::table('etiqueta_pedido')->insert([
+
+                'pedido_id' => $id,
+                'etiqueta_id' => $etiqueta_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+
+            ]);
+
+        }
+
+        //Volver a poner las etiquetas no permitidas
+        foreach($etiquetasNoModificables as $etiqueta_id){
+
+            DB::table('etiqueta_pedido')->insert([
+
+                'pedido_id' => $id,
+                'etiqueta_id' => $etiqueta_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+                
+            ]);
+
+        }
+
+        //Registrar en el historial
+        foreach($nuevas as $nueva){
+
+            $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
+
+            DB::table('logs')->insert([
+
+                'order_id' => $id,
+                'user_id' =>$user->id,
+                'action' => "Añadió etiqueta",
+                'status' => 'Etiqueta añadida: ' .$nombreEtiqueta,
+                'created_at' => now(),
+                'updated_at' => now(),
+
+
+            ]);
+
+        }
+
+        foreach($eliminadas as $eliminada){
+
+            $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
+
+            DB::table('logs')->insert([
+
+                'order_id' => $id,
+                'user_id' =>$user->id,
+                'action' => "Eliminó etiqueta",
+                'status' => 'Etiqueta eliminada: ' .$nombreEtiqueta,
+                'created_at' => now(),
+                'updated_at' => now(),
+
+            ]);
+
+        }
+
+        return redirect()->back()->with('success', 'Etiquetas actualizadas correctamente.');
+
     }
 
 
-
-
-
-    //-----------------------------------------------------------------------//
-    //------------------------Registrar en el historial----------------------//
-    //-----------------------------------------------------------------------//
-
-    foreach ($nuevas as $nueva) {
-        $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
-        DB::table('logs')->insert([
-            'order_id' => $id,
-            'user_id' => Auth::id(),
-            'action' => "Añadió etiqueta",
-            'status' => 'Etiqueta añadida: '.$nombreEtiqueta,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    foreach ($eliminadas as $eliminada) {
-        $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
-        DB::table('logs')->insert([
-            'order_id' => $id,
-            'user_id' => Auth::id(),
-            'action' => "Eliminó etiqueta",
-            'status' => 'Etiqueta eliminada: '.$nombreEtiqueta,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    return redirect()->back()->with('success', 'Etiquetas guardadas correctamente.');
-}
     //----------------------------------------------------------------------------------------------------------//
     //-------------------------------FIN GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA------------------------------//
     //---------------------------------------------------------------------------------------------------------//
@@ -442,7 +486,7 @@ public function dashboard(){
 
     $user = auth()->user();
 
-    $departamentosPermitidos = [2, 3, 4, 5];
+    $departamentosPermitidos = [2, 3, 4, 5, 9];
     $rolesPermitidos = [1,4];
 
     if(!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)){
@@ -628,34 +672,54 @@ public function dashboardLista(Request $request){
         ]); */
 
         //Filtros generales para todos los usuarios
-        $statusExcluidos = [6, 7, 8, 9, 10];
         $statusDahsboard = [2, 5];
-
-        if(in_array($pedido->status_id, $statusExcluidos)){
-
-            return false;
-                
-        }
-
-
-         //Para usuarios de embarques vean solo lo "Recibido por embarques"
-        if($user->role_id == 2 && $user->department_id == 4){
-
-            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
-
-        }
 
         //Para usuarios de ventas vean solo sus pedidos
         if($user->role_id == 2 && $user->department_id == 3){
 
-            return $pedido->user_id == $user->id;
+            return $pedido->user_id == $user->id && in_array($pedido->status_id, [1, 2, 3, 4, 5]);
+
+        }
+
+        
+        //Para usuarios de embarques vean solo lo "Recibido por embarques"
+        if($user->role_id == 2 && $user->department_id == 4){
+
+            
+            if(in_array($pedido->status_id, $statusDahsboard)){
+
+                $ultimoLog = Log::where('order_id', $pedido->id)
+                    ->where('status', 'like', '%Recibido por embarques%')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                if($ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office){
+                    return true;
+                }
+
+                return false;
+
+            }
+
+            return false;
 
         }
 
          //Para usuarios de fabricación
          if($user->role_id == 2 && $user->department_id == 5){
 
-            return in_array($pedido->ordenf_status_id, [1, 3] ) && $pedido->office == $user->office;
+             if (in_array($pedido->ordenf_status_id, [1, 3])) {
+                $ordenc = Log::where('order_id', $pedido->id)
+                    ->where('status', 'like', '%Orden de fabricación%')
+                    ->orderByDesc('created_at')
+                    ->get()
+                    ->firstWhere(fn($log)=>$log->user && $log->user->office == $user->office);
+
+                return $ordenc !== null && !in_array($pedido->status_id, [6, 7, 8, 9]);
+
+             }
+
+             return false;
 
         }
 
@@ -663,7 +727,14 @@ public function dashboardLista(Request $request){
         //Usuarios de administración
         if($user->role_id == 1 || $user->department_id == 2){
 
-            return true;
+            return !in_array($pedido->status_id, [6,7,8,9,10]);
+
+        }
+
+        //Usuarios de auditría
+        if(in_array($user->role_id, [1,2]) && $user->department_id == 9){
+
+            return in_array($pedido->status_id, [6, 7, 8, 9]);
 
         }
 
@@ -738,9 +809,9 @@ public function dashboardLista(Request $request){
     $total = Pedidos2::$total;
     $rpp = Pedidos2::$rpp;
 
-    //LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
+    LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
 
-    //LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
+    LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
 
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
 
@@ -1507,7 +1578,7 @@ public function guardarEntregaProgramada(Request $request, $id){
         
     }
 
-
+ 
 
     public function smaterial_desestatus($id,$status_id){
         $id = Tools::_int($id);       
