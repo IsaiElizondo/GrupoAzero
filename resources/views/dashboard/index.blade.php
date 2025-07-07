@@ -1,4 +1,4 @@
-s<?php 
+<?php 
 
 use App\Pedidos;
 use App\Http\Controllers\Pedidos2Controller;

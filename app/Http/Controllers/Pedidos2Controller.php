@@ -706,20 +706,24 @@ public function dashboardLista(Request $request){
         }
 
          //Para usuarios de fabricación
-         if($user->role_id == 2 && $user->department_id == 5){
+        if($user->role_id == 2 && $user->department_id == 5){
 
-             if (in_array($pedido->ordenf_status_id, [1, 3])) {
-                $ordenc = Log::where('order_id', $pedido->id)
-                    ->where('status', 'like', '%Orden de fabricación%')
-                    ->orderByDesc('created_at')
-                    ->get()
-                    ->firstWhere(fn($log)=>$log->user && $log->user->office == $user->office);
+            $ordenes = ManufacturingOrder::where('order_id', $pedido->id)
+                ->whereIn('status_id', [1,3])
+                ->get();
+                
+            $ordenesSucursal = $ordenes->filter(function($of) use($user){
 
-                return $ordenc !== null && !in_array($pedido->status_id, [6, 7, 8, 9]);
+                $office = $of->office() ?: $of->officeCreated();
+                $office = trim(strtolower($office));
+                $userOffice = trim(strtolower($user->office));
+                return $office == $userOffice;
 
-             }
+            });
 
-             return false;
+            LaravelLog::info("Pedido #{$pedido->id} - Ordenes Totales: " . $ordenes->count(). " - Ordenes sucursal: " . $ordenesSucursal->count());
+
+            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6,7,8,9,10]);
 
         }
 
