@@ -549,9 +549,9 @@ $pedidoStatusId = $pedido->status_id;
         </div>
     @endif
 
-    {{-- ETIQUETAS PARA EMBARQUES--}}
+    {{-- ETIQUETAS PARA ADMINISTRACIÓN--}}
 
-    @if(in_array($user->department->name, ["Administrador", "Embarques", "Ventas"]) && in_array($user->role->name, ["Administrador", "Empleado"]))
+    @if($user->department->name == "Administrador" && in_array($user->role->name, ["Administrador", "Empleado"]))
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
@@ -572,6 +572,32 @@ $pedidoStatusId = $pedido->status_id;
         </form>
     @endif
 
+
+    {{-- ETIQUETAS PARA EMBARQUES --}}
+
+     @if($user->department->name =="Embarques" && in_array($user->role->name, ["Administrador", "Empleado"]))
+        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
+            @csrf
+            <div class="card etiquetas-card">
+                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="Eleccion">
+                    @foreach($etiquetasDisponibles as $etiqueta)
+                        @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                            <div class="etiqueta-item">
+                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
+                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
+                                    {{strtoupper($etiqueta->nombre)}}
+                                </label>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                <br>
+                <button class="btn btn-dark" type="submit">Guardar</button>
+            </div>
+        </form>
+    @endif
+
     {{-- ETIQUETAS PARA FABRICACIÓN NORIA --}}
 
     @if($user->department->name =="Fabricación" && in_array($user->role->name, ["Administrador", "Empleado"]) && $user->office == "La Noria")
@@ -581,7 +607,7 @@ $pedidoStatusId = $pedido->status_id;
                 <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponibles as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['N3', 'N4', 'Parcialmente Terminado']))
+                        @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
                             <div class="etiqueta-item">
                                 <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
                                 <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
@@ -606,7 +632,7 @@ $pedidoStatusId = $pedido->status_id;
                 <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponibles as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['N1', 'N2', 'Parcialmente Terminado']))
+                        @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
                             <div class="etiqueta-item">
                                 <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
                                 <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
@@ -638,9 +664,7 @@ $pedidoStatusId = $pedido->status_id;
 
 
 
-@if ($user->role_id == 1 || in_array($user->department->id,[2, 3, 5])  
-    || ($user->department_id==7 && $pedido->origin == "R" )
-)
+@if(in_array(auth()->user()->department->name, ["Ventas", "Administrador"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
 
     <div class="card">
 

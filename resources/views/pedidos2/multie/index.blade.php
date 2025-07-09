@@ -55,7 +55,7 @@ $statuses = Pedidos2::StatusesCat();
 
         <div class="center" style="margin-bottom: 15px;">
             <button type="button" class="btn btn-secondary" id="modoEstatus"> Cambiar estatus</button>
-            @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
+            @if (in_array(auth()->user()->role->name, ["Administrador","Empleado"]) || in_array(auth()->user()->department->name, ["Administrador", "Embarques", "Fabricación"]))
                 <button type="button" class="btn btn-secondary" id="modoEtiquetas"> Cambiar etiquetas</button>
             @endif
         </div>
@@ -80,23 +80,63 @@ $statuses = Pedidos2::StatusesCat();
                         Seleccionar etiquetas
                     </button>
                     <div class="dropdown-menu-checkboxes">
-                        @foreach($etiquetas as $etiqueta)
-                        <label class="dropdown-item-checkbox">
-                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
-                            <span class="etiqueta-color" style="background-color: {{$etiqueta->color ?? 'CCC'}}">
-                                {{ strtoupper($etiqueta->nombre) }}
-                            </span>
-                        </label>
-                        @endforeach
+                        {{-- Administrador, Ventas, Auditoria --}}
+                        @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Auditoria"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                            @foreach($etiquetas as $etiqueta)
+                                <label class="dropdown-item-checkbox">
+                                    <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
+                                    <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
+                                        {{ strtoupper($etiqueta->nombre) }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        @endif
+
+                        {{-- Embarques --}}
+                        @if(auth()->user()->department->name == "Embarques" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                            @foreach($etiquetas as $etiqueta)
+                                @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                    <label class="dropdown-item-checkbox">
+                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
+                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
+                                            {{ strtoupper($etiqueta->nombre) }}
+                                        </span>
+                                    </label>
+                                @endif
+                            @endforeach
+                        @endif
+
+                        {{-- Fabricación - San Pablo --}}
+                        @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
+                            @foreach($etiquetas as $etiqueta)
+                                @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
+                                    <label class="dropdown-item-checkbox">
+                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
+                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
+                                            {{ strtoupper($etiqueta->nombre) }}
+                                        </span>
+                                    </label>
+                                @endif
+                            @endforeach
+                        @endif
+
+                        {{-- Fabricación - La Noria --}}
+                        @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
+                            @foreach($etiquetas as $etiqueta)
+                                @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                    <label class="dropdown-item-checkbox">
+                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
+                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
+                                            {{ strtoupper($etiqueta->nombre) }}
+                                        </span>
+                                    </label>
+                                @endif
+                            @endforeach
+                        @endif
                     </div>
                 </div>
-                {{--
-                    <div style="margin-top: 10px;">
-                        <button type="button" class="btn btn-primary" id="confirmarEtiquetasBtn">
-                            Aplicar etiquetas
-                        </button>
-                    </div>
-                --}}
+
+                
                     <div style="margin-top: 6px;">
                         <label style="font-size: 14px;">
                             <input type="checkbox" id="modoEliminarEtiquetas"/>

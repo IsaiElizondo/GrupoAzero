@@ -712,6 +712,7 @@ public function dashboardLista(Request $request){
                 ->whereIn('status_id', [1,3])
                 ->get();
                 
+                
             $ordenesSucursal = $ordenes->filter(function($of) use($user){
 
                 $office = $of->office() ?: $of->officeCreated();
