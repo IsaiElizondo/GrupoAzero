@@ -17,6 +17,7 @@ Route::group (['middleware' => 'auth'], function (){
     Route::post('reportes/reporte_participaciones', [ReportesController::class, 'reporte_participaciones']);
     
     Route::get('/dashboard/exportar-excel', [ReportesController::class, 'ExcelDashboard'])->name('dashboard.exportar.excel');
+    Route::get('reportes/fabricacion-excel', [ReportesController::class, 'ExcelFabricacion'])->name('reportes.fabricacion-excel');
 
 
 });

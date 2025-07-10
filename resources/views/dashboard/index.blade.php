@@ -81,10 +81,16 @@ use App\Http\Controllers\Pedidos2Controller;
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                     </div>
                     
-                   @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 3, 4]))
-                    <div class="col-md-3">
-                        <button type="button" id="nuevoExcelBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
-                    </div>
+                    @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 3, 4]))
+                        <div class="col-md-3">
+                            <button type="button" id="nuevoExcelBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
+                        </div>
+                    @endif
+
+                    @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                        <div class="col-md-3">
+                            <button type="button" id="excelFabricacionBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
+                        </div>
                     @endif
 
                 </div>
@@ -814,6 +820,70 @@ function ActualizaContadorPedidos(){
     document.getElementById('contador-pedidos').textContent = total;
 
 }
+
+
+// Botón para Excel General
+$("#excelDashboardBtn").click(function (e) {
+    e.preventDefault();
+
+    let raw = $("input[name='querystring']").val();
+    let filtros = {};
+
+    if (raw && raw !== "{}") {
+        filtros = JSON.parse(raw);
+    } else {
+        const fromForm = $("#fbuscar").serializeArray();
+        for (let i = 0; i < fromForm.length; i++) {
+            let name = fromForm[i].name;
+            let value = fromForm[i].value;
+
+            if (name.endsWith("[]")) {
+                name = name.slice(0, -2);
+                if (!filtros[name]) filtros[name] = [];
+                filtros[name].push(value);
+            } else {
+                filtros[name] = value;
+            }
+        }
+    }
+
+    filtros._ = Date.now();
+    const queryString = $.param(filtros);
+    const url = "{{ route('dashboard.exportar.excel') }}?" + queryString;
+    window.location.href = url;
+});
+
+
+// Botón para Excel de Fabricación
+$("#excelFabricacionBtn").click(function (e) {
+    e.preventDefault();
+
+    let raw = $("input[name='querystring']").val();
+    let filtros = {};
+
+    if (raw && raw !== "{}") {
+        filtros = JSON.parse(raw);
+    } else {
+        const fromForm = $("#fbuscar").serializeArray();
+        for (let i = 0; i < fromForm.length; i++) {
+            let name = fromForm[i].name;
+            let value = fromForm[i].value;
+
+            if (name.endsWith("[]")) {
+                name = name.slice(0, -2);
+                if (!filtros[name]) filtros[name] = [];
+                filtros[name].push(value);
+            } else {
+                filtros[name] = value;
+            }
+        }
+    }
+
+    filtros._ = Date.now();
+    const queryString = $.param(filtros);
+    const url = "{{ route('reportes.fabricacion-excel') }}?" + queryString;
+    window.location.href = url;
+});
 
 
 
