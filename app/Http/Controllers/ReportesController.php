@@ -998,8 +998,8 @@ class ReportesController extends Controller
 
     }
 
-   public function ExcelFabricacion(Request $request)
-{
+   public function ExcelFabricacion(Request $request){
+
      $user = auth()->user();
 
     $termino = $request->query("termino", "");
@@ -1145,6 +1145,7 @@ class ReportesController extends Controller
     $wExcel->setAuthor('Departamento de Fabricación');
 
     foreach ($lista as $li) {
+        
         // Tipo de pedido y folio
         $tipoPedido = '';
         $folioPedido = '';
@@ -1171,7 +1172,15 @@ class ReportesController extends Controller
         $etiquetas_string = implode(',', $etiquetas);
 
         // Solo Órdenes de Fabricación válidas
-        $ordenes = \App\ManufacturingOrder::where("order_id", $li->id)->get();
+        $ordenes = \App\ManufacturingOrder::where("order_id", $li->id)
+            ->whereIn('status_id', [1, 3]) // Solo pendientes y en proceso
+            ->get()
+            ->filter(function($of) use ($user) {
+                $office = $of->office() ?: $of->officeCreated();
+                $office = trim(strtolower($office));
+                $userOffice = trim(strtolower($user->office));
+                return $office == $userOffice;
+            });
         foreach ($ordenes as $ord) {
             $creado = new \DateTime($ord->created_at);
             $dias = $creado->diff($now)->days;
@@ -1197,11 +1206,13 @@ class ReportesController extends Controller
             ];
 
             $wExcel->writeSheetRow('Sheet1', $row);
+
         }
     }
 
     $nombreArchivo = "Reporte_Fabricacion_" . date("Y-m-d_H-i-s") . ".xlsx";
     return $this->MandaReporte($wExcel, $nombreArchivo);
+
 }
 
 

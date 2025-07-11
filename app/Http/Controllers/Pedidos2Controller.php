@@ -246,8 +246,8 @@ class Pedidos2Controller extends Controller
 
         //Obtener las etiquetas nuevas de fabricación
         $etiquetasPermitidas = DB::table('etiquetas')
-            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3','N4', 'Parcialmente Terminado']))
-            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'Parcialmente Terminado']))
+            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
             ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
             ->pluck('id');
 
@@ -1486,6 +1486,10 @@ public function guardarEntregaProgramada(Request $request, $id){
             "updated_at"=>date("Y-m-d H:i:s")
         ]); 
 
+        if (in_array($status_id, [6, 7])) {
+            $data["end_at"] = date("Y-m-d H:i:s");
+        }
+
         $partial = Partial::where(["id" => $id])->first(); 
 
         Pedidos2::Log($id,"Parcial Update", " Cambio en datos de parcial #{$partial->invoice}", $status_id, $user);
@@ -1569,6 +1573,12 @@ public function guardarEntregaProgramada(Request $request, $id){
             "status_".$status_id => 1,
             "updated_at"=>date("Y-m-d H:i:s")
         ];
+
+        if (in_array($status_id, [6, 7])) {
+            $updateData["end_at"] = date("Y-m-d H:i:s");
+        }
+
+
             if(!empty($code)){$updateData["code"]=$code;}
 
         Smaterial::where("id", $id)->update($updateData); 
@@ -1605,7 +1615,12 @@ public function guardarEntregaProgramada(Request $request, $id){
         $updateData = [
             "status_".$status_id => 0,
             "updated_at"=>date("Y-m-d H:i:s")
-        ];    
+        ];
+        
+        if (in_array($status_id, [6, 7])) {
+            $updateData["end_at"] = null;
+        }
+
         if($ob->status_id ==6){
             $updateData["status_id"]=5;
    
@@ -1650,7 +1665,12 @@ public function guardarEntregaProgramada(Request $request, $id){
         $updateData = [
             "status_".$status_id => 0,
             "updated_at"=>date("Y-m-d H:i:s")
-        ];    
+        ];
+        
+        if (in_array($status_id, [6, 7])) {
+            $updateData["end_at"] = null;
+        }
+        
         if($ob->status_id ==6){
             $updateData["status_id"]=5;
 
@@ -1791,6 +1811,10 @@ public function guardarEntregaProgramada(Request $request, $id){
                 "status_".$status_id => 1,
                 "updated_at"=>date("Y-m-d H:i:s")
             ];
+            if(in_array($status_id, [4,7])){
+                $data["end_at"] = date("Y-m-d H:i:s");
+            }
+
             if(!empty($sqlPath)){
                 $data["document"]=$sqlPath;
             }
@@ -1834,7 +1858,11 @@ public function guardarEntregaProgramada(Request $request, $id){
         $updateData = [
             "status_".$status_id => 0,
             "updated_at"=>date("Y-m-d H:i:s")
-        ];    
+        ];
+        
+        if(in_array($status_id, [4,7])){
+            $updateData["end_at"] = null;
+        }
 
         //Revertir según estatus
         switch($status_id){
@@ -3216,7 +3244,7 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         Smaterial::where("id", $id)->update($data);         
 
-        Pedidos2::Log($smaterial->order_id, "Salida de Material", "Cambio de status ".$estatuses[$status_id]." en la sallida de material #{$smaterial->code}", $status_id, $user);
+        Pedidos2::Log($smaterial->order_id, "Salida de Material", "Cambio de status ".$estatuses[$status_id]." en la salida de material #{$smaterial->code}", $status_id, $user);
         Feedback::j(1);
         return;       
     }
