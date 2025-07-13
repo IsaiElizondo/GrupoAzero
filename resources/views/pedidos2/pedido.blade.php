@@ -323,7 +323,7 @@ $pedidoStatusId = $pedido->status_id;
 
 
         @if (  $pedido->status_id < 6 && 
-            ($user->role_id ==1 || in_array($user->department_id,[3,4,6,7,8]))
+            ($user->role_id ==1 || in_array($user->department_id,[4,6,7,8]))
           )
 
         <a class="Accion entregado" href="{{ url('pedidos2/accion/'.$pedido->id.'?a=entregar') }}">Entregado (Factura amarilla)</a>
@@ -467,7 +467,7 @@ $pedidoStatusId = $pedido->status_id;
 
 
     @if ( $pedido->origin != "R" && ($user->role_id == 1 || 
-        ( in_array($user->department_id,[2,4,7]) &&  !in_array($pedido->status_id,[6,7,10]) && !isset($purchaseOrder->id)  ) ) 
+        ( in_array($user->department_id,[2,7]) &&  !in_array($pedido->status_id,[6,7,10]) && !isset($purchaseOrder->id)  ) ) 
       )
         <a class="Candidato" rel="requisicion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=requisicion') }}">+ Requisición</a>
     @endif
@@ -486,7 +486,7 @@ $pedidoStatusId = $pedido->status_id;
     @endif
 
        
-    @if ($user->role_id == 1 || (in_array($user->department_id,[2,3,4,8]) && !in_array($pedido->status_id,[10])) )
+    @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
         <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
      @endif 
 

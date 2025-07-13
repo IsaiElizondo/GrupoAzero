@@ -814,9 +814,9 @@ public function dashboardLista(Request $request){
     $total = Pedidos2::$total;
     $rpp = Pedidos2::$rpp;
 
-    LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
+    //LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
 
-    LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
+    //LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
 
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
 

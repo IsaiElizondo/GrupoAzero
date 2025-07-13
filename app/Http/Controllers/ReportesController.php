@@ -859,7 +859,7 @@ class ReportesController extends Controller
 
     })->values();
 
-        \Log::info("IDs exportados Excel:", $lista->pluck('id')->toArray());
+        //\Log::info("IDs exportados Excel:", $lista->pluck('id')->toArray());
 
 
             $header = [
@@ -889,7 +889,7 @@ class ReportesController extends Controller
             $wExcel->writeSheetHeader('Sheet1', $header);
             $wExcel->setAuthor('Excel Mis Pendientes');
 
-            \Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
+            //\Log::info(" Filtro aplicado correctamente, IDs exportados:", $lista->pluck('id')->toArray());
 
 
             foreach($lista as $li){

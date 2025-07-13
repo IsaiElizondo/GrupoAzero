@@ -14,7 +14,8 @@
 		"laravel/framework": "^11.0",
 		"laravel/tinker": "^2.5",
 		"laravel/ui": "^4.0",
-		"laraveles/spanish": "^1.5"
+		"laraveles/spanish": "^1.5",
+		"league/commonmark": "^2.7.0"
 	},
 	"require-dev" : {
 		"spatie/laravel-ignition": "^2.0",
