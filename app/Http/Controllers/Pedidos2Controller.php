@@ -627,9 +627,10 @@ public function dashboardLista(Request $request){
 
     $user = auth()->user();
 
-    $termino = $request->query("termino", "");
+    $termino =(string)  $req->input("termino", "");
     $desde = "2000-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
+
 
     $status = (array)$request->query("st");
     $subprocesos = (array)$request->query("sp");
