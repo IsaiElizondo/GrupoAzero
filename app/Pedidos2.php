@@ -39,6 +39,9 @@ class Pedidos2 extends Model
     array $recogido=[], array $suborigen=[], int $user_id=0, array $etiquetas = []
     ) : array {
 
+        //LaravelLog::info('RPP recibido en Lista(): ' . self::$rpp);
+
+
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
         $wheres=["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];

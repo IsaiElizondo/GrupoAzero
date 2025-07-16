@@ -483,36 +483,35 @@ public function deleteEtiqueta($id)
 //-----------------------------------------------------------------------------------------------------------//
 
 public function dashboard(){
-
+    
     $user = auth()->user();
 
+    // Verificación de permisos
     $departamentosPermitidos = [2, 3, 4, 5, 9];
-    $rolesPermitidos = [1,4];
+    $rolesPermitidos = [1, 4];
 
-    if(!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)){
-
+    if (!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)) {
         abort(403, 'No tienes permiso para acceder a esta sección');
     }
 
-    //Prefiltros
-
+    // Prefiltros iniciales
     $termino = "";
     $desde = "2000-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
     $pag = 1;
-   // Pedidos2::$rpp = 9999999;
-    
+    $rpp = 30;
+    Pedidos2::$rpp = 150; // Para tener espacio suficiente y filtrar después
+
     $status = [];
     $subprocesos = [];
-    $origen =[];
+    $origen = [];
     $sucursal = [];
     $subpstatus = [];
     $recogido = [];
     $orsub = [];
     $etiquetas = [];
-    
-    
 
+    // Obtener todos los pedidos relevantes
     $lista = collect(Pedidos2::Lista(
         $pag,
         $termino,
@@ -527,86 +526,68 @@ public function dashboard(){
         $orsub,
         $user->id,
         $etiquetas
-    ))->filter(function($pedido) use ($user){
+    ));
 
+    
+    $lista = $lista->filter(function ($pedido) use ($user) {
 
-        //Filtros generales para todos los usuarios
         $statusExcluidos = [6, 7, 8, 9, 10];
+        $statusDashboard = [2, 5];
 
-        $statusDahsboard = [2, 5];
+        if (in_array($pedido->status_id, $statusExcluidos)) return false;
 
-        //FILTROS GENERALES PARA TODOS LOS USUARIOS
-        if(in_array($pedido->status_id, $statusExcluidos)){
-
-            return false;
-
+        if ($user->role_id == 2 && $user->department_id == 4) {
+            return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
         }
 
-
-        //Para usuarios de embarques vean solo lo "Recibido por embarques"
-        if($user->role_id == 2 && $user->department_id == 4){
-
-            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
-
+        if ($user->role_id == 2 && $user->department_id == 3) {
+            return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
         }
 
-        //Para usuarios de ventas vean solo sus pedidos
-        if($user->role_id == 2 && $user->department_id == 3){
-
-            return in_array($pedido->status_id, $statusDahsboard) && $pedido->office == $user->office;
-
-        }
-
-        //Para usuarios de fabricación
-        if($user->role_id == 2 && $user->department_id == 5){
-
+        if ($user->role_id == 2 && $user->department_id == 5) {
             return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
-
         }
 
-        //usuarios de administración
-        if($user->role_id == 1 || $user->department_id == 2){
-
+        if ($user->role_id == 1 || $user->department_id == 2) {
             return true;
-
         }
 
-        
+        if (in_array($user->role_id, [1, 2]) && $user->department_id == 9) {
+            return in_array($pedido->status_id, [6, 7, 8, 9, 10]);
+        }
+
+        return false;
     })->values();
 
-     //LaravelLog::info(count($lista));
+    // Total real filtrado
+    $total = $lista->count();
 
-    foreach($lista as $item){
+    // Paginar manualmente
+    $lista = $lista->forPage($pag, $rpp)->values();
 
+    // Etiquetas
+    foreach ($lista as $item) {
         $item->etiquetas_render = [];
 
-        if(!empty($item->etiquetas_coloreadas)){
-
+        if (!empty($item->etiquetas_coloreadas)) {
             $pairs = explode(',', $item->etiquetas_coloreadas);
 
-            foreach($pairs as $p){
-
-                if(str_contains($p, '|')){
-
+            foreach ($pairs as $p) {
+                if (str_contains($p, '|')) {
                     [$nombre, $color] = explode('|', trim($p));
-                    $iniciales = implode('', array_map(fn($w)=>mb_substr($w, 0, 1), explode(' ', $nombre)));
+                    $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
 
                     $item->etiquetas_render[] = [
-
                         'nombre' => $nombre,
                         'color' => $color,
-                        'iniciales' =>strtoupper($iniciales),
-
+                        'iniciales' => strtoupper($iniciales),
                     ];
-
                 }
-
             }
-
         }
-
     }
 
+    // Datos adicionales
     $estatuses = Pedidos2::StatusesCat();
     $estatusCodes = Pedidos2::StatusCodes();
     $estatusesSM = Pedidos2::StatusesSmaterial();
@@ -615,22 +596,21 @@ public function dashboard(){
     $events = DB::table('events')->pluck('name', 'id')->toArray();
     $etiquetas = DB::table('etiquetas')->select('id', 'nombre')->get();
 
-
-    
-
-    return view('dashboard.index', compact( 'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP', 'origenes', 'events', 'etiquetas', 'user'));
-
+    return view('dashboard.index', compact(
+        'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP',
+        'origenes', 'events', 'etiquetas', 'user', 'total', 'rpp', 'pag'
+    ));
 }
+
 
 
 public function dashboardLista(Request $request){
 
     $user = auth()->user();
 
-    $termino =(string)  $req->input("termino", "");
+    $termino = (string) $request->input("termino", "");
     $desde = "2000-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
-
 
     $status = (array)$request->query("st");
     $subprocesos = (array)$request->query("sp");
@@ -642,15 +622,17 @@ public function dashboardLista(Request $request){
     $etiquetas = (array)$request->query("etiquetas");
 
     $pag = max(1, (int)$request->query("p", 1));
+    $ordenRecibido = $request->query('orden_recibido', '');
+
+    
+    $rpp = 30;
+    Pedidos2::$rpp = 150;
 
     $ordenRecibido = $request->query('orden_recibido', '');
-    
-    //LaravelLog::info('Origen recibido: ',['origen' => $origen]);
-    Pedidos2::$rpp = 9999999;
-    
-    $lista = collect(Pedidos2::Lista(
 
-        $pag, 
+     
+    $lista = collect(Pedidos2::Lista(
+        1,
         $termino,
         $desde,
         $hasta,
@@ -663,165 +645,127 @@ public function dashboardLista(Request $request){
         $orsub,
         $user->id,
         $etiquetas
+    ));
 
-    ))->filter(function ($pedido)use ($user){
-
-        /* LaravelLog::info('Filtro user_id vs auth_id', [
-            'pedido_id' => $pedido->id,
-            'pedido_user_id' => $pedido->user_id ?? 'NO DEFINIDO',
-            'auth_id' => $user->id
-        ]); */
-
-        //Filtros generales para todos los usuarios
-        $statusDahsboard = [2, 5];
-
-        //Para usuarios de ventas vean solo sus pedidos
-        if($user->role_id == 2 && $user->department_id == 3){
-
+    
+    //VENTAS
+    if ($user->role_id == 2 && $user->department_id == 3) {
+        $lista = $lista->filter(function ($pedido) use ($user) {
             return $pedido->user_id == $user->id && in_array($pedido->status_id, [1, 2, 3, 4, 5]);
+        })->values();
+    }
 
-        }
 
-        
-        //Para usuarios de embarques vean solo lo "Recibido por embarques"
-        if($user->role_id == 2 && $user->department_id == 4){
+    //EMBARQUES
+    if ($user->role_id == 2 && $user->department_id == 4) {
+        $lista = $lista->filter(function ($pedido) use ($user) {
+            $statusDashboard = [2, 5];
 
-            
-            if(in_array($pedido->status_id, $statusDahsboard)){
-
+            if (in_array($pedido->status_id, $statusDashboard)) {
                 $ultimoLog = Log::where('order_id', $pedido->id)
                     ->where('status', 'like', '%Recibido por embarques%')
                     ->orderByDesc('created_at')
                     ->first();
 
-                if($ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office){
-                    return true;
-                }
-
-                return false;
-
+                return $ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office;
             }
 
             return false;
+        })->values();
+    }
 
-        }
 
-         //Para usuarios de fabricación
-        if($user->role_id == 2 && $user->department_id == 5){
+    //FABRICACIÓN
+    if ($user->role_id == 2 && $user->department_id == 5) {
+
+        $lista = collect($lista)->filter(function ($pedido) use ($user) {
 
             $ordenes = ManufacturingOrder::where('order_id', $pedido->id)
-                ->whereIn('status_id', [1,3])
+                ->whereIn('status_id', [1, 3])
                 ->get();
-                
-                
-            $ordenesSucursal = $ordenes->filter(function($of) use($user){
 
+            $ordenesSucursal = $ordenes->filter(function ($of) use ($user) {
                 $office = $of->office() ?: $of->officeCreated();
                 $office = trim(strtolower($office));
                 $userOffice = trim(strtolower($user->office));
                 return $office == $userOffice;
-
             });
 
-            //LaravelLog::info("Pedido #{$pedido->id} - Ordenes Totales: " . $ordenes->count(). " - Ordenes sucursal: " . $ordenesSucursal->count());
+            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6, 7, 8, 9, 10]);
 
-            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-
-        //Usuarios de administración
-        if($user->role_id == 1 || $user->department_id == 2){
-
-            return !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-        //Usuarios de auditría
-        if(in_array($user->role_id, [1,2]) && $user->department_id == 9){
-
-            return in_array($pedido->status_id, [6, 7, 8, 9]);
-
-        }
-
-
-
-    })->values();
-
-    
-    //ORDEN POR RECIBIDO
-    if(in_array($ordenRecibido,['asc', 'desc'])){
-
-        $conStatus2 = $lista->filter(fn($p) => in_array($p->status_id, [2, 5]));
-
-        $sinStatus2 = $lista->reject(fn($p) => in_array($p->status_id, [2, 5]));
-
-        $ordenados = $ordenRecibido == 'asc' ? $conStatus2->sortBy('recibido_embarques_at') : $conStatus2->sortByDesc('recibido_embarques_at');
-
-        $lista = $ordenados->merge($sinStatus2)->values();
-        
+        })->values();
     }
 
+
+    //ADMINISTRADOR
+    if ($user->role_id == 1 || $user->department_id == 2) {
+        $lista = $lista->reject(function ($pedido) {
+            return in_array($pedido->status_id, [6, 7, 8, 9, 10]);
+        })->values();
+    }
+
+
+    //AUDITORIA
+    if (in_array($user->role_id, [1, 2]) && $user->department_id == 9) {
+        $lista = $lista->filter(function ($pedido) {
+            return in_array($pedido->status_id, [6, 7, 8, 9]);
+        })->values();
+    }
+
+    $total = $lista->count();
+    $rpp = 30;
+
+    $lista = $lista->forPage($pag, $rpp)->values();
+
     
-    //LaravelLog::info(count($lista));
+    if (in_array($ordenRecibido, ['asc', 'desc'])) {
+        $conStatus2 = $lista->filter(fn($p) => in_array($p->status_id, [2, 5]));
+        $sinStatus2 = $lista->reject(fn($p) => in_array($p->status_id, [2, 5]));
 
-    foreach($lista as $item){
+        $ordenados = $ordenRecibido === 'asc'
+            ? $conStatus2->sortBy('recibido_embarques_at')
+            : $conStatus2->sortByDesc('recibido_embarques_at');
 
+        $lista = $ordenados->merge($sinStatus2)->values();
+    }
+
+    // Etiquetas
+    foreach ($lista as $item) {
         $item->etiquetas_render = [];
 
-        if(!empty($item->etiquetas_coloreadas)){
-            
+        if (!empty($item->etiquetas_coloreadas)) {
+
             $pairs = explode(',', $item->etiquetas_coloreadas);
-            foreach($pairs as $p){
 
-                if(str_contains($p, '|')){
+            foreach ($pairs as $p) {
 
+                if (str_contains($p, '|')) {
                     [$nombre, $color] = explode('|', trim($p));
-                    $iniciales = implode('', array_map(fn($w)=>mb_substr($w, 0, 1), explode(' ', $nombre)));
+                    $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
 
                     $item->etiquetas_render[] = [
-
                         'nombre' => $nombre,
                         'color' => $color,
                         'iniciales' => strtoupper($iniciales),
-
                     ];
 
                 }
-
             }
-
         }
-
     }
 
-    if($request->query('excel_dashboard')==1){
-
-            $RC = new ReportesController();
-            $RC->ExcelDashboard($lista);
-            return;
-
-        }
-
-
-    $statuses = Status::all();
-    $estatuses = [];
-
-    foreach($statuses as $st){
-
-        $estatuses[$st ->id]= $st->name;
+    // Excel
+    if ($request->query('excel_dashboard') == 1) {
+        $RC = new ReportesController();
+        $RC->ExcelDasboard($lista);
+        return;
     }
 
-    $total = Pedidos2::$total;
-    $rpp = Pedidos2::$rpp;
-
-    //LaravelLog::info('Total pedidos enviados a la vista: ' . count($lista));
-
-    //LaravelLog::info('Pedidos exportados al Excel', ['total' => count($lista)]);
+    $estatuses = Status::all()->pluck('name', 'id')->toArray();
 
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
-
 }
+
 
     //-----------------------------------------------------------------------------------------------------------//
     //--------------------------FIN DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS----------------------------//
