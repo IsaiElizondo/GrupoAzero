@@ -138,7 +138,7 @@ class Pedidos2 extends Model
             foreach($recogido as $reco){
                 $rearr[]="'".$reco."'";
             }      
-        $wheres[]="(SELECT COUNT(*) FROM shipments s página 1 y rpp = 99999.h WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";      
+        $$wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";          
         }
 
         if (!empty($etiquetas)) {
