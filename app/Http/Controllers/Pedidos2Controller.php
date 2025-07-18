@@ -603,168 +603,65 @@ public function dashboard(){
 }
 
 
-
 public function dashboardLista(Request $request){
 
     $user = auth()->user();
 
-    $termino = (string) $request->input("termino", "");
-    $desde = "2000-01-01 00:00:00";
-    $hasta = now()->format("Y-m-d 23:59:59");
-
-    $status = (array)$request->query("st");
-    $subprocesos = (array)$request->query("sp");
-    $origen = (array)$request->query("or");
-    $sucursal = (array)$request->query("suc");
-    $subpstatus = (array)$request->query("spsub");
-    $recogido = (array)$request->query("rec");
-    $orsub = (array)$request->query("orsob");
-    $etiquetas = (array)$request->query("etiquetas");
-
     $pag = max(1, (int)$request->query("p", 1));
     $ordenRecibido = $request->query('orden_recibido', '');
 
-    
-    $rpp = 30;
-    Pedidos2::$rpp = 150;
+    $filtros = [
+        'termino' => $request->input("termino", ""),
+        'desde' => "2000-01-01",
+        'hasta' => now()->format("Y-m-d"),
+        'etiquetas' => (array)$request->query("etiquetas"),
+    ];
 
-    $ordenRecibido = $request->query('orden_recibido', '');
+    Pedidos2::$rpp = ($request->query('excel_dashboard') == 1)? 99999 : 30;
+    $resultado = Pedidos2::ListaDashboard($pag, $user, $filtros);
 
-     
-    $lista = collect(Pedidos2::Lista(
-        1,
-        $termino,
-        $desde,
-        $hasta,
-        $status,
-        $subprocesos,
-        $origen,
-        $sucursal,
-        $subpstatus,
-        $recogido,
-        $orsub,
-        $user->id,
-        $etiquetas
-    ));
+    $lista = $resultado['data'];
+    $total = $resultado['total'];
+    $rpp = Pedidos2::$rpp;
 
-    
-    //VENTAS
-    if ($user->role_id == 2 && $user->department_id == 3) {
-        $lista = $lista->filter(function ($pedido) use ($user) {
-            return $pedido->user_id == $user->id && in_array($pedido->status_id, [1, 2, 3, 4, 5]);
-        })->values();
-    }
+    foreach($lista as $item){
 
-
-    //EMBARQUES
-    if ($user->role_id == 2 && $user->department_id == 4) {
-        $lista = $lista->filter(function ($pedido) use ($user) {
-            $statusDashboard = [2, 5];
-
-            if (in_array($pedido->status_id, $statusDashboard)) {
-                $ultimoLog = Log::where('order_id', $pedido->id)
-                    ->where('status', 'like', '%Recibido por embarques%')
-                    ->orderByDesc('created_at')
-                    ->first();
-
-                return $ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office;
-            }
-
-            return false;
-        })->values();
-    }
-
-
-    //FABRICACIÓN
-    if ($user->role_id == 2 && $user->department_id == 5) {
-
-        $lista = collect($lista)->filter(function ($pedido) use ($user) {
-
-            $ordenes = ManufacturingOrder::where('order_id', $pedido->id)
-                ->whereIn('status_id', [1, 3])
-                ->get();
-
-            $ordenesSucursal = $ordenes->filter(function ($of) use ($user) {
-                $office = $of->office() ?: $of->officeCreated();
-                $office = trim(strtolower($office));
-                $userOffice = trim(strtolower($user->office));
-                return $office == $userOffice;
-            });
-
-            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6, 7, 8, 9, 10]);
-
-        })->values();
-    }
-
-
-    //ADMINISTRADOR
-    if ($user->role_id == 1 || $user->department_id == 2) {
-        $lista = $lista->reject(function ($pedido) {
-            return in_array($pedido->status_id, [6, 7, 8, 9, 10]);
-        })->values();
-    }
-
-
-    //AUDITORIA
-    if (in_array($user->role_id, [1, 2]) && $user->department_id == 9) {
-        $lista = $lista->filter(function ($pedido) {
-            return in_array($pedido->status_id, [6, 7, 8, 9]);
-        })->values();
-    }
-
-    $total = $lista->count();
-    $rpp = 30;
-
-    $lista = $lista->forPage($pag, $rpp)->values();
-
-    
-    if (in_array($ordenRecibido, ['asc', 'desc'])) {
-        $conStatus2 = $lista->filter(fn($p) => in_array($p->status_id, [2, 5]));
-        $sinStatus2 = $lista->reject(fn($p) => in_array($p->status_id, [2, 5]));
-
-        $ordenados = $ordenRecibido === 'asc'
-            ? $conStatus2->sortBy('recibido_embarques_at')
-            : $conStatus2->sortByDesc('recibido_embarques_at');
-
-        $lista = $ordenados->merge($sinStatus2)->values();
-    }
-
-    // Etiquetas
-    foreach ($lista as $item) {
         $item->etiquetas_render = [];
 
-        if (!empty($item->etiquetas_coloreadas)) {
-
+        if(!empty($item->etiquetas_coloreadas)){
             $pairs = explode(',', $item->etiquetas_coloreadas);
-
-            foreach ($pairs as $p) {
-
-                if (str_contains($p, '|')) {
+            foreach($pairs as $p){
+                if(str_contains($p, '|')){
                     [$nombre, $color] = explode('|', trim($p));
                     $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
-
                     $item->etiquetas_render[] = [
-                        'nombre' => $nombre,
+
+                        'nombre' => $nombre, 
                         'color' => $color,
                         'iniciales' => strtoupper($iniciales),
-                    ];
 
+                    ];
                 }
             }
         }
+
     }
 
-    // Excel
-    if ($request->query('excel_dashboard') == 1) {
+    if($request->query('excel_dashboard') == 1){
         $RC = new ReportesController();
-        $RC->ExcelDasboard($lista);
+        $RC->ExcelDashboard(collect($lista));
         return;
     }
 
     $estatuses = Status::all()->pluck('name', 'id')->toArray();
+    //$total = Pedidos2::$total;
+    $rpp = Pedidos2::$rpp;
 
     return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
+    
 }
+
+
 
 
     //-----------------------------------------------------------------------------------------------------------//

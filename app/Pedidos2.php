@@ -7,6 +7,8 @@ use Ramsey\Collection\AbstractArray;
 use Illuminate\Support\Facades\DB;
 use App\Log;
 use Illuminate\Support\Facades\Log as LaravelLog;
+use App\User;
+
 class Pedidos2 extends Model
 {
     public static $total = 0;
@@ -136,7 +138,7 @@ class Pedidos2 extends Model
             foreach($recogido as $reco){
                 $rearr[]="'".$reco."'";
             }      
-        $wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";      
+        $wheres[]="(SELECT COUNT(*) FROM shipments s página 1 y rpp = 99999.h WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";      
         }
 
         if (!empty($etiquetas)) {
@@ -364,6 +366,137 @@ public static function OrigenesCat() : array
 
     }
 
+
+    public static function ListaDashboard(int $pag, $user, array $filtros): array{
+
+        $ini = ($pag > 1) ? ($pag - 1) * self::$rpp : 0;
+        
+        $termino = addslashes($filtros['termino'] ?? '');
+        $desde = $filtros['desde'] ?? '2000-01-01';
+        $hasta = $filtros['hasta'] ?? now()->format("Y-m-d");
+        $etiquetas = $filtros['etiquetas'] ?? [];
+
+        $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
+
+        //BARRA DE BÚSQUEDA
+        if(!empty($termino)){
+
+            $where[] = "( o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%'
+                        OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%'
+                        OR q.number LIKE '%$termino%' )";
+
+        }
+
+        //FILTRO ETIQUETAS
+        if(!empty($etiquetas)){
+
+            $where[] = "(SELECT COUNT(*) FROM etiqueta_pedido ep WHERE ep.pedido_id = o.id AND ep.etiqueta_id IN (" . implode(',',$etiquetas) . " )) > 0";
+
+        }
+
+
+        if($user->role_id == 2 && $user->department_id == 3){
+
+            $where[] = "(
+                SELECT l.user_id 
+                FROM logs l 
+                WHERE l.order_id = o.id 
+                AND l.action LIKE '%crea%' 
+                ORDER BY l.created_at ASC LIMIT 1
+            ) = {$user->id}";
+            
+            $where[] = "o.status_id IN (1,2,3,4,5)";
+        }elseif($user->role_id == 2 && $user->department_id == 4){
+
+            $where[] = "o.status_id IN (2,5)";
+            $where[] = "EXISTS(
+                SELECT 1 FROM logs l
+                JOIN users ul ON ul.id = l.user_id
+                WHERE l.order_id = o.id
+                AND l.status LIKE '%Recibido por embarques%'
+                AND ul.office = '". addslashes($user->office) ."'
+            )";
+
+        }elseif($user->role_id == 2 && $user->department_id == 5){
+
+            $where[] = "EXISTS (
+                SELECT 1 FROM manufacturing_orders mo
+                JOIN users u_mo ON u_mo.id = mo.created_by
+                WHERE mo.order_id = o.id
+                AND mo.status_id IN (1,3)
+                AND u_mo.office = '" . addslashes($user->office) . "'
+            )";
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+
+        }elseif($user->role_id == 1 || $user->department_id == 2){
+
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+
+        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
+
+            $where[] = "o.status_id IN (6,7,8,9)";
+
+        }
+
+        //LaravelLog::info('RPP recibido en Lista(): ' . self::$rpp);
+        
+        $whereStr = implode(" AND ", $where);
+
+        $totalQ = DB::select("SELECT COUNT(*) AS tot FROM orders o LEFT JOIN quotes q ON q.order_id = o.id WHERE $whereStr");
+        
+        $query = "SELECT 
+            o.*,
+
+            (SELECT l.user_id 
+            FROM logs l 
+            WHERE l.order_id = o.id AND l.action LIKE '%crea%' 
+            ORDER BY l.created_at ASC LIMIT 1) AS user_id,
+
+            (SELECT GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ')
+            FROM etiqueta_pedido ep
+            JOIN etiquetas e ON e.id = ep.etiqueta_id
+            WHERE ep.pedido_id = o.id
+            ) AS etiquetas_coloreadas,
+
+            (SELECT p.number FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS requisition_code,
+            (SELECT p.document FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS document,
+            (SELECT p.requisition FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS requisition_document,
+
+            (SELECT COUNT(*) FROM follows WHERE follows.user_id = {$user->id} AND follows.order_id = o.id) AS follows, 
+
+            q.number AS quote, 
+            q.document AS quote_document, 
+
+            r.id AS stockreq_id,
+            r.number AS stockreq_number,
+            r.document AS stockreq_document, 
+
+            (SELECT m.number FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_number,
+            (SELECT m.status_id FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_status_id,
+
+            (SELECT pa.invoice FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_number,
+            (SELECT pa.status_id FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_status_id,
+
+            (SELECT ue.office FROM users ue WHERE ue.id = o.embarques_by) AS embarques_office, 
+
+            u.name AS creator
+
+            FROM orders o 
+            LEFT JOIN quotes q ON q.order_id = o.id 
+            LEFT JOIN stockreq r ON r.order_id = o.id 
+            LEFT JOIN users u ON u.id = o.created_by 
+            WHERE $whereStr 
+            ORDER BY o.updated_at DESC 
+            LIMIT $ini, " . self::$rpp;
+
+        $resultados = DB::select($query);
+
+        return [
+            'total' => $totalQ[0]->tot ?? 0,
+            'data' => $resultados,
+        ];
+
+    }
 
 
 }
