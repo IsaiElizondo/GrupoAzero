@@ -13,6 +13,7 @@ class Pedidos2 extends Model
 {
     public static $total = 0;
     public static $rpp=10;
+    public static int $pagina = 1;
 
     protected $fillable = [
      //   'file', 'order_id', 'created_at'
@@ -366,137 +367,214 @@ public static function OrigenesCat() : array
 
     }
 
+public static function ListaDashboard(int $pag, $user, array $filtros): array{
 
-    public static function ListaDashboard(int $pag, $user, array $filtros): array{
+    $ini = ($pag > 1) ? ($pag - 1) * self::$rpp : 0;
 
-        $ini = ($pag > 1) ? ($pag - 1) * self::$rpp : 0;
-        
-        $termino = addslashes($filtros['termino'] ?? '');
-        $desde = $filtros['desde'] ?? '2000-01-01';
-        $hasta = $filtros['hasta'] ?? now()->format("Y-m-d");
-        $etiquetas = $filtros['etiquetas'] ?? [];
+    $termino = addslashes($filtros['termino'] ?? '');
+    $desde = $filtros['desde'] ?? '2025-01-01';
+    $hasta = $filtros['hasta'] ?? now()->format("Y-m-d");
+    $etiquetas = $filtros['etiquetas'] ?? [];
+    $status = $filtros['st'] ?? [];
+    $subprocesos = $filtros['sp'] ?? [];
+    $subpstatus = $filtros['spsub'] ?? [];
+    $origen = $filtros['or'] ?? [];
+    $sucursal = $filtros['suc'] ?? [];
+    $recogido = $filtros['rec'] ?? [];
+    $suborigen = $filtros['orsob'] ?? [];
+    $ordenRecibido = $filtros['orden_recibido'] ?? 'DESC';
 
-        $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
+    $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
-        //BARRA DE BÚSQUEDA
-        if(!empty($termino)){
-
-            $where[] = "( o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%'
-                        OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%'
-                        OR q.number LIKE '%$termino%' )";
-
-        }
-
-        //FILTRO ETIQUETAS
-        if(!empty($etiquetas)){
-
-            $where[] = "(SELECT COUNT(*) FROM etiqueta_pedido ep WHERE ep.pedido_id = o.id AND ep.etiqueta_id IN (" . implode(',',$etiquetas) . " )) > 0";
-
-        }
-
-
-        if($user->role_id == 2 && $user->department_id == 3){
-
-            $where[] = "(
-                SELECT l.user_id 
-                FROM logs l 
-                WHERE l.order_id = o.id 
-                AND l.action LIKE '%crea%' 
-                ORDER BY l.created_at ASC LIMIT 1
-            ) = {$user->id}";
-            
-            $where[] = "o.status_id IN (1,2,3,4,5)";
-        }elseif($user->role_id == 2 && $user->department_id == 4){
-
-            $where[] = "o.status_id IN (2,5)";
-            $where[] = "EXISTS(
-                SELECT 1 FROM logs l
-                JOIN users ul ON ul.id = l.user_id
-                WHERE l.order_id = o.id
-                AND l.status LIKE '%Recibido por embarques%'
-                AND ul.office = '". addslashes($user->office) ."'
-            )";
-
-        }elseif($user->role_id == 2 && $user->department_id == 5){
-
-            $where[] = "EXISTS (
-                SELECT 1 FROM manufacturing_orders mo
-                JOIN users u_mo ON u_mo.id = mo.created_by
-                WHERE mo.order_id = o.id
-                AND mo.status_id IN (1,3)
-                AND u_mo.office = '" . addslashes($user->office) . "'
-            )";
-            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
-
-        }elseif($user->role_id == 1 || $user->department_id == 2){
-
-            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
-
-        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
-
-            $where[] = "o.status_id IN (6,7,8,9)";
-
-        }
-
-        //LaravelLog::info('RPP recibido en Lista(): ' . self::$rpp);
-        
-        $whereStr = implode(" AND ", $where);
-
-        $totalQ = DB::select("SELECT COUNT(*) AS tot FROM orders o LEFT JOIN quotes q ON q.order_id = o.id WHERE $whereStr");
-        
-        $query = "SELECT 
-            o.*,
-
-            (SELECT l.user_id 
-            FROM logs l 
-            WHERE l.order_id = o.id AND l.action LIKE '%crea%' 
-            ORDER BY l.created_at ASC LIMIT 1) AS user_id,
-
-            (SELECT GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ')
-            FROM etiqueta_pedido ep
-            JOIN etiquetas e ON e.id = ep.etiqueta_id
-            WHERE ep.pedido_id = o.id
-            ) AS etiquetas_coloreadas,
-
-            (SELECT p.number FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS requisition_code,
-            (SELECT p.document FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS document,
-            (SELECT p.requisition FROM purchase_orders p WHERE p.order_id = o.id LIMIT 1) AS requisition_document,
-
-            (SELECT COUNT(*) FROM follows WHERE follows.user_id = {$user->id} AND follows.order_id = o.id) AS follows, 
-
-            q.number AS quote, 
-            q.document AS quote_document, 
-
-            r.id AS stockreq_id,
-            r.number AS stockreq_number,
-            r.document AS stockreq_document, 
-
-            (SELECT m.number FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_number,
-            (SELECT m.status_id FROM manufacturing_orders m WHERE m.order_id = o.id ORDER BY id DESC LIMIT 1) AS ordenf_status_id,
-
-            (SELECT pa.invoice FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_number,
-            (SELECT pa.status_id FROM partials pa WHERE pa.order_id = o.id ORDER BY id DESC LIMIT 1) AS parcial_status_id,
-
-            (SELECT ue.office FROM users ue WHERE ue.id = o.embarques_by) AS embarques_office, 
-
-            u.name AS creator
-
-            FROM orders o 
-            LEFT JOIN quotes q ON q.order_id = o.id 
-            LEFT JOIN stockreq r ON r.order_id = o.id 
-            LEFT JOIN users u ON u.id = o.created_by 
-            WHERE $whereStr 
-            ORDER BY o.updated_at DESC 
-            LIMIT $ini, " . self::$rpp;
-
-        $resultados = DB::select($query);
-
-        return [
-            'total' => $totalQ[0]->tot ?? 0,
-            'data' => $resultados,
-        ];
-
+    if (!empty($termino)) {
+        $where[] = "( o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%' OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%' OR q.number LIKE '%$termino%' )";
     }
+
+    if (!empty($etiquetas)) {
+        $where[] = "ep.etiqueta_id IN (" . implode(',', $etiquetas) . ")";
+    }
+
+    if (!empty($status)) {
+        $where[] = "o.status_id IN (" . implode(',', $status) . ")";
+    }
+
+    if (!empty($origen)) {
+        $arr = array_map(fn($v) => "'" . addslashes($v) . "'", $origen);
+        $where[] = "o.origin IN (" . implode(',', $arr) . ")";
+    }
+
+    if (!empty($sucursal)) {
+        $arr = array_map(fn($v) => "'" . addslashes($v) . "'", $sucursal);
+        $where[] = "o.office IN (" . implode(',', $arr) . ")";
+    }
+
+    if (!empty($recogido)) {
+        $where[] = "(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type IN (" . implode(',', $recogido) . ")) > 0";
+    }
+
+    if (!empty($suborigen)) {
+        foreach ($suborigen as $subor) {
+            $valpar = explode("_", $subor);
+            if ($valpar[0] == "C" && $valpar[1] == 0) {
+                $where[] = "(o.invoice_number = '' OR o.invoice_number IS NULL)";
+            } elseif ($valpar[0] == "C" && $valpar[1] == 1) {
+                $where[] = "(o.invoice_number IS NOT NULL AND o.invoice_number != '')";
+            }
+        }
+    }
+
+    // Filtros de subprocesos y subestatus
+    if (!empty($subprocesos)) {
+        if (in_array("devolucion", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM debolutions WHERE debolutions.order_id = o.id) > 0";
+        }
+
+        if (in_array("ordenc", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM purchase_orders po WHERE po.order_id = o.id) > 0";
+            $subpo = [];
+            foreach ($subpstatus as $sp) {
+                $arr = explode("_", $sp);
+                if ($arr[0] == "ordenc") $subpo[] = $arr[1];
+            }
+            if (!empty($subpo)) {
+                $where[] = "(SELECT COUNT(*) FROM purchase_orders po WHERE po.order_id = o.id AND po.status_id IN (" . implode(',', $subpo) . ")) > 0";
+            }
+        }
+
+        if (in_array("ordenf", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM manufacturing_orders mof WHERE mof.order_id = o.id) > 0";
+            $submo = [];
+            foreach ($subpstatus as $sp) {
+                $arr = explode("_", $sp);
+                if ($arr[0] == "ordenf") $submo[] = $arr[1];
+            }
+            if (!empty($submo)) {
+                $where[] = "(SELECT COUNT(*) FROM manufacturing_orders mof WHERE mof.order_id = o.id AND mof.status_id IN (" . implode(',', $submo) . ")) > 0";
+            }
+        }
+
+        if (in_array("parcial", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM partials WHERE partials.order_id = o.id) > 0";
+            $subpa = [];
+            foreach ($subpstatus as $sp) {
+                $arr = explode("_", $sp);
+                if ($arr[0] == "parcial") $subpa[] = $arr[1];
+            }
+            if (!empty($subpa)) {
+                $where[] = "(SELECT COUNT(*) FROM partials pa WHERE pa.order_id = o.id AND pa.status_id IN (" . implode(',', $subpa) . ")) > 0";
+            }
+        }
+
+        if (in_array("refacturar", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM rebillings WHERE rebillings.order_id = o.id) > 0";
+        }
+
+        if (in_array("sm", $subprocesos)) {
+            $where[] = "(SELECT COUNT(*) FROM smaterial WHERE smaterial.order_id = o.id) > 0";
+            $subsm = [];
+            foreach ($subpstatus as $sp) {
+                $arr = explode("_", $sp);
+                if ($arr[0] == "sm") $subsm[] = $arr[1];
+            }
+            if (!empty($subsm)) {
+                $where[] = "(SELECT COUNT(*) FROM smaterial sma WHERE sma.order_id = o.id AND sma.status_id IN (" . implode(',', $subsm) . ")) > 0";
+            }
+        }
+    }
+
+    // Filtros por rol y departamento
+    if ($user->role_id == 2 && $user->department_id == 3) {
+        $where[] = "log_creador.user_id = {$user->id}";
+        $where[] = "o.status_id IN (1,2,3,4,5)";
+    } elseif ($user->role_id == 2 && $user->department_id == 4) {
+        $where[] = "o.status_id IN (2,5)";
+        $where[] = "ul_emb.office = '" . addslashes($user->office) . "'";
+    } elseif ($user->role_id == 2 && $user->department_id == 5) {
+        $where[] = "u_mo.office = '" . addslashes($user->office) . "'";
+        $where[] = "mo.status_id IN (1,3)";
+        $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+    } elseif ($user->role_id == 1 || $user->department_id == 2) {
+        $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+    } elseif (in_array($user->role_id, [1,2]) && $user->department_id == 9) {
+        $where[] = "o.status_id IN (6,7,8,9)";
+    }
+
+    $whereStr = implode(" AND ", $where);
+
+    // Ordenamiento por recibido_embarques_at
+    $orderBy = "MAX(o.recibido_embarques_at) " . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
+
+    $totalQ = DB::select("
+        SELECT COUNT(DISTINCT o.id) AS tot
+        FROM orders o
+        LEFT JOIN quotes q ON q.order_id = o.id
+        LEFT JOIN etiqueta_pedido ep ON ep.pedido_id = o.id
+        LEFT JOIN etiquetas e ON e.id = ep.etiqueta_id
+        LEFT JOIN logs log_creador ON log_creador.order_id = o.id AND log_creador.action LIKE '%crea%'
+        LEFT JOIN users ul_emb ON ul_emb.id = log_creador.user_id
+        LEFT JOIN manufacturing_orders mo ON mo.order_id = o.id
+        LEFT JOIN users u_mo ON u_mo.id = mo.created_by
+        WHERE $whereStr
+    ");
+
+    $query = "
+        SELECT 
+            o.id,
+            MAX(o.office) AS office,
+            MAX(o.invoice) AS invoice,
+            MAX(o.invoice_number) AS invoice_number,
+            MAX(o.client) AS client,
+            MAX(o.status_id) AS status_id,
+            MAX(o.created_at) AS created_at,
+            MAX(o.updated_at) AS updated_at,
+            MAX(o.origin) AS origin,
+            MAX(o.recibido_embarques_at) AS recibido_embarques_at,
+            MAX(o.entrega_programada_at) AS entrega_programada_at,
+            MAX(log_creador.user_id) AS user_id,
+            GROUP_CONCAT(DISTINCT CONCAT(e.nombre, '|', e.color) SEPARATOR ', ') AS etiquetas_coloreadas,
+            MAX(p.number) AS requisition_code,
+            MAX(p.document) AS document,
+            MAX(p.requisition) AS requisition_document,
+            IF(MAX(f.user_id) IS NULL, 0, 1) AS follows,
+            MAX(q.number) AS quote,
+            MAX(q.document) AS quote_document,
+            MAX(r.id) AS stockreq_id,
+            MAX(r.number) AS stockreq_number,
+            MAX(r.document) AS stockreq_document,
+            MAX(mo.number) AS ordenf_number,
+            MAX(mo.status_id) AS ordenf_status_id,
+            MAX(pa.invoice) AS parcial_number,
+            MAX(pa.status_id) AS parcial_status_id,
+            MAX(ue.office) AS embarques_office,
+            MAX(u.name) AS creator
+        FROM orders o
+        LEFT JOIN quotes q ON q.order_id = o.id
+        LEFT JOIN stockreq r ON r.order_id = o.id
+        LEFT JOIN users u ON u.id = o.created_by
+        LEFT JOIN logs log_creador ON log_creador.order_id = o.id AND log_creador.action LIKE '%crea%'
+        LEFT JOIN etiqueta_pedido ep ON ep.pedido_id = o.id
+        LEFT JOIN etiquetas e ON e.id = ep.etiqueta_id
+        LEFT JOIN follows f ON f.order_id = o.id AND f.user_id = {$user->id}
+        LEFT JOIN purchase_orders p ON p.order_id = o.id
+        LEFT JOIN manufacturing_orders mo ON mo.order_id = o.id
+        LEFT JOIN partials pa ON pa.order_id = o.id
+        LEFT JOIN users ue ON ue.id = o.embarques_by
+        LEFT JOIN users ul_emb ON ul_emb.id = log_creador.user_id
+        LEFT JOIN users u_mo ON u_mo.id = mo.created_by
+        WHERE $whereStr
+        GROUP BY o.id
+        ORDER BY $orderBy
+        LIMIT " . self::$rpp . " OFFSET $ini
+    ";
+
+    $resultados = DB::select($query);
+
+    return [
+        'total' => $totalQ[0]->tot ?? 0,
+        'data' => $resultados,
+    ];
+}
+
 
 
 }

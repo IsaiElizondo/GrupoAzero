@@ -29,7 +29,8 @@ use App\Http\Controllers\Pedidos2Controller;
         
 
 
-            <form id="fbuscar" action="#" method="GET">           
+            <form id="fbuscar" action="#" method="POST">
+		@csrf           
             
                 <input type="hidden" name="p" value="1">
                 <input type="hidden" name="excel" value="0">
@@ -70,8 +71,8 @@ use App\Http\Controllers\Pedidos2Controller;
                     <div class="col-md-2">
                         <select name="orden_recibido" class="form-control form-control-sm">
                             <option value="">Ordenar por recibido</option>
-                            <option value="asc" {{ request('orden_recibido') == 'asc' ? 'selected' : '' }}>Más antiguo primero</option>
-                            <option value="desc" {{ request('orden_recibido') == 'desc' ? 'selected' : '' }}>Más reciente primero</option>
+                            <option value="asc" {{ old('orden_recibido', request()->input('orden_recibido')) == 'asc' ? 'selected' : '' }}>Más antiguo primero</option>
+			    <option value="desc" {{ old('orden_recibido', request()->input('orden_recibido')) == 'desc' ? 'selected' : '' }}>Más reciente primero</option>
 
                         </select>
                     </div>
@@ -591,6 +592,7 @@ function GetLista(p) {
 
     $("#fbuscar").ajaxSubmit({
         url: href,
+	type: 'POST',
         error: function (err) {
             alert(err.statusText);
         },
@@ -737,27 +739,31 @@ function FormatearFechaDate(start,end,label){
     $("#MuestraFecha").text(v);
 }
 
-
-function FormatearFechaDeInput(){
+function FormatearFechaDeInput() {
     let completo = $("input[name='fechas']").val();
+
+    if (typeof completo !== 'string' || !completo.includes(" - ")) {
+        console.warn("Valor de 'fechas' no válido o vacío:", completo);
+        return;
+    }
+
     let partes = completo.split(' - ');
-    let miStart = new Date(partes[0]+" 00:00:00");
+    if (partes.length !== 2) {
+        console.warn("Formato inesperado en 'fechas':", completo);
+        return;
+    }
+
+    let miStart = new Date(partes[0] + " 00:00:00");
     let miEnd = new Date(partes[1] + " 23:59:59");
+
     console.log(partes);
     console.log(miStart);
     console.log(miEnd);
     console.log("FormatearFechaDate");
-    FormatearFechaDate(miStart,miEnd);
-    /*
-    const options = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    };
-    let v = start._d.toLocaleDateString("es-MX",options)+" - "+end._d.toLocaleDateString("es-MX",options);
-    $("#MuestraFecha").text(v);
-    */
+
+    FormatearFechaDate(miStart, miEnd);
 }
+
    
 
 function MuestraIconFiltros(es){

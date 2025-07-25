@@ -110,7 +110,8 @@ Route::middleware('auth')->group(function () {
 	//DASHBOARD
 	Route::middleware(['auth'])->group(function () {
 		Route::get('pedidos2/dashboard', [Pedidos2Controller::class, 'dashboard'])->name('dashboard');
-		Route::get('pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboardLista'])->name('dashboard.lista');
+		Route::match(['get', 'post'], 'pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboardLista'])->name('dashboard.lista');
+
 	});
 
 	Route::post('pedidos2/entrega-programada/{id}', [Pedidos2Controller::class, 'guardarEntregaProgramada']);

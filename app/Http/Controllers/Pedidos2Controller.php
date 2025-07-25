@@ -496,7 +496,7 @@ public function dashboard(){
 
     // Prefiltros iniciales
     $termino = "";
-    $desde = "2000-01-01 00:00:00";
+    $desde = "2025-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
     $pag = 1;
     $rpp = 30;
@@ -604,20 +604,29 @@ public function dashboard(){
 
 
 public function dashboardLista(Request $request){
-
     $user = auth()->user();
 
-    $pag = max(1, (int)$request->query("p", 1));
-    $ordenRecibido = $request->query('orden_recibido', '');
+    $pag = max(1, (int)($request->input("p") ?? 1));
+    $ordenRecibido = $request->input('orden_recibido', '');
 
     $filtros = [
-        'termino' => $request->input("termino", ""),
-        'desde' => "2000-01-01",
-        'hasta' => now()->format("Y-m-d"),
-        'etiquetas' => (array)$request->query("etiquetas"),
+        'termino' => (string) $request->input("termino", ""),
+        'desde' => "2025-01-01 00:00:00",
+        'hasta' => now()->format("Y-m-d 23:59:59"),
+        'st' => (array) $request->input("st", []),
+        'sp' => (array) $request->input("sp", []),
+        'spsub' => (array) $request->input("spsub", []),
+        'or' => (array) $request->input("or", []),
+        'orsob' => (array) $request->input("orsob", []),
+        'suc' => (array) $request->input("suc", []),
+        'rec' => (array) $request->input("rec", []),
+        'etiquetas' => (array) $request->input("etiquetas", []),
+        'orden_recibido' => $ordenRecibido,
     ];
 
-    Pedidos2::$rpp = ($request->query('excel_dashboard') == 1)? 99999 : 30;
+    Pedidos2::$rpp = ($request->input('excel_dashboard') == 1) ? 99999 : 30;
+    Pedidos2::$pagina = $pag;
+
     $resultado = Pedidos2::ListaDashboard($pag, $user, $filtros);
 
     $lista = $resultado['data'];
@@ -625,7 +634,6 @@ public function dashboardLista(Request $request){
     $rpp = Pedidos2::$rpp;
 
     foreach($lista as $item){
-
         $item->etiquetas_render = [];
 
         if(!empty($item->etiquetas_coloreadas)){
@@ -635,31 +643,26 @@ public function dashboardLista(Request $request){
                     [$nombre, $color] = explode('|', trim($p));
                     $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
                     $item->etiquetas_render[] = [
-
                         'nombre' => $nombre, 
                         'color' => $color,
                         'iniciales' => strtoupper($iniciales),
-
                     ];
                 }
             }
         }
-
     }
 
-    if($request->query('excel_dashboard') == 1){
+    if($request->input('excel_dashboard') == 1){
         $RC = new ReportesController();
         $RC->ExcelDashboard(collect($lista));
         return;
     }
 
     $estatuses = Status::all()->pluck('name', 'id')->toArray();
-    //$total = Pedidos2::$total;
-    $rpp = Pedidos2::$rpp;
 
-    return view("dashboard.lista", compact("lista", "estatuses", "total", "rpp", "pag", "user"));
-    
+    return view("dashboard.lista", compact("lista","pag", "estatuses", "total", "rpp", "user"));
 }
+
 
 
 

@@ -740,7 +740,7 @@ class ReportesController extends Controller
         $user = auth()->user();
 
     $termino = $request->query("termino", "");
-    $desde = "2000-01-01 00:00:00";
+    $desde = "2025-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
 
     $status = (array)$request->query("st");
@@ -757,107 +757,34 @@ class ReportesController extends Controller
     $ordenRecibido = $request->query('orden_recibido', '');
     
     //LaravelLog::info('Origen recibido: ',['origen' => $origen]);
-    Pedidos2::$rpp = 9999999;
     
-    $lista = collect(Pedidos2::Lista(
+    
+    $filtros = [
 
-        $pag, 
-        $termino,
-        $desde,
-        $hasta,
-        $status,
-        $subprocesos,
-        $origen,
-        $sucursal,
-        $subpstatus,
-        $recogido,
-        $orsub,
-        $user->id,
-        $etiquetas
+        'termino' => $termino,
+        'desde' => substr($desde, 0, 10),
+        'hasta' => substr($hasta, 0, 10),
+        'etiquetas' => $etiquetas,
+        'st' => $status,
+        'sp' => $subprocesos,
+        'spsub' => $subpstatus,
+        'or' => $origen,
+        'orsub' => $orsub,
+        'rec' => $recogido,
+        'suc' => $sucursal,
+        'orden_recibido' => $ordenRecibido
 
-    ))->filter(function ($pedido)use ($user){
+    ];
 
-        /* LaravelLog::info('Filtro user_id vs auth_id', [
-            'pedido_id' => $pedido->id,
-            'pedido_user_id' => $pedido->user_id ?? 'NO DEFINIDO',
-            'auth_id' => $user->id
-        ]); */
+	
+	Pedidos2::$rpp = 1;
+	$resultadoTotal = Pedidos2::ListaDashboard(1, $user, $filtros);
+	$totalFiltrados = $resultadoTotal['total'] ?? 0;
 
-        //Filtros generales para todos los usuarios
-        $statusDahsboard = [2, 5];
+	Pedidos2::$rpp = $totalFiltrados > 0 ? $totalFiltrados : 1000;
+	$resultado = Pedidos2::ListaDashboard(1, $user, $filtros);
+	$lista = collect($resultado['data']);
 
-        //Para usuarios de ventas vean solo sus pedidos
-        if($user->role_id == 2 && $user->department_id == 3){
-
-            return $pedido->user_id == $user->id && in_array($pedido->status_id, [1, 2, 3, 4, 5]);
-
-        }
-
-        
-        //Para usuarios de embarques vean solo lo "Recibido por embarques"
-        if($user->role_id == 2 && $user->department_id == 4){
-
-            
-            if(in_array($pedido->status_id, $statusDahsboard)){
-
-                $ultimoLog = Log::where('order_id', $pedido->id)
-                    ->where('status', 'like', '%Recibido por embarques%')
-                    ->orderByDesc('created_at')
-                    ->first();
-
-                if($ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office){
-                    return true;
-                }
-
-                return false;
-
-            }
-
-            return false;
-
-        }
-
-         //Para usuarios de fabricación
-        if($user->role_id == 2 && $user->department_id == 5){
-
-            $ordenes = ManufacturingOrder::where('order_id', $pedido->id)
-                ->whereIn('status_id', [1,3])
-                ->get();
-                
-                
-            $ordenesSucursal = $ordenes->filter(function($of) use($user){
-
-                $office = $of->office() ?: $of->officeCreated();
-                $office = trim(strtolower($office));
-                $userOffice = trim(strtolower($user->office));
-                return $office == $userOffice;
-
-            });
-
-            //LaravelLog::info("Pedido #{$pedido->id} - Ordenes Totales: " . $ordenes->count(). " - Ordenes sucursal: " . $ordenesSucursal->count());
-
-            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-
-        //Usuarios de administración
-        if($user->role_id == 1 || $user->department_id == 2){
-
-            return !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-        //Usuarios de auditría
-        if(in_array($user->role_id, [1,2]) && $user->department_id == 9){
-
-            return in_array($pedido->status_id, [6, 7, 8, 9]);
-
-        }
-
-
-
-    })->values();
 
         //\Log::info("IDs exportados Excel:", $lista->pluck('id')->toArray());
 
@@ -1003,7 +930,7 @@ class ReportesController extends Controller
      $user = auth()->user();
 
     $termino = $request->query("termino", "");
-    $desde = "2000-01-01 00:00:00";
+    $desde = "2025-01-01 00:00:00";
     $hasta = now()->format("Y-m-d 23:59:59");
 
     $status = (array)$request->query("st");
