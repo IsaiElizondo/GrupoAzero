@@ -37,7 +37,7 @@
 
 
 
-                @if ($user->role_id ==1 || in_array($user->department_id,[7]) )
+                @if ($user->role_id ==1 || in_array($user->department_id,[5,7]) )
                 <button class="Tipo" rel="R">Requisición Stock</button>
                 @endif
             

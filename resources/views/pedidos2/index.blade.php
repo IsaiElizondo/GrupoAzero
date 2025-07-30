@@ -215,7 +215,7 @@ use App\Http\Controllers\Pedidos2Controller;
         <button class="nuevo" href="{{ url('pedidos2/multie') }}">Cambio de Estatus Masivo </button>   
         @endif
 
-        @if ( !in_array($user->department_id,[5,9]))
+        @if ( !in_array($user->department_id,[9]))
         <button class="nuevo" href="{{ url('pedidos2/nuevo') }}">Crear Nuevo Pedido</button>
         @endif
 

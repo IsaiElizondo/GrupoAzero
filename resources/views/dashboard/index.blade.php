@@ -297,7 +297,7 @@ $manana->modify("+1 day");
 $mananaString = $manana->format("Y-m-d");
 ?>
 <script type="text/javascript" >
-
+let haBuscado = false;
 
 $(document).ready(function(){
 /*
@@ -368,8 +368,30 @@ $(document).ready(function(){
 
     //Buscar
     $("#buscarBoton").click(function(e){
+
         e.preventDefault();
-        GetLista();
+        if(!haBuscado){
+            haBuscado = true;
+            $("#fbuscar input[name='p']").val("1");
+            GetLista();
+        }else{
+            
+            haBuscado = false;
+
+            //Limpiar las checkboxes
+            $("#fbuscar input[type='checkbox']").prop("checked", false);
+            $("#fbuscar input[type='text'][name='termino']").val("");
+            $("#fbuscar input[type='text'][name='fechas']").val("");
+            $("#fbuscar select[name='orden_recibido']").val("");
+
+            //Lipiar valores
+            $("[name='querystring']").val("{}");
+            
+            //Recargar Dashboard
+            $("#fbuscar input[name='p']").val("1");
+
+            GetLista();
+        }
     });
 
  
@@ -636,7 +658,7 @@ function GetLista(p) {
             //console.log("querystring actualizado:", queryObject);
 
           
-            LimpiaFiltros();
+            
         }
     });
 
