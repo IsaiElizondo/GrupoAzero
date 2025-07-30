@@ -1090,6 +1090,10 @@ public function guardarEntregaProgramada(Request $request, $id){
             $shipment = Shipment::where(["order_id"=>$id])->first();
             return view("pedidos2/accion/enpuerta",compact("id","order","paso","shipment"));
         }
+        if($accion == "noexitosa"){
+
+            return view("pedidos2/accion/noexitosa", compact("id", "order", "paso"));
+        }
         if($accion == "entregar"){
            // $this->set_accion_entregar($request, $id);
             return view("pedidos2/accion/entregar",compact("id","order","paso"));
@@ -3495,6 +3499,61 @@ public function guardarEntregaProgramada(Request $request, $id){
     
     return redirect("pedidos2/pedido/".$order->id);
     }
+
+    //------------------------------------------------------------------//
+    //----------------------QUITAR EN PUERTA---------------------------//
+    //-----------------------------------------------------------------//
+
+    public function set_accion_noexitosa($id, Request $request){
+
+        $id = Tools::_int($id);
+        $user = auth()->user();
+
+        $order = Order::where("id", $id)->first();
+
+        if(!$order || $order->status_id != 5){
+            abort(403, "Pedido iválido o sin estatus 'En Puerta'");
+        }
+
+        $motivo = !empty($request->motivo) ? Tools::_string($request->motivo, 100):"";
+        $observaciones = !empty($request->observaciones) ? Tools::_string($request->observaciones, 200) : "";
+
+        if(empty($motivo)){
+            return back()->with("error", "Debes seleccionar un motivo.");
+        }
+
+        $nuevoStatus = 2;
+        Order::where("id", $id)->update([
+            "status_id" => $nuevoStatus,
+            "status_5" => 0,
+            "status_6" => 0,
+            "updated_at" => now()
+        ]);
+
+        Pedidos2::Log(
+            $id,
+            "Entrega no exitosa",
+            "Se marcó como entrega no exitosa el pedido'". Pedidos2::CodigoDe($order) . "'. Motivo: " . $motivo,
+            $nuevoStatus,
+            $user
+        );
+
+        if(!empty($observaciones)){
+            Pedidos2::Log(
+                $id,
+                "Observaciones entrega no exitosa",
+                "Comentario:" . $observaciones,
+                $nuevoStatus,
+                $user
+            );
+        }
+
+        return redirect("pedidos2/pedido/" . $order->id)->with("succes", "Entrega no exitosa registrada correctamente.");
+
+    }
+    //------------------------------------------------------------------//
+    //----------------------QUITAR EN PUERTA---------------------------//
+    //-----------------------------------------------------------------//
 
 
 

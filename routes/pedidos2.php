@@ -82,6 +82,9 @@ Route::middleware('auth')->group(function () {
 	Route::get('pedidos2/set_status/{id}', [Pedidos2Controller::class, 'set_status']);
 	Route::post('pedidos2/set_multistatus', [Pedidos2Controller::class, 'set_multistatus']);
 	Route::post('pedidos2/set_accion_desauditoria/{id}', [Pedidos2Controller::class, 'set_accion_desauditoria']);
+
+	Route::post('pedidos2/set_accion_noexitosa/{id}', [Pedidos2Controller::class, 'set_accion_noexitosa']);
+
 	Route::post('pedidos2/add_nota/{id}', [Pedidos2Controller::class, 'add_nota']);
 	
 	Route::post('pedidos2/set_accion_audita/{id}', [Pedidos2Controller::class, 'set_accion_audita']); 

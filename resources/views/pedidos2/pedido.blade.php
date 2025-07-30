@@ -306,7 +306,7 @@ $pedidoStatusId = $pedido->status_id;
         @if ( 
            
         $parciales->isEmpty()==true && $pedido->origin !="R" 
-        && $pedido->status_5==0 && $pedido->status_6==0 && $shipments->isEmpty()==true 
+        && $pedido->status_5==0 && $pedido->status_6==0 
         && ($user->role_id ==1 || in_array($user->department_id,[2,8]) )
         )  
         <!--  !empty($pedido->invoice_number) &&   -->
@@ -320,6 +320,12 @@ $pedidoStatusId = $pedido->status_id;
 
 
         <!-- <a class="Accion" href="{{ url('pedidos2/parcial_accion/'.$pedido->id.'?a=fabricado') }}">Fabricado</a> -->
+        
+        @if($pedido->status_id == 5 && (in_array(auth()->user()->role->name, ["Administrador","Empleado"]) && in_array(auth()->user()->department->name, ["Administrador", "Embarques"])))
+            <a class="Accion alerta modalShow" href="{{ url('pedidos2/accion/'.$pedido->id.'?a=noexitosa') }}">
+            Entrega no exitosa
+            </a>
+        @endif
 
 
         @if (  $pedido->status_id < 6 && 
@@ -951,7 +957,14 @@ let rel = $(this).attr("rel");
 });
 
 
+$(".Eleccion .Accion.alerta").click(function(e){
 
+    e.preventDefault();
+    $(".Eleccion .Accion").removeClass("activo");
+    $(this).addClass("activo");
+    AccionPresionadoNoExitosa(this);
+
+});
 
 
 CargarParciales();
@@ -1722,6 +1735,52 @@ $.ajax({
 
 }
 
+
+//Quitar Estatus EN Puerta 
+
+function AccionPresionadoNoExitosa(ob){
+
+    let href = $(ob).attr("href");
+
+    $.ajax({
+
+        url: href,
+        type: "get",
+        error: function(err){ alert(err.statusText); },
+        success: function(html){
+            AccionNoExitosaForma(html, ob);
+        }
+
+    });
+
+}
+
+function AccionNoExitosaForma(html, ob){
+
+    if(typeof(ob) !== "undefined"){
+        $(ob).addClass("Completo");
+    }
+
+    MiModal.content(html);
+    MiModal.show();
+
+    $("#FSetAccion").ajaxForm({
+        error: function(err){alert(err.statusText);},
+        dataType: "json",
+        success: function(json){
+            if(json.status == 1){
+                window.location.reload();
+            }else{
+                alert(json.errors);
+            }
+        }
+    });
+
+    $("body").on("MiModal-exit", function(){
+        window.location.reload();
+        $("body").off("MiModal-exit");
+    });
+}
 
 
 
