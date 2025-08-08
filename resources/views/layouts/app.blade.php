@@ -21,6 +21,7 @@
     <!-- Datepicker Files -->
     <link rel="stylesheet" href="{{asset('css/bootstrap-datepicker3.css')}}">
     
+    @stack('css')
 
     </head>
     <body class="{{ $class ?? '' }}">

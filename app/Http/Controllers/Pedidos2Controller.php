@@ -23,6 +23,7 @@ use App\Status;
 use App\Smaterial;
 use App\Stockreq;
 use App\User;
+use App\DevolucionParcial;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -164,6 +165,28 @@ class Pedidos2Controller extends Controller
                     }
                 }
             }
+
+
+            $item->devoluciones_mini = [];
+
+            if(!empty($item->devoluciones_info)){
+
+                $regs = explode(',', $item->devoluciones_info);
+
+                foreach($regs as $r){
+                    if(str_contains($r, '|')){
+                        [$tipo, $folio] = explode('|', $r);
+                        $item->devoluciones_mini[] = [
+                            'tipo' => $tipo,
+                            'folio' => $folio,
+                            'letra' => strtoupper(substr($tipo, 0, 1))
+                        ];
+                    }
+                }
+
+            }
+
+
         }
 
 
@@ -229,7 +252,7 @@ class Pedidos2Controller extends Controller
 
 
     //----------------------------------------------------------------------------------------------------------//
-    //------------------------------- GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA------------------------------//
+    //------------------------------- GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA----------------------------------//
     //---------------------------------------------------------------------------------------------------------//
 
 
@@ -635,6 +658,25 @@ public function dashboardLista(Request $request){
 
     foreach($lista as $item){
         $item->etiquetas_render = [];
+
+        $item->devoluciones_mini = [];
+
+        if(!empty($item->devoluciones_info)){
+
+            $regs = explode(',', $item->devoluciones_info);
+
+            foreach($regs as $r){
+                if(str_contains($r, '|')){
+                    [$tipo, $folio] = explode('|', $r);
+                    $item->devoluciones_mini[] = [
+                        'tipo' => $tipo,
+                        'folio' => $folio,
+                        'letra' => strtoupper(substr($tipo, 0, 1))
+                    ];
+                }
+            }
+
+        }
 
         if(!empty($item->etiquetas_coloreadas)){
             $pairs = explode(',', $item->etiquetas_coloreadas);
@@ -2847,7 +2889,164 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
+    //---------------------------------------------------------------------//
+    //-----------------------DEVULUCIONES PARCIALES(NUEVO)-----------------//
+    //---------------------------------------------------------------------//
 
+
+    public function devolucion_parcial_nueva($order_id){
+
+        $order = Order::findOrfail($order_id);
+        $user = auth()->user();
+
+        return view('pedidos2.devoluciones_parciales.nuevo', compact('order', 'user'));
+
+    }
+
+
+
+    public function devolucion_parcial_guardar(Request $request, $order_id){
+
+        $request->validate([
+            'folio' => 'required|string|max:100',
+            'motivo' => 'required|in:Error del Cliente,Error Interno',
+            'descripcion' => 'nullable|string|max:300',
+            'tipo' => 'required|in:total,parcial',
+            'archivo' => 'required|file|mimes:pdf,jpg,jpeg,png',
+        ]);
+
+        $filePath = null;
+        if($request->hasFile('archivo')){
+
+            $archivo = $request->file('archivo');
+            $filename = time() . '_' . $archivo->getClientOriginalName();
+            $filePath = $archivo->storeAs('public/DevolucionesParciales', $filename);
+
+        }
+
+        $devolucion = DevolucionParcial::create([
+
+            'order_id' => $order_id,
+            'folio' => $request->folio,
+            'motivo' => $request->motivo,
+            'descripcion' => $request->descripcion,
+            'tipo' => $request->tipo,
+            'file' => $filePath,
+            'created_by' => auth()->id(),
+
+        ]);
+
+        if($request->tipo == 'total'){
+
+            Order::where('id', $order_id)->update([
+                'status_id' => 9,
+                'updated_at' => now()
+            ]);
+        
+            Pedidos2::Log($order_id, "Devolución Total", "Se registró una devolución Total", 9, auth()->user());
+        }else{
+            Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
+        }
+
+        return response()->json(['status' => 1]);
+    }
+
+
+
+    public function devoluciones_parciales_lista($order_id){
+
+        $lista = DevolucionParcial::where('order_id', $order_id)->orderBy('id', 'desc')->get();
+        $user = auth()->user();
+
+        return view('pedidos2.devoluciones_parciales.lista', compact('lista', 'user'));
+
+    }
+
+
+
+    public function devolucion_parcial_editar($id){
+
+        $user = auth()->user();
+
+        if(!in_array($user->role->name, ["Administrador", "Empleado"]) && !in_array($user->department->name, ["Administrador", "Embarques"])){
+            abort(403, 'No autorizado');            
+        }
+
+        $dev = DevolucionParcial::findOrFail($id);
+
+        return view('pedidos2.devoluciones_parciales.edit', compact('dev'));
+
+    }
+
+
+
+    public function devolucion_parcial_actualizar(Request $request, $id){
+
+        $user = auth()->user();
+
+        if(!in_array($user->role->name, ["Administrador", "Empleado"]) && !in_array($user->department->name, ["Administrador", "Embarques"])){
+            abort(403, 'No autorizado');
+        }
+
+        $request->validate([
+            'motivo' => 'required|in:Error del Cliente,Error Interno',
+            'descripcion' => 'required|string|max:300',
+            'tipo' => 'required|in:total,parcial,'
+        ]);
+
+        $dev = DevolucionParcial::findOrFail($id);
+        $order_id = $dev->order_id;
+
+        if($request->tipo == 'total'){
+
+            Order::where('id', $order_id)->update([
+                'status_id' => 9,
+                'updated_at' => now()
+            ]);
+        
+            Pedidos2::Log($order_id, "Devolución Total", "Se registró una devolución Total", 9, auth()->user());
+        }else{
+            Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
+        }
+
+        $dev = DevolucionParcial::findOrFail($id);
+        $dev->update([
+            'motivo' => $request->motivo,
+            'descripcion' => $request->motivo,
+            'tipo' => $request->tipo,
+        ]);
+
+        Pedidos2::Log($dev->order_id, "Devolución Parcial", "Actualizada por: ", 0, $user);
+
+        return response()->json(['status' => 1]);
+
+    }
+
+
+
+    public function devolucion_parcial_cancelar($id){
+
+        $user = auth()->user();
+
+        if($user->role->name !== 'Administrador'){
+            abort(403, 'No autorizado');
+        }
+
+        $dev= DevolucionParcial::findOrFail($id);
+        $dev->cancelado = true;
+        $dev->updated_at = now();
+        $dev->save();
+
+        Pedidos2::Log($dev->order_id, "Devolución Parcial", "Cancelada por admin", 0, $user);
+
+        return response()->json(['status' => 1]);
+
+    }
+
+
+    //---------------------------------------------------------------------//
+    //-----------------------DEVULUCIONES PARCIALES(FIN)-----------------//
+    //---------------------------------------------------------------------//
 
 
 

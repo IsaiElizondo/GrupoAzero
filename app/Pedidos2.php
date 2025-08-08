@@ -121,6 +121,26 @@ class Pedidos2 extends Model
                 }
             }
 
+            if(in_array("devolucionp", $subprocesos)){
+
+                $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0";
+
+                $tipos = [];
+                foreach($subpstatus as $sps){
+                    if($sps == "devolucionp_parcial"){
+                        $tipos[] = "'parcial'";
+                    }
+                    if($sps == "devolucionp_total"){
+                        $tipos[] = "'total'";
+                    }
+                }
+
+                if(!empty($tipos)){
+                    $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN (" . implode(",", $tipos) . ")) > 0";
+                }
+
+            }
+
         }
 
         if(!empty($origen)){
@@ -178,6 +198,12 @@ class Pedidos2 extends Model
         JOIN etiquetas e ON e.id = ep.etiqueta_id
         WHERE ep.pedido_id = o.id
         )AS etiquetas_coloreadas,
+
+        (
+            SELECT GROUP_CONCAT(CONCAT(dp.tipo, '|', dp.folio) SEPARATOR',')
+            FROM devoluciones_parciales dp
+            WHERE dp.order_id = o.id AND dp.cancelado = 0
+        )AS devoluciones_info,
 
         (SELECT p.number FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS requisition_code,      
         (SELECT p.document FROM purchase_orders p wHERE p.order_id = o.id LIMIT 1) AS document,
@@ -480,6 +506,22 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
                 $where[] = "(SELECT COUNT(*) FROM smaterial sma WHERE sma.order_id = o.id AND sma.status_id IN (" . implode(',', $subsm) . ")) > 0";
             }
         }
+
+        if(in_array("devolucionp", $subprocesos)){
+
+            $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0";
+
+            foreach($subpstatus as $sp){
+                if($sp == 'devolucionp_parcial'){
+                    $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0";
+                }
+                if($sp == 'devolucion_total'){
+                    $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total) > 0";
+                }
+            }
+
+        }
+
     }
 
     // Filtros por rol y departamento
@@ -546,7 +588,13 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
             MAX(pa.invoice) AS parcial_number,
             MAX(pa.status_id) AS parcial_status_id,
             MAX(ue.office) AS embarques_office,
-            MAX(u.name) AS creator
+            MAX(u.name) AS creator,
+            (
+                SELECT GROUP_CONCAT(CONCAT(dp.tipo, '|', dp.folio) SEPARATOR',')
+                FROM devoluciones_parciales dp
+                WHERE dp.order_id = o.id AND dp.cancelado = 0
+            )AS devoluciones_info
+
         FROM orders o
         LEFT JOIN quotes q ON q.order_id = o.id
         LEFT JOIN stockreq r ON r.order_id = o.id

@@ -1,0 +1,36 @@
+.subfila .Alerta{
+
+    display: inline-block;
+    margin-left: 10px;
+    color: #a11;
+    font-weight: bold;
+    vertical-align: middle;
+
+}
+
+aside.Subproceso{
+
+    display: block;
+    overflow: hidden;
+
+}
+
+aside.Subproceso .subfila{
+
+    margin-bottom: 5px;
+    display: block;
+
+}
+
+aside.Subproceso a.pdf{
+
+    display: inline-block;
+    margin-left: 5px;
+
+}
+
+aside.Subproceso.cancelado{
+
+    grid-column: unset !important;
+
+}

@@ -119,6 +119,14 @@ Route::middleware('auth')->group(function () {
 
 	Route::post('pedidos2/entrega-programada/{id}', [Pedidos2Controller::class, 'guardarEntregaProgramada']);
 
+	//DEVOLUCIONES PARCIALES
+	Route::get('pedidos2/devolucion_parcial_nueva/{order_id}', [Pedidos2Controller::class, 'devolucion_parcial_nueva']);
+	Route::post('pedidos2/devolucion_parcial_guardar/{order_id}', [Pedidos2Controller::class, 'devolucion_parcial_guardar']);
+	Route::get('pedidos2/devoluciones_parciales_lista/{order_id}', [Pedidos2Controller::class, 'devoluciones_parciales_lista']);
+	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_editar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_editar']);
+	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_actualizar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_actualizar']);
+	Route::post('pedidos2/devolucion_parcial_cancelar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_cancelar']);
+
 });
 
 });

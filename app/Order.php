@@ -95,4 +95,11 @@ class Order extends Model
         return !empty($usr) ? $usr->office : "";
     }
 
+    public function devolucionesParciales(){
+
+        return $this->hasMany(\App\DevolucionParcial::class, 'order_id');
+
+    }
+
+
 }

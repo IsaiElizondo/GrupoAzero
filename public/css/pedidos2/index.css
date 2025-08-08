@@ -228,6 +228,17 @@ background-repeat: no-repeat;
     background-image: url(icon_status_10.png);
 }
 
+.Pedido .estatus.ED.parcial{
+    background-color:#da921e;  
+    background-image: url(icon_status_9.png);
+}
+
+.Pedido .estatus.ED.total{
+    background-color:#7f5613;  
+    background-image: url(icon_status_9.png);
+}
+
+
 .Pedido .estatus small{
     display:block;
     text-align: center;

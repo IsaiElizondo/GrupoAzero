@@ -78,7 +78,7 @@ use App\Http\Controllers\Pedidos2Controller;
                 <fieldset>
                     <legend>Subprocesos</legend>
                     @foreach ($events as $k=>$v)
-                        @if ($k == "refacturar")
+                        @if ($k == "refacturar" || $k == "devolucion")
                             @continue
                         @endif 
                     <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>
@@ -108,6 +108,24 @@ use App\Http\Controllers\Pedidos2Controller;
                             @endif
 
                     @endforeach
+
+                    {{--NUEVA DEVOLUCIÓN--}} 
+
+                            <div class="checkpair parent" rel="devolucionp">
+                                <input type="checkbox" name="sp[]" value="devolucionp" id="sp_devolucionp">
+                                <label for="sp_devolucionp"> Devolución </label>
+                            </div>
+
+                            <div class="checkpair sub" parent="devolucionp">
+                                <input type="checkbox" name="spsub[]" value="devolucionp_parcial" id="spsub_devolucionp_parcial">
+                                <label for="spsub_devolucionp_parcial">Parcial</label>
+                            </div>
+
+                            <div class="checkpair sub" parent="devolucionp">
+                                <input type="checkbox" name="spsub[]" value="devolucionp_total" id="spsub_devolucionp_total">
+                                <label for="spsub_devolucionp_total"> Total </label>
+                            </div>
+
                 </fieldset>
                 <fieldset>
                     <legend>Origen</legend>
@@ -457,6 +475,15 @@ function Querystring(){
         for(i in qsob.suc){
             $("[name='suc[]'][value='"+qsob.suc[i]+"']").prop("checked",true);  
         }   
+    }
+
+
+     if(typeof(qsob.spsub) != "undefined"){
+
+        for(i in qsob.spsub){
+            $("[name='spsub[]'][value='"+qsob.spsub[i]+"']").prop("checked", true);
+        }
+
     }
 
 

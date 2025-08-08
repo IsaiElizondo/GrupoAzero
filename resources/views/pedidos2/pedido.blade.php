@@ -352,6 +352,10 @@ $pedidoStatusId = $pedido->status_id;
 
         @endif
 
+        @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
+            <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución (GENERAL)</a> 
+        @endif 
+
         </div>
     </div>
 
@@ -491,10 +495,10 @@ $pedidoStatusId = $pedido->status_id;
         <a class="NParcial Candidato subp" href="{{ url('pedidos2/parcial_nuevo/'.$pedido->id) }}">+ Salida Parcial</a>
     @endif
 
-       
-    @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
-        <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
-     @endif 
+    @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])))
+        <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
+    @endif
+    
 
 
     @if ($user->role_id == 1 || (in_array($user->department_id,[3,7]) && in_array($pedido->status_id, [7]) && !isset($rebilling->id)) )
@@ -504,6 +508,8 @@ $pedidoStatusId = $pedido->status_id;
     
     </div>
 
+
+    <div id="DevolucionesParcialesDiv" href="{{ url('pedidos2/devoluciones_parciales_lista/'.$pedido->id) }}" class="SubprocesoContainer"></div>
 
     <div id="DevolucionDiv" href="{{ url('pedidos2/devolucion_lista/'.$pedido->id) }}" class="SubProcesoContainer"></div>
 
@@ -953,6 +959,9 @@ let rel = $(this).attr("rel");
     else if(rel == "refacturacion"){
         AjaxGet(href,FormaNuevoRefacturacion);        
     }
+    else if(rel == "devolucion_parcial"){
+        AjaxGet(href,FormaNuevoDevolucionParcial);
+    }
 
 });
 
@@ -966,12 +975,42 @@ $(".Eleccion .Accion.alerta").click(function(e){
 
 });
 
+//DEVOLUCIONES PARCIALES
+$("body").on("click", ".editapg", function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"), FormaEditarDevolucionParcial);
+});
+
+$("body").on("submit", ".formCancelarDevolucion", function(e){
+
+    e.preventDefault();
+
+    if(!confirm("¿Estás seguro de cancelar esta devolución?")){
+        return;
+    }
+
+    let form =$(this);
+    let url = form.attr("action");
+
+    $.post(url, form.serialize(), function(json){
+        if(json.status == 1){
+            CargarDevolucionesParciales();
+        }else{
+            alert("No se pudo cancelar");
+        }
+    });
+
+});
+
+//FIN DE DEVOLUCIONES PARCIALES
+
 
 CargarParciales();
 CargarSmateriales();
 CargarOrdenf();
 CargarRequisiciones();
 CargarDevoluciones();
+CargarDevolucionesParciales();
 //$("#CuerpoActualizar").hide();
 
 
@@ -1553,8 +1592,54 @@ function FormaEditarRefacturacion(h){
 
 }
 
+function FormaNuevoDevolucionParcial(h){
 
+    MiModal.exitButton = true;
+    MiModal.content(h);
+    MiModal.show();
 
+    $("#FSetAccion").ajaxForm({
+        datatype: "json",
+        error:function(err){
+            alert("Error al registrar devolución: " + err.statusText);
+        },
+
+        success: function(json){
+            if(json.status == 1){
+                MiModal.exit();
+                CargarDevolucionesParciales();
+            }else{
+                alert("Error inesperado.");
+            }
+        }
+    });
+
+}
+
+function FormaEditarDevolucionParcial(h){
+
+    MiModal.exitButton = true;
+    MiModal.content(h);
+    MiModal.show();
+
+    $("#FSetAccion").ajaxForm({
+
+        dataType: "json",
+        error: function(err){
+            alert("Error al guardar: " + err.statusText);
+        },
+        success: function(json){
+            if(json.status == 1){
+                MiModal.exit();
+                CargarDevolucionesParciales();
+            }else{
+                alert("Error inesperado.");
+            }
+        }
+
+    });
+
+}
 
 
 
@@ -1958,6 +2043,24 @@ function CargarDevoluciones(){
         }
     });
     
+}
+
+function CargarDevolucionesParciales(){
+
+    let href = $("#DevolucionesParcialesDiv").attr("href");
+
+    $.ajax({
+        url:href,
+        error: function(err){
+
+            $("#DevolucionesParcialesDiv").html("<aside class='SubprocesoError'> Error al cargar devoluciones: " + err.statusText + "</aside>");
+
+        },
+        success: function(html){
+            $("#DevolucionesParcialesDiv").html(html);
+        }
+    });
+
 }
 
 

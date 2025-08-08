@@ -170,6 +170,15 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
         <a href="{{ url('pedidos2/pedido/'.$item->id) }}">  
             <div class="SuperElemento conSubprocesos">
 
+            @if(!empty($item->devoluciones_mini))
+                @foreach($item->devoluciones_mini as $dev)
+                    <div class="estatus ED {{$dev['tipo'] }}" title = "Devolución {{ $dev['tipo'] }} - {{ $dev['folio'] }}">
+                        <b>DEV</b>: {{$dev['letra']}}
+                        <small> {{ $dev['folio'] }} </small>
+                    </div>
+                @endforeach
+            @endif
+
             @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department_id != 5)
                 @foreach ($requisitions as $re)
                 <div class="estatus E{{ $re->status_id }}" title="Requisición #{{$re->number}} {{ (isset($estatuses[$re->status_id])?$estatuses[$re->status_id]:0) }}"> <b>RE</b>:{{ (isset($estatusCodes[$re->status_id])?$estatusCodes[$re->status_id]:$re->status_id) }} 

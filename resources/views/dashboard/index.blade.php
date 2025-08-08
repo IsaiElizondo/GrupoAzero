@@ -82,7 +82,7 @@ use App\Http\Controllers\Pedidos2Controller;
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                     </div>
                     
-                    @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 3, 4]))
+                    @if(in_array(auth()->user()->role->name, ['Administrador', 'Empleado']) || in_array(auth()->user()->department_id, [2, 3, 4, 9]))
                         <div class="col-md-3">
                             <button type="button" id="nuevoExcelBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
                         </div>
@@ -128,7 +128,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 <fieldset>
                                                     <legend>Subprocesos</legend>
                                                     @foreach ($events as $k=>$v)
-                                                        @if ($k == "refacturar")
+                                                        @if ($k == "refacturar" || $k == "devolucion")
                                                             @continue
                                                         @endif 
                                                     <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>
@@ -158,6 +158,26 @@ use App\Http\Controllers\Pedidos2Controller;
                                                             @endif
 
                                                     @endforeach
+
+
+                                                    {{--NUEVA DEVOLUCIÓN--}} 
+
+                                                    <div class="checkpair parent" rel="devolucionp">
+                                                        <input type="checkbox" name="sp[]" value="devolucionp" id="sp_devolucionp">
+                                                        <label for="sp_devolucionp"> Devolución </label>
+                                                    </div>
+
+                                                    <div class="checkpair sub" parent="devolucionp">
+                                                        <input type="checkbox" name="spsub[]" value="devolucionp_parcial" id="spsub_devolucionp_parcial">
+                                                        <label for="spsub_devolucionp_parcial">Parcial</label>
+                                                    </div>
+
+                                                    <div class="checkpair sub" parent="devolucionp">
+                                                        <input type="checkbox" name="spsub[]" value="devolucionp_total" id="spsub_devolucionp_total">
+                                                        <label for="spsub_devolucionp_total"> Total </label>
+                                                    </div>
+                                                    
+                                                    
                                                 </fieldset>
                                                 <fieldset>
                                                     <legend>Origen</legend>
@@ -568,6 +588,14 @@ function Querystring(){
 
     if(typeof(qsob.orden_recibido) != "undefined"){
         $("[name='orden_recibido']").val(qsob.orden_recibido);
+    }
+
+    if(typeof(qsob.spsub) != "undefined"){
+
+        for(i in qsob.spsub){
+            $("[name='spsub[]'][value='"+qsob.spsub[i]+"']").prop("checked", true);
+        }
+
     }
 
 
