@@ -5,30 +5,23 @@ use App\Libraries\Tools;
 $estatuses =[2=>"Recibido por embarques",3=>"En fabricación",4=>"Fabricado"];
 
 
+if($user->role_id != 1 && $user->department_id == 4){
+    $estatuses = [2=>"Recibido por embarques"];
+}
 
-    if($user->role_id != 1 && $user->department_id == 4){
-        $estatuses = [2=>"Recibido por embarques"];
-    }
+if($user->role_id != 1 && $user->department_id == 5){
+    $estatuses = [3=>"En fabricación",4=>"Fabricado"];
+}
 
-    if($user->role_id != 1 && $user->department_id == 5){
-        $estatuses = [3=>"En fabricación",4=>"Fabricado"];
-    }
-
-    if($user->role_id == 1 || $user->department_id == 9){
-        if($user->department_id == 9){$estatuses=[];} //VACIAR SI ES AU DITORIA
-        $estatuses[10]="Recibido por Auditoría";
-    }
-
- 
-
+if($user->role_id == 1 || $user->department_id == 9){
+    if($user->department_id == 9){$estatuses=[];}
+    $estatuses[10]="Recibido por Auditoría";
+}
 ?>
 @extends('layouts.app', ['activePage' => 'orders', 'titlePage' => __('Pedidos y ordenes de fabricación')])
 
 @section('content')
-<?php
-$statuses = Pedidos2::StatusesCat();
-
-?>
+<?php $statuses = Pedidos2::StatusesCat(); ?>
 
 <link rel="stylesheet" href="{{ asset('css/pedidos2/general.css?x='.rand(0,999)) }}" />
 <link rel="stylesheet" href="{{ asset('css/pedidos2/pedido.css?x='.rand(0,999)) }}" />
@@ -37,9 +30,6 @@ $statuses = Pedidos2::StatusesCat();
 <link rel="stylesheet" href="{{ asset('css/etiquetas/etiquetamultie.css?x='.rand(0,999)) }}" />
 
 <main class="content">
-
-
-
     <div class="card Fila">
         <center> <a class="regresar" href="{{ url('pedidos2') }}">&laquo; Regresar</a> </center>
     </div>
@@ -58,29 +48,28 @@ $statuses = Pedidos2::StatusesCat();
             @if (in_array(auth()->user()->role->name, ["Administrador","Empleado"]) || in_array(auth()->user()->department->name, ["Administrador", "Embarques", "Fabricación"]))
                 <button type="button" class="btn btn-secondary" id="modoEtiquetas"> Cambiar etiquetas</button>
             @endif
+            <button type="button" class="btn btn-secondary" id="modoCombo"> Cambio de Estatus y Cambio de Etiquetas</button>
         </div>
 
-        {{-- FORMULARIO INICIA AQUÍ --}}
         <form id="festatus" action="{{url('pedidos2/multie')}}" method="get">
             @csrf
             <input type="hidden" name="modo" id="inputModo" value="estatus" />
 
             <div id="bloqueEstatus" style="display:none;">
-                <select name="estatus" class="form-control">
+                <select name="estatus" class="form-control" id="selectEstatus">
                     <option value=""> -Elija uno- </option>
                     @foreach ($estatuses as $k => $v)
-                    <option value="{{$k}}" {{ ($k==$estatus) ? "selected" : "" }}>{{$v}}</option>
+                        <option value="{{$k}}" {{ ($k==$estatus) ? "selected" : "" }}>{{$v}}</option>
                     @endforeach
                 </select>
             </div>
 
             <center>
-                <div class="dropdown-checkbox">
+                <div class="dropdown-checkbox" id="bloqueEtiquetas">
                     <button type="button" class="dropdown-toggle">
                         Seleccionar etiquetas
                     </button>
                     <div class="dropdown-menu-checkboxes">
-                        {{-- Administrador, Ventas, Auditoria --}}
                         @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Auditoria"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                             @foreach($etiquetas as $etiqueta)
                                 <label class="dropdown-item-checkbox">
@@ -92,7 +81,6 @@ $statuses = Pedidos2::StatusesCat();
                             @endforeach
                         @endif
 
-                        {{-- Embarques --}}
                         @if(auth()->user()->department->name == "Embarques" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                             @foreach($etiquetas as $etiqueta)
                                 @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
@@ -106,7 +94,6 @@ $statuses = Pedidos2::StatusesCat();
                             @endforeach
                         @endif
 
-                        {{-- Fabricación - San Pablo --}}
                         @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
                             @foreach($etiquetas as $etiqueta)
                                 @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
@@ -120,7 +107,6 @@ $statuses = Pedidos2::StatusesCat();
                             @endforeach
                         @endif
 
-                        {{-- Fabricación - La Noria --}}
                         @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
                             @foreach($etiquetas as $etiqueta)
                                 @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
@@ -136,17 +122,14 @@ $statuses = Pedidos2::StatusesCat();
                     </div>
                 </div>
 
-                
-                    <div style="margin-top: 6px;">
-                        <label style="font-size: 14px;">
-                            <input type="checkbox" id="modoEliminarEtiquetas"/>
-                            Quitar etiquetas
-                        </label>
-                    </div>
+                <div style="margin-top: 6px;" id="bloqueQuitarEtiquetas">
+                    <label style="font-size: 14px;">
+                        <input type="checkbox" id="modoEliminarEtiquetas"/>
+                        Quitar etiquetas
+                    </label>
+                </div>
             </center>
-
         </form>
-        {{-- FORMULARIO TERMINA AQUÍ --}}
 
         <div class="Cuerpo">
             <p>Escriba un shipment en el campo de texto. Aparecerá uno o más pedidos en la lista.</p>
@@ -166,6 +149,7 @@ $statuses = Pedidos2::StatusesCat();
                     <center><h4><b>Elegidos</b></h4></center>
                     <div class="ResultsDiv" id="ResultsEstatus"></div>
                     <div class="ResultsDiv" id="ResultsEtiquetas" style="display:none;"></div>
+                    <div class="ResultsDiv" id="ResultsCombo" style="display:none;"></div>
                 </div>
 
                 <div>
@@ -175,22 +159,22 @@ $statuses = Pedidos2::StatusesCat();
             </section>
         </div>
     </div>
-
 </main>
-
-
 @endsection
 
 @push('js')
 <script type="text/javascript" src="{{ asset('js/jquery.form.js') }}"></script>
 <script type="text/javascript" src="{{ asset('jqueryui/jquery-ui.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('js/piedramuda.js') }}"></script> 
+<script type="text/javascript" src="{{ asset('js/piedramuda.js') }}"></script>
 <script type="text/javascript" src="{{ asset('js/etiquetas/etiquetasmultie.js') }}"></script>
 
 <script type="text/javascript">
 $(document).ready(function(){
-
     $("[name='estatus']").change(function(){
+        if($("#inputModo").val()==='combo'){
+            $("#bloqueEtiquetas").show();
+            $("#bloqueQuitarEtiquetas").show();
+        }
         $(".Cuerpo").show();
     });
 
@@ -225,89 +209,71 @@ $(document).ready(function(){
 
     $("body").on("click", ".SearchDiv .Pedido", function(){
         Enfoca(this);
-        setTimeout(AgregarALista, 100);        
+        setTimeout(AgregarALista, 100);
     });
 
     $("body").on("click",".PedidoPar a.del",function(){
         $(this).closest(".PedidoPar").remove();
-        
         if ($(".PedidoPar").length == 0) {
-            $("#confirmButton").hide(); // ⬅️ CAMBIO
+            $("#confirmButton").hide();
         }
     });
 
-    
     $("[name='shipment']").on("click",function(){
-        $(".Pedido").removeClass("focus"); 
+        $(".Pedido").removeClass("focus");
     });
 
-    
     $("#confirmButton").click(function(){
         Enviar();
     }).hide();
 
-$("#confirmarEtiquetasBtn").click(function(){
-
-    let hayEtiquetas = $("[name='etiquetas[]']:checked").length > 0;
-    if(!hayEtiquetas){
-
-        alert("Ni ha seleccionado etiquetas");
-        return;
-
-    }
-
-    let hayPedidos = $("ResultsEtiquetas .Pedido").length > 0;
-    if(!hayPedidos){
-
-        alert("No ha agregado ningún pedido para aplicar etiquetas");
-        return;
-
-    }
-
-    $("#inputModo").val("etiquetas");
-    Enviar();
-
-})
-
-
-    //SIN ESCOGER ESTATUS
     $("#bloqueEstatus").hide();
-    $(".dropdown-checkbox").hide();
-    $("#confirmarEtiquetasBtn").hide();
-    $("#modoEliminarEtiquetas").closest('div').hide();
     $("#bloqueEtiquetas").hide();
+    $("#bloqueQuitarEtiquetas").hide();
     $(".Cuerpo").hide();
 
-    //CAMBIAR A MODO ESTATUS
     $("#modoEstatus").click(function(){
-    $("#bloqueEstatus").show();
-    $(".dropdown-checkbox").hide();
-    $("#confirmarEtiquetasBtn").hide();
-    $("#modoEliminarEtiquetas").closest('div').hide();
-    $(".Cuerpo").hide();
-    $("#inputModo").val("estatus");
-    $("#ResultsEstatus").show();
-    $("#ResultsEtiquetas").hide().html("");
-    $("[name='etiquetas[]']").prop("checked", false);
-    $("#confirmButton").val("Confirmar estatus");
-    $("[name='term']").val("");
-});
+        $("#bloqueEstatus").show();
+        $("#bloqueEtiquetas").hide();
+        $("#bloqueQuitarEtiquetas").hide();
+        $(".Cuerpo").hide();
+        $("#inputModo").val("estatus");
+        $("#ResultsEstatus").show();
+        $("#ResultsEtiquetas").hide().html("");
+        $("#ResultsCombo").hide().html("");
+        $("[name='etiquetas[]']").prop("checked", false);
+        $("#confirmButton").val("Confirmar estatus");
+        $("[name='shipment']").val("");
+    });
 
-    //CAMBIAR A MODO ETIQUETAS
-   $("#modoEtiquetas").click(function(){
-    $("#bloqueEstatus").hide();
-    $(".dropdown-checkbox").show();
-    $("#confirmarEtiquetasBtn").show();
-    $("#modoEliminarEtiquetas").closest('div').show();
-    $(".Cuerpo").show();
-    $("#inputModo").val("etiquetas");
-    $("#ResultsEstatus").hide().html("");
-    $("#ResultsEtiquetas").show();
-    $("[name='estatus']").val("");
-    $("#confirmButton").val("Aplicar etiquetas");
-    $("[name='term']").val("");
-});
+    $("#modoEtiquetas").click(function(){
+        $("#bloqueEstatus").hide();
+        $("#bloqueEtiquetas").show();
+        $("#bloqueQuitarEtiquetas").show();
+        $(".Cuerpo").show();
+        $("#inputModo").val("etiquetas");
+        $("#ResultsEstatus").hide().html("");
+        $("#ResultsEtiquetas").show();
+        $("#ResultsCombo").hide().html("");
+        $("[name='estatus']").val("");
+        $("#confirmButton").val("Aplicar etiquetas");
+        $("[name='shipment']").val("");
+    });
 
+    $("#modoCombo").click(function(){
+        $("#bloqueEstatus").show();
+        $("#bloqueEtiquetas").hide();
+        $("#bloqueQuitarEtiquetas").hide();
+        $(".Cuerpo").hide();
+        $("#inputModo").val("combo");
+        $("#ResultsEstatus").hide().html("");
+        $("#ResultsEtiquetas").hide().html("");
+        $("#ResultsCombo").show().html("");
+        $("[name='etiquetas[]']").prop("checked", false);
+        $("[name='estatus']").val("");
+        $("#confirmButton").val("Aplicar todo");
+        $("[name='shipment']").val("");
+    });
 });
 
 function Enfoca(ob){
@@ -323,28 +289,7 @@ function ActivaShipments(){
     }
 }
 
-function AbrirConfirmacion(){
-    let focused = $(".ShipsLista .Pedido.focus");
-    let href = $(focused).attr("del");
-    let strEstatus = $("[name='estatus']").find(":selected").text();
-    let idEstatus = $("[name='estatus']").val();
-    let txt =  "Confirma que este pedido cambiará al estatus '"+strEstatus+"'";
-    if(confirm(txt)){
-        $.ajax({
-            url:href,
-            datatype:"json",
-            data:{ids:idEstatus},
-            success:function(json){
-                FocusBuscar();
-                $("[name='shipment']").change();
-            }
-        });
-    }
-}
 
-function FocusBuscar(){
-    $(".SearchDiv [name='shipment']").focus();
-}
 
 function AgregarALista() {
     let focused = $(".ShipsLista .Pedido.focus");
@@ -361,13 +306,15 @@ function AgregarALista() {
     if (modo === "estatus") {
         $("#ResultsEstatus").append(item);
         $("#ResultsEstatus .pc[rel='"+rel+"']").html(focused);
-    } else {
+    } else if (modo === "etiquetas") {
         $("#ResultsEtiquetas").append(item);
         $("#ResultsEtiquetas .pc[rel='"+rel+"']").html(focused);
+    } else {
+        $("#ResultsCombo").append(item);
+        $("#ResultsCombo .pc[rel='"+rel+"']").html(focused);
     }
 
-    $("#confirmButton").show(); 
-    FocusBuscar();
+    $("#confirmButton").show();
 }
 
 function Enviar(){
@@ -376,7 +323,9 @@ function Enviar(){
     let href = $("#confirmButton").attr("href");
     dd.append("modo", modo);
 
-    let selector = (modo === "estatus") ? "#ResultsEstatus" : "#ResultsEtiquetas";
+    let selector = "#ResultsEstatus";
+    if(modo === "etiquetas") selector = "#ResultsEtiquetas";
+    if(modo === "combo") selector = "#ResultsCombo";
 
     let quitarEtiquetas = $("#modoEliminarEtiquetas").is(":checked");
     dd.append("quitar_etiquetas", quitarEtiquetas ? 1: 0);
@@ -387,7 +336,7 @@ function Enviar(){
 
     dd.append("_token", $("[name='_token']").val());
 
-    if(modo === "estatus") {
+    if(modo === "estatus" || modo === "combo") {
         let est = $("[name='estatus']").val();
         if(!est) {
             alert("Selecciona un estatus.");
@@ -397,7 +346,7 @@ function Enviar(){
         dd.append("status_id", est);
     }
 
-    if(modo === "etiquetas") {
+    if(modo === "etiquetas" || modo === "combo") {
         if($("[name='etiquetas[]']:checked").length === 0){
             alert("Selecciona al menos una etiqueta.");
             return;
@@ -406,7 +355,7 @@ function Enviar(){
             dd.append("etiquetas[]", $(this).val());
         });
     }
-    
+
     $.ajax({
         url: href,
         data: dd,

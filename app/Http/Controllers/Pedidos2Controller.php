@@ -3352,38 +3352,34 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
-   public function multie_lista(Request $request)
-{
+  public function multie_lista(Request $request){
+
     $user = auth()->user();
     $role = $user->role;
 
-    // MODO DE OPERACIÓN
     $modo = $request->get("modo", "estatus");
+    $term = Tools::_string($request->get("term"), 16);
 
-    // Término de búsqueda
-    $term = $request->get("term");
-    $term = Tools::_string($term, 16);
-
-    // Inicializar variables de búsqueda
     $wseg = "";
     $wsegmo = "";
-    $estatus = null;
+    if (strlen($term) > 1) {
+        $wseg   = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
+        $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
+    }
 
-    // Lógica de filtrado según modo
-    if ($modo === "etiquetas") {
-        // Aplicar búsqueda solo para modo etiquetas
-        if (strlen($term) > 1) {
-            $wseg = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
-        }
+    $statusesq = Status::all();
+    $statuses = [];
+    foreach ($statusesq as $st) {
+        $statuses[$st->id] = $st->name;
+    }
 
-        $estatus_ocultos = [6, 7, 8, 9, 10];
-        $estatus_ocultos = implode(',', $estatus_ocultos);
+    if ($modo == "etiquetas") {
 
+        $estatus_ocultos = implode(',', [6,7,8,9,10]);
         $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
               FROM orders 
               WHERE status_id NOT IN ($estatus_ocultos) $wseg
               LIMIT 50";
-
         $shipments = DB::select($q);
 
         $pedido_ids = array_column($shipments, 'id');
@@ -3395,44 +3391,49 @@ public function guardarEntregaProgramada(Request $request, $id){
             ->get()
             ->groupBy('pedido_id');
 
-        $statusesq = Status::all();
-        $statuses = [];
-        foreach ($statusesq as $st) {
-            $statuses[$st->id] = $st->name;
-        }
-
         return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+
     }
 
-    // Si el modo es "estatus", limpia los filtros de etiquetas y aplica búsqueda para estatus
-    $estatus = Tools::_int($request->get("estatus"));
+    if ($modo == "combo" || $modo == "estatus") {
 
-    if (strlen($term) > 1) {
-        $wseg = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
-        $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
+        $estatus = Tools::_int($request->get("estatus"));
+
+        $qOrders = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
+        $qMO     = "SELECT mo.*, o.invoice_number, o.invoice 
+                    FROM manufacturing_orders mo 
+                    JOIN orders o ON o.id = mo.order_id 
+                    WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
+
+        if ($estatus == 2 || $estatus == 10) {
+
+            $shipments = DB::select($qOrders);
+
+            $etiquetas_por_pedido = collect();
+            if ($modo == "combo" && !empty($shipments)) {
+                $pedido_ids = array_column($shipments, 'id');
+                $etiquetas_por_pedido = DB::table('etiqueta_pedido')
+                    ->whereIn('pedido_id', $pedido_ids)
+                    ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                    ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
+                    ->get()
+                    ->groupBy('pedido_id');
+            }
+
+            return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+
+        } else {
+
+            $lista = DB::select($qMO);
+            return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
+
+        }
     }
 
-    $q = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
+    return view("pedidos2.multie.lista", ['user'=>$user, 'shipments'=>[], 'statuses'=>$statuses]);
 
-    $qo = "SELECT mo.*, o.invoice_number, o.invoice 
-           FROM manufacturing_orders mo 
-           JOIN orders o ON o.id = mo.order_id 
-           WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
-
-    $statusesq = Status::all();
-    $statuses = [];
-    foreach ($statusesq as $st) {
-        $statuses[$st->id] = $st->name;
-    }
-
-    if ($estatus == 2 || $estatus == 10) {
-        $shipments = DB::select($q);
-        return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses'));
-    } else {
-        $lista = DB::select($qo);
-        return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
-    }
 }
+
 
 
 
@@ -3478,184 +3479,202 @@ public function guardarEntregaProgramada(Request $request, $id){
 
 
   public function set_multistatus(Request $request) {
-    $user = auth()->user();
-    $modo = $request->get('modo', 'estatus');
-    $quitar = $request->get('quitar_etiquetas', 0);
-    LaravelLog::info('Modo recibido:', ['modo' => $request->get('modo')]);
+    $user   = auth()->user();
+    $modo   = $request->get('modo', 'estatus');
+    $quitar = (int)$request->get('quitar_etiquetas', 0);
 
-    LaravelLog::info('Datos recibidos en set_multistatus', [
-    'modo' => $request->get('modo'),
-    'lista' => $request->lista,
-    'estatus' => $request->status_id,
-    'catalogo' => $request->catalogo,
-    'etiquetas' => $request->etiquetas
-]);
+    $estatuses = [
+        2  => "Recibido por embarques",
+        3  => "En Fabricación",
+        4  => "Fabricado",
+        10 => "Recibido por Auditoría",
+    ];
+
+    
 
     $listaor = $request->lista ?? [];
-    $lista = [];
-
-    foreach ($listaor as $li) {
-        $lista[] = (int)$li;
-    }
+    $lista   = [];
+    foreach ($listaor as $li) { $lista[] = (int)$li; }
 
     $n = 0;
     $d = date("Y-m-d H:i:s");
 
-    //MODO ETIQUETAS
+    if ($modo == 'etiquetas') {
+        $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
 
-  if($modo == 'etiquetas'){
+        if (empty($request->lista) || empty($request->etiquetas)) {
 
-    $mapa_etiquetas = DB::table('etiquetas')
-        ->pluck('nombre', 'id')
-        ->toArray();
+            return response()->json(['status' => 0, 'errors' => 'Faltan pedidos o etiquetas']);
 
-    if(empty($request->lista) || empty($request->etiquetas)){
+        }
 
-        LaravelLog::info('Faltan datos para etiquetas', [
-            'lista'=>$request->lista,
-            'etiquetas'=>$request->etiquetas,
-        ]);
+        foreach ($request->lista as $pedido_id) {
 
-        return response()->json([
-            'status'=>0,
-            'errors'=>'Faltan pedidos o etiquetas',
-        ]);
+            $pedido = Order::find($pedido_id);
+            $idLog  = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id;
 
-    }
+            if ($quitar) {
+                DB::table('etiqueta_pedido')
+                    ->where('pedido_id', $pedido_id)
+                    ->whereIn('etiqueta_id', $request->etiquetas)
+                    ->delete();
 
-    foreach($request->lista as $pedido_id){
-
-        $pedido = Order::find($pedido_id);
-        $idLog = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id; 
-
-        //SECCIÓN DE BORRADO DE ETIQUETAS
-
-        if($quitar){
-
-            DB::table('etiqueta_pedido')
-                ->where('pedido_id', $pedido_id)
-                ->whereIn('etiqueta_id', $request->etiquetas)
-                ->delete();
-
-            foreach($request->etiquetas as $etiqueta_id){
-
-                LaravelLog::info('Etiqueta eliminada',[
-                    'pedido_id'=>$pedido_id,
-                    'etiqueta_id'=>$etiqueta_id,
-                ]);
-
-                $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-
-            }
-            
-            //SECCIÓN DE AÑADIDO DE ETIQUETAS
-
-        }else{
-
-            $etiquetas_actuales = DB::table('etiqueta_pedido')
-                ->where('pedido_id', $pedido_id)
-                ->pluck('etiqueta_id')
-                ->toArray();
-
-            foreach($request->etiquetas as $etiqueta_id){
-
-                if(!in_array($etiqueta_id, $etiquetas_actuales)){
-
-                    LaravelLog::info('Insertando etiqueta nueva', [
-                        'pedido_id' => $pedido_id, 
-                        'etiqueta_id' => $etiqueta_id,
-                    ]);
-
-                    DB::table('etiqueta_pedido')->insert([
-                        'pedido_id'=>$pedido_id,
-                        'etiqueta_id'=>$etiqueta_id,
-                    ]);
-
+                foreach ($request->etiquetas as $etiqueta_id) {
                     $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                    Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-                }else{
+                   
+                    Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+                }
+            } else {
+                $etiquetas_actuales = DB::table('etiqueta_pedido')
+                    ->where('pedido_id', $pedido_id)
+                    ->pluck('etiqueta_id')->toArray();
 
-                    LaravelLog::info('Etiqueta ya existente — NO insertada', [
-                            'pedido_id' => $pedido_id,
+                foreach ($request->etiquetas as $etiqueta_id) {
+                    if (!in_array($etiqueta_id, $etiquetas_actuales)) {
+
+                        DB::table('etiqueta_pedido')->insert([
+                            'pedido_id'   => $pedido_id,
                             'etiqueta_id' => $etiqueta_id,
                         ]);
+                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                        LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                        Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+
+                    } else {
+                        LaravelLog::info('Etiqueta ya existente — NO insertada', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                    }
+                }
+            }
+
+            $n++;
+
+        }
+
+        return response()->json(['status' => 1, 'value' => $n]);
+    }
+
+    if ($modo == 'combo') {
+        $status_id = Tools::_int($request->status_id);
+        $catalogo  = $request->get('catalogo', '');
+
+        if (!in_array($status_id, array_keys($estatuses))) {
+            return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
+        }
+        if (empty($request->etiquetas) || empty($lista)) {
+            return response()->json(['status' => 0, 'errors' => "Faltan etiquetas o lista de pedidos"]);
+        }
+
+        $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
+
+        foreach ($lista as $li) {
+
+            DB::transaction(function () use ($li, $status_id, $catalogo, $d, $user, $estatuses, $request, $quitar, $mapa_etiquetas) {
+                $data = ["status_id" => $status_id, "updated_at" => $d];
+
+                if ($status_id == 2) {
+
+                    $pedido = Order::find($li);
+                    if ($pedido && !$pedido->recibido_embarques_at) {
+                        $data["recibido_embarques_at"] = now();
+                        $idLogReg = Pedidos2::CodigoDe($pedido);
+                        Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLogReg}", $status_id, $user);
+                    }
 
                 }
 
-            }
+                if ($catalogo == "order") {
+
+                    if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                    Order::where("id", $li)->update($data);
+                    $order = Order::find($li);
+                    $idLog = Pedidos2::CodigoDe($order);
+                    Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
+
+                } elseif ($catalogo == "morder") {
+
+                    if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                    ManufacturingOrder::where("id", $li)->update($data);
+                    $morder = ManufacturingOrder::find($li);
+                    Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+                
+                }
+
+                $pedidoReal = Order::find($catalogo == 'order' ? $li : optional(ManufacturingOrder::find($li))->order_id);
+                $pedido_id  = optional($pedidoReal)->id ?: $li;
+                $idLog2     = $pedidoReal ? Pedidos2::CodigoDe($pedidoReal) : $pedido_id;
+
+                if ($quitar) {
+
+                    DB::table('etiqueta_pedido')
+                        ->where('pedido_id', $pedido_id)
+                        ->whereIn('etiqueta_id', $request->etiquetas)
+                        ->delete();
+
+                    foreach ($request->etiquetas as $etiqueta_id) {
+                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                        Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                    }
+
+                } else {
+
+                    $etiquetas_actuales = DB::table('etiqueta_pedido')
+                        ->where('pedido_id', $pedido_id)
+                        ->pluck('etiqueta_id')
+                        ->toArray();
+
+                    foreach ($request->etiquetas as $etiqueta_id) {
+
+                        if (!in_array($etiqueta_id, $etiquetas_actuales)) {
+                            DB::table('etiqueta_pedido')->insert([
+                                'pedido_id'   => $pedido_id,
+                                'etiqueta_id' => $etiqueta_id,
+                            ]);
+                            $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                            Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                        }
+
+                    }
+
+                }
+            });
+
+            $n++;
 
         }
 
-        $n++;
+        return response()->json(['status' => 1, 'value' => $n]);
 
     }
-
-    return response()->json([
-        'status' => 1,
-        'value' => $n
-    ]);
-
-  }
-
-    //MODO ESTATUS//
-    
-    $estatuses = [2 => "Recibido por embarques",3 => "En Fabricación", 4 => "Fabricado", 10 => "Recibido por Auditoría"];
 
     $status_id = Tools::_int($request->status_id);
-    $catalogo = $request->get('catalogo', '');
+    $catalogo  = $request->get('catalogo', '');
 
     if (!in_array($status_id, array_keys($estatuses))) {
-
-        return response()->json([
-            'status' => 0,
-            'errors' => "Estatus inválido"
-        ]);
-
+        return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
     }
 
-    foreach($lista as $li){
+    foreach ($lista as $li) {
 
-        
-        $data = [
-            "status_id" => $status_id,
-            "updated_at" => $d
-        ];
+        $data = ["status_id" => $status_id, "updated_at" => $d];
 
-        if($status_id == 2){
-
+        if ($status_id == 2) {
             $pedido = Order::find($li);
-            if($pedido && !$pedido->recibido_embarques_at){
-
+            if ($pedido && !$pedido->recibido_embarques_at) {
                 $data["recibido_embarques_at"] = now();
-                $idLog = Pedidos2::CodigoDE($pedido);
-
+                $idLog = Pedidos2::CodigoDe($pedido);
                 Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLog}", $status_id, $user);
-
             }
-
         }
 
-        if($catalogo == "order"){
-
-            if($status_id > 2){
-                $data["status_" . $status_id] = 1;
-            }
-
+        if ($catalogo == "order") {
+            if ($status_id > 2) { $data["status_" . $status_id] = 1; }
             Order::where("id", $li)->update($data);
             $order = Order::find($li);
             $idLog = Pedidos2::CodigoDe($order);
-
             Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
             $n++;
-        }
-
-        elseif($catalogo == "morder"){
-
-            if($status_id > 2){
-                $data["status_" . $status_id] = 1; 
-            }
-
+        } elseif ($catalogo == "morder") {
+            if ($status_id > 2) { $data["status_" . $status_id] = 1; }
             ManufacturingOrder::where("id", $li)->update($data);
             $morder = ManufacturingOrder::find($li);
             Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
@@ -3664,11 +3683,10 @@ public function guardarEntregaProgramada(Request $request, $id){
 
     }
 
-    return response()->json([
-        'status' => 1,
-        'value' => $n
-    ]);
+    return response()->json(['status' => 1, 'value' => $n]);
+
 }
+
 
 
 
