@@ -78,7 +78,7 @@ class RecibidoAuditoria extends Command
             ->whereIn('origin', ['C', 'F'])
             ->whereIn('status_id', [6, 7, 8, 9])
             ->whereNotIn('invoice_number', $excluirPedidos)
-            ->count();
+            ->update(['status_id' => 10]);
 
         $this->info("Pedidos actualizados: {$afectados}");
 
