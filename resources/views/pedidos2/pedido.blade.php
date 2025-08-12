@@ -495,9 +495,11 @@ $pedidoStatusId = $pedido->status_id;
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])))
         <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
     @endif
-    
-
-
+{{--Botón desactivado durante pruebas, activas después 
+    @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
+        <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
+     @endif 
+--}}
     @if ($user->role_id == 1 || (in_array($user->department_id,[3,7]) && in_array($pedido->status_id, [7]) && !isset($rebilling->id)) )
 
         <a class="Candidato" rel="refacturacion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=refacturacion') }}">Refacturación</a>

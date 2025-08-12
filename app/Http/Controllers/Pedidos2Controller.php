@@ -2919,8 +2919,14 @@ public function guardarEntregaProgramada(Request $request, $id){
         if($request->hasFile('archivo')){
 
             $archivo = $request->file('archivo');
-            $filename = time() . '_' . $archivo->getClientOriginalName();
-            $filePath = $archivo->storeAs('public/DevolucionesParciales', $filename);
+
+            if(!Storage::exists('public/DevolucionesParciales')){
+                Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
+            }
+
+            $fileName = 'dp-' . $order_id . '-' . date('dHis') . '.' . $archivo->getClientOriginalExtension();
+            $stored = $archivo->storeAs('public/DevolucionesParciales', $fileName);
+            $filePath = str_replace('public/', '',$stored);
 
         }
 
@@ -2991,7 +2997,7 @@ public function guardarEntregaProgramada(Request $request, $id){
         $request->validate([
             'motivo' => 'required|in:Error del Cliente,Error Interno',
             'descripcion' => 'required|string|max:300',
-            'tipo' => 'required|in:total,parcial,'
+            'tipo' => 'required|in:total,parcial'
         ]);
 
         $dev = DevolucionParcial::findOrFail($id);
@@ -3012,7 +3018,7 @@ public function guardarEntregaProgramada(Request $request, $id){
         $dev = DevolucionParcial::findOrFail($id);
         $dev->update([
             'motivo' => $request->motivo,
-            'descripcion' => $request->motivo,
+            'descripcion' => $request->descripcion,
             'tipo' => $request->tipo,
         ]);
 
