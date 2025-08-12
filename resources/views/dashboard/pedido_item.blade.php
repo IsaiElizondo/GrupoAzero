@@ -231,9 +231,26 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 
 
             </div>
-            @if (!empty($item->etiquetas_render))
+
+            @php
+                    $usuario = auth()->user();
+                    
+                    $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA'];
+
+                    $etiquetasMiniFiltradas = $item->etiquetas_render ?? [];
+                                                                                
+                        if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
+                            $etiquetasMiniFiltradas = array_values(array_filter($etiquetasMiniFiltradas, function($etq) use ($etiquetasOucltasVentas){
+                                $nombre = isset($etq['nombre']) ? mb_strtoupper($etq['nombre']) : '';
+                                return !in_array($nombre, $etiquetasOucltasVentas, true);
+                            }));
+                            
+                        }
+            @endphp
+
+            @if (!empty($etiquetasMiniFiltradas))
                 <div class="etiquetas-mini">
-                    @foreach ($item->etiquetas_render as $etq)
+                    @foreach ($etiquetasMiniFiltradas as $etq)
                         <span class="etiqueta-circulo" style="background-color: {{ $etq['color'] }};" title="{{ $etq['nombre'] }}">
                             {{ $etq['iniciales'] }}
                         </span>

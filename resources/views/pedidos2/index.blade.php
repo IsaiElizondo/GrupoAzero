@@ -78,7 +78,7 @@ use App\Http\Controllers\Pedidos2Controller;
                 <fieldset>
                     <legend>Subprocesos</legend>
                     @foreach ($events as $k=>$v)
-                        @if ($k == "refacturar" || $k == "devolucion")
+                        @if ($k == "refacturar")
                             @continue
                         @endif 
                     <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>
@@ -150,6 +150,19 @@ use App\Http\Controllers\Pedidos2Controller;
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
                 </fieldset>
+
+                
+                @php
+
+                    $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
+                                                                    
+                    if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
+                        $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
+                            return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
+                        });
+                    }
+
+                @endphp
 
                 <fieldset>
                     <legend>Etiquetas</legend>

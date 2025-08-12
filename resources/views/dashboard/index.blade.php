@@ -128,7 +128,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 <fieldset>
                                                     <legend>Subprocesos</legend>
                                                     @foreach ($events as $k=>$v)
-                                                        @if ($k == "refacturar" || $k == "devolucion")
+                                                        @if ($k == "refacturar")
                                                             @continue
                                                         @endif 
                                                     <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>
@@ -197,6 +197,17 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     <div class="checkpair"><input type="checkbox" name="rec[]" value="2" id="rec_2"> <label for="rec_2">Cliente recoge</label></div>
 
                                                 </fieldset>
+
+                                            @php
+
+                                                $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
+                                                                                                
+                                                if(auth()->user()->department->name == "Ventas") {
+                                                    $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
+                                                        return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
+                                                    });
+                                                }
+                                            @endphp
 
                                             @if(in_array(auth()->user()->role->name,["Administrador", "ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name,["Administrador", "Ventas"]))
                                                 <fieldset>

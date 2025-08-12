@@ -70,6 +70,19 @@ if($user->role_id == 1 || $user->department_id == 9){
                         Seleccionar etiquetas
                     </button>
                     <div class="dropdown-menu-checkboxes">
+
+                    @php
+
+                    $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
+                                                                    
+                    if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
+                        $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
+                            return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
+                        });
+                    }
+
+                @endphp
+
                         @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Auditoria"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                             @foreach($etiquetas as $etiqueta)
                                 <label class="dropdown-item-checkbox">

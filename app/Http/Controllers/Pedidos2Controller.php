@@ -3537,7 +3537,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                             'etiqueta_id' => $etiqueta_id,
                         ]);
                         $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                        LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                       // LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
                         Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
 
                     } else {
