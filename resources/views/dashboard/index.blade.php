@@ -82,7 +82,7 @@ use App\Http\Controllers\Pedidos2Controller;
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                     </div>
                     
-                    @if(in_array(auth()->user()->role->name, ['Administrador', 'Empleado']) || in_array(auth()->user()->department_id, [2, 3, 4, 9]))
+                    @if(in_array(auth()->user()->role->name, ['Administrador', 'Empleado']) && in_array(auth()->user()->department_id, [2, 3, 4, 9]))
                         <div class="col-md-3">
                             <button type="button" id="nuevoExcelBtn" class="btn btn-sm btn-success w-100"> Descargar Excel </button>
                         </div>
