@@ -410,6 +410,9 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
     $suborigen = $filtros['orsob'] ?? [];
     $ordenRecibido = $filtros['orden_recibido'] ?? 'DESC';
 
+    $A0order = null;
+    $BBorder = null;
+
     $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
     if (!empty($termino)) {
@@ -515,11 +518,33 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
                 if($sp == 'devolucionp_parcial'){
                     $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0";
                 }
-                if($sp == 'devolucion_total'){
+                if($sp == 'devolucionp_total'){
                     $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total) > 0";
                 }
             }
 
+        }
+
+
+        if (in_array('a0', $subprocesos)) {
+
+            $where[] = "o.invoice_number LIKE 'A0%'";
+            foreach ($subpstatus as $sp) {
+                if($sp === 'a0_asc')  { $A0order = 'ASC'; }
+                if($sp === 'a0_desc') { $A0order = 'DESC'; }
+            }
+
+        }
+        
+
+        if(in_array('bb', $subprocesos)){
+
+            $where[] = "o.invoice_number LIKE 'BB%'";
+            foreach($subpstatus as $sp){
+                if($sp == 'bb_asc') { $BBorder = 'ASC'; }
+                if($sp == 'bb_desc') { $BBorder = 'DESC'; }
+            }
+            
         }
 
     }
@@ -558,7 +583,29 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
     $whereStr = implode(" AND ", $where);
 
     // Ordenamiento por recibido_embarques_at
-    $orderBy = "MAX(o.recibido_embarques_at) " . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
+    $sinfiltros = 
+        empty($termino)
+        && empty($etiquetas)
+        && empty($status)
+        && empty($subprocesos)
+        && empty($subpstatus)
+        && empty($origen)
+        && empty($sucursal)
+        && empty($recogido)
+        && empty($suborigen);
+
+    if($A0order !== null){
+        $orderBy ="a0_num " . ($A0order === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
+    }elseif($BBorder !== null){
+        $orderBy ="bb_num " . ($BBorder === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
+    }elseif($sinfiltros){
+        $orderBy = "MAX(o.created_at) DESC";
+    }else{
+        $orderBy = "MAX(o.recibido_embarques_at)" . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
+    }
+
+
+
 
     $totalQ = DB::select("
         SELECT COUNT(DISTINCT o.id) AS tot
@@ -579,6 +626,14 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
             MAX(o.office) AS office,
             MAX(o.invoice) AS invoice,
             MAX(o.invoice_number) AS invoice_number,
+            CASE
+                WHEN MAX(o.invoice_number) LIKE 'A0%' THEN CAST(SUBSTRING(MAX(o.invoice_number), 3) AS UNSIGNED)
+                ELSE NULL
+            END AS a0_num,
+            CASE
+                WHEN MAX(o.invoice_number) LIKE 'BB%' THEN CAST(SUBSTRING(MAX(o.invoice_number), 3) AS UNSIGNED)
+                ELSE NULL
+            END AS bb_num,
             MAX(o.client) AS client,
             MAX(o.status_id) AS status_id,
             MAX(o.created_at) AS created_at,

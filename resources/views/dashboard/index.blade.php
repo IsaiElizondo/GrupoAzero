@@ -271,7 +271,36 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     @endforeach
                                                 </fieldset>
                                             @endif
-                                            
+
+                                                <fieldset>
+                                                    <legend>Filtrar por tipo de pedido </legend>
+                                                    <div class="checkpair parent" rel="a0">
+                                                        <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
+                                                        <label for="sp_a0"> Folios A0 </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="a0">
+                                                        <input type="checkbox" name="spsub[]" value="a0_asc" id="spsub_a0_asc">
+                                                        <label for="spsub_a0_asc">Ascendente(A00001 -> A09999)</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="a0">
+                                                        <input type="checkbox" name="spsub[]" value="a0_desc" id="spsub_a0_desc">
+                                                        <label for="spsub_a0_desc">Descendente(A09999 -> A00001)</label>
+                                                    </div>
+
+                                                    <div class="checkpair parent" rel="bb">
+                                                        <input type="checkbox" name="sp[]" value="bb" id="sp_bb">
+                                                        <label for="sp_bb"> Folios BB </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="bb">
+                                                        <input type="checkbox" name="spsub[]" value="bb_asc" id="spsub_bb_asc">
+                                                        <label for="spsub_bb_asc">Ascendente(BB0001 -> A09999)</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="bb">
+                                                        <input type="checkbox" name="spsub[]" value="bb_desc" id="spsub_bb_desc">
+                                                        <label for="spsub_bb_desc">Descendente(BB9999 -> A00001)</label>
+                                                    </div>
+                                                    
+                                                </fieldset>
                                             
 
 
