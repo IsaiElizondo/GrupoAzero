@@ -574,7 +574,7 @@ $pedidoStatusId = $pedido->status_id;
 
     {{-- ETIQUETAS PARA ADMINISTRACIÓN--}}
 
-    @if(in_array(auth()->user()->department->name,["Administrador", "Auditoria"]) && in_array($user->role->name, ["Administrador", "Empleado"]))
+    @if(in_array(auth()->user()->department->name,["Administrador"]) && in_array($user->role->name, ["Administrador", "Empleado"]))
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
@@ -670,7 +670,30 @@ $pedidoStatusId = $pedido->status_id;
             </div>
         </form>
     @endif
+    
 
+    @if($user->department->name =="Auditoria" && in_array($user->role->name, ["Administrador", "Empleado"]))
+        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
+            @csrf
+            <div class="card etiquetas-card">
+                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="Eleccion">
+                    @foreach($etiquetasDisponiblesOcultas as $etiqueta)
+                        @if(in_array($etiqueta->nombre, ['NO ESTA', 'PERDIDA', 'GERENCIA']))
+                            <div class="etiqueta-item">
+                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
+                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
+                                    {{strtoupper($etiqueta->nombre)}}
+                                </label>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                <br>
+                <button class="btn btn-dark" type="submit">Guardar</button>
+            </div>
+        </form>
+    @endif
 
 {{-- FIN DE SECCIÓN DE ETIQUETADO --}}
 

@@ -83,7 +83,7 @@ if($user->role_id == 1 || $user->department_id == 9){
 
                 @endphp
 
-                        @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas", "Auditoria"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                        @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                             @foreach($etiquetas as $etiqueta)
                                 <label class="dropdown-item-checkbox">
                                     <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
@@ -123,6 +123,19 @@ if($user->role_id == 1 || $user->department_id == 9){
                         @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
                             @foreach($etiquetas as $etiqueta)
                                 @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                    <label class="dropdown-item-checkbox">
+                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
+                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
+                                            {{ strtoupper($etiqueta->nombre) }}
+                                        </span>
+                                    </label>
+                                @endif
+                            @endforeach
+                        @endif
+
+                        @if(auth()->user()->department->name == "Auditoria" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                            @foreach($etiquetas as $etiqueta)
+                                @if(in_array($etiqueta->nombre, ['NO ESTA', 'GERENCIA', 'PERDIDA']))
                                     <label class="dropdown-item-checkbox">
                                         <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
                                         <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
