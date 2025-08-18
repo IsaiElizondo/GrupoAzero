@@ -329,7 +329,7 @@ $pedidoStatusId = $pedido->status_id;
 
 
         @if (  $pedido->status_id < 6 && 
-            ($user->role_id ==1 || in_array($user->department_id,[4,5,6,7,8]))
+            ($user->role_id ==1 || in_array($user->department_id,[4,5,6,7,8,9]))
           )
 
         <a class="Accion entregado" href="{{ url('pedidos2/accion/'.$pedido->id.'?a=entregar') }}">Entregado (Factura amarilla)</a>
