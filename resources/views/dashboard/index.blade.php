@@ -202,7 +202,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
                                                 $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
                                                                                                 
-                                                if(auth()->user()->department->name == "Ventas") {
+                                                 if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
                                                     $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
                                                         return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
                                                     });
@@ -273,7 +273,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                             @endif
 
                                                 <fieldset>
-                                                    <legend>Filtrar por tipo de pedido </legend>
+                                                    <legend>Filtros por tiempo y folio </legend>
                                                     <div class="checkpair parent" rel="a0">
                                                         <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
                                                         <label for="sp_a0"> Folios A0 </label>

@@ -491,15 +491,16 @@ $pedidoStatusId = $pedido->status_id;
             )
         <a class="NParcial Candidato subp" href="{{ url('pedidos2/parcial_nuevo/'.$pedido->id) }}">+ Salida Parcial</a>
     @endif
-
+{{--
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])))
         <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
     @endif
-{{--Botón desactivado durante pruebas, activas después 
+--}}
+
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
         <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
      @endif 
---}}
+
     @if ($user->role_id == 1 || (in_array($user->department_id,[3,7]) && in_array($pedido->status_id, [7]) && !isset($rebilling->id)) )
 
         <a class="Candidato" rel="refacturacion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=refacturacion') }}">Refacturación</a>
@@ -543,7 +544,7 @@ $pedidoStatusId = $pedido->status_id;
 
         $etiquetasDisponiblesOcultas = $etiquetasDisponibles;
                                                                     
-            if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) || !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
+            if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
                 $etiquetasDisponiblesOcultas = $etiquetasDisponibles->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
                     return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
                 });
@@ -573,7 +574,7 @@ $pedidoStatusId = $pedido->status_id;
 
     {{-- ETIQUETAS PARA ADMINISTRACIÓN--}}
 
-    @if($user->department->name == "Administrador" && in_array($user->role->name, ["Administrador", "Empleado"]))
+    @if(in_array(auth()->user()->department->name,["Administrador", "Auditoria"]) && in_array($user->role->name, ["Administrador", "Empleado"]))
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
