@@ -142,6 +142,14 @@ input[type='checkbox']{
     border:#333 3px solid;
 }
 
+.nuevoFiltros{
+    font-size:1.4rem;
+    padding:.5rem 1%;
+    cursor:pointer;
+    margin-bottom:1rem;
+    border:#cf0f0f 3px solid;
+}
+
 
 .estatusFlags{
     position:absolute;
@@ -475,9 +483,18 @@ left:0;
 
 .BotsPrincipales{
     display:flex;
-    justify-content: flex-end;
-    flex-direction: row;
-    column-gap: 2rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.left{
+    flex: 1;
+}
+
+.right{
+    display: flex;
+    gap: 10px;
 }
 
 

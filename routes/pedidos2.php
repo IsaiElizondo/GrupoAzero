@@ -9,7 +9,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('pedidos2/', [Pedidos2Controller::class, 'index']);
 	Route::get('pedidos2/index', [Pedidos2Controller::class, 'index']);
-	Route::get('pedidos2/lista', [Pedidos2Controller::class, 'lista']);
+	Route::match(['get', 'post'], 'pedidos2/lista', [Pedidos2Controller::class, 'lista']);
 
 	Route::get('pedidos2/nuevo', [Pedidos2Controller::class, 'nuevo']);
 	Route::post('pedidos2/guardar/{id}', [Pedidos2Controller::class, 'guardar']);

@@ -45,7 +45,7 @@ use App\Http\Controllers\Pedidos2Controller;
                 @endphp
 
                 <div class="col-md-2">
-                    <input type="text" name="termino" class="form-control form-control-sm" placehoder="Buscar..." onkeydown="if(event.key == 'Enter'){envent.preventDefault(); $('#buscarBoton').click();}">
+                    <input type="text" name="termino" class="form-control form-control-sm" placeholder="Buscar..." onkeydown="if(event.key == 'Enter'){event.preventDefault(); buscarPorTexto();}">
                 </div>
                 
                 {{--
@@ -67,17 +67,7 @@ use App\Http\Controllers\Pedidos2Controller;
                         </button>
                     </div>
 
-                    @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2, 4]))
-                    <div class="col-md-2">
-                        <select name="orden_recibido" class="form-control form-control-sm">
-                            <option value="">Ordenar por recibido</option>
-                            <option value="asc" {{ old('orden_recibido', request()->input('orden_recibido')) == 'asc' ? 'selected' : '' }}>Más antiguo primero</option>
-			    <option value="desc" {{ old('orden_recibido', request()->input('orden_recibido')) == 'desc' ? 'selected' : '' }}>Más reciente primero</option>
-
-                        </select>
-                    </div>
-                    @endif
-
+                    
                     <div class="col-md-2">
                         <button type="button" id="buscarBoton" class="btn btn-sm btn-primary w-100">Buscar</button>
                     </div>
@@ -197,6 +187,49 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     <div class="checkpair"><input type="checkbox" name="rec[]" value="2" id="rec_2"> <label for="rec_2">Cliente recoge</label></div>
 
                                                 </fieldset>
+                                                <fieldset>
+                                                    <legend>Filtros por tiempo y folio </legend>
+                                                    <div class="checkpair parent" rel="a0">
+                                                        <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
+                                                        <label for="sp_a0"> Folios A0 </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="a0">
+                                                        <input type="checkbox" name="spsub[]" value="a0_asc" id="spsub_a0_asc">
+                                                        <label for="spsub_a0_asc">Ascendente(A00001 -> A09999)</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="a0">
+                                                        <input type="checkbox" name="spsub[]" value="a0_desc" id="spsub_a0_desc">
+                                                        <label for="spsub_a0_desc">Descendente(A09999 -> A00001)</label>
+                                                    </div>
+
+                                                    <div class="checkpair parent" rel="bb">
+                                                        <input type="checkbox" name="sp[]" value="bb" id="sp_bb">
+                                                        <label for="sp_bb"> Folios BB </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="bb">
+                                                        <input type="checkbox" name="spsub[]" value="bb_asc" id="spsub_bb_asc">
+                                                        <label for="spsub_bb_asc">Ascendente(BB0001 -> BB9999)</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="bb">
+                                                        <input type="checkbox" name="spsub[]" value="bb_desc" id="spsub_bb_desc">
+                                                        <label for="spsub_bb_desc">Descendente(BB9999 -> BB0001)</label>
+                                                    </div>
+
+                                                    <legend>Por Antigüedad</legend>
+                                                    <div class="checkpair parent" rel="created">
+                                                        <input type="checkbox" name="sp[]" value="created" id="sp_a0">
+                                                        <label for="sp_created"> Filtrar por fecha de creación </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="created">
+                                                        <input type="checkbox" name="spsub[]" value="created_at_asc" id="spsub_created_asc">
+                                                        <label for="spsub_created_asc">Más viejo primero</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="created">
+                                                        <input type="checkbox" name="spsub[]" value="created_at_desc" id="spsub_created_desc">
+                                                        <label for="spsub_created_desc">Más reciente primero</label>
+                                                    </div>   
+                                                    
+                                                </fieldset>
 
                                             @php
 
@@ -209,7 +242,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 }
                                             @endphp
 
-                                            @if(in_array(auth()->user()->role->name,["Administrador", "ALEJANDRO GALICIA"]) || in_array(auth()->user()->department->name,["Administrador", "Ventas"]))
+                                            @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Ventas", "Auditoria"]))
                                                 <fieldset>
                                                     <legend>Sucursal</legend>
                                                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
@@ -286,35 +319,9 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 </fieldset>
                                             @endif
 
-                                                <fieldset>
-                                                    <legend>Filtros por tiempo y folio </legend>
-                                                    <div class="checkpair parent" rel="a0">
-                                                        <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
-                                                        <label for="sp_a0"> Folios A0 </label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="a0">
-                                                        <input type="checkbox" name="spsub[]" value="a0_asc" id="spsub_a0_asc">
-                                                        <label for="spsub_a0_asc">Ascendente(A00001 -> A09999)</label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="a0">
-                                                        <input type="checkbox" name="spsub[]" value="a0_desc" id="spsub_a0_desc">
-                                                        <label for="spsub_a0_desc">Descendente(A09999 -> A00001)</label>
-                                                    </div>
+                                                
 
-                                                    <div class="checkpair parent" rel="bb">
-                                                        <input type="checkbox" name="sp[]" value="bb" id="sp_bb">
-                                                        <label for="sp_bb"> Folios BB </label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="bb">
-                                                        <input type="checkbox" name="spsub[]" value="bb_asc" id="spsub_bb_asc">
-                                                        <label for="spsub_bb_asc">Ascendente(BB0001 -> A09999)</label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="bb">
-                                                        <input type="checkbox" name="spsub[]" value="bb_desc" id="spsub_bb_desc">
-                                                        <label for="spsub_bb_desc">Descendente(BB9999 -> A00001)</label>
-                                                    </div>
-                                                    
-                                                </fieldset>
+                                                
                                             
 
 
@@ -372,6 +379,11 @@ $mananaString = $manana->format("Y-m-d");
 ?>
 <script type="text/javascript" >
 let haBuscado = false;
+
+function buscarPorTexto(){
+        $("#fbuscar input[name='p']").val("1");
+        GetLista();
+    }
 
 $(document).ready(function(){
 /*
@@ -468,7 +480,7 @@ $(document).ready(function(){
         }
     });
 
- 
+    
 $("#nuevoExcelBtn").click(function (e) {
     e.preventDefault();
 
@@ -544,7 +556,10 @@ $("#nuevoExcelBtn").click(function (e) {
 
     
     $("input[name='termino']").on("keyup",function(e){
-        if(e.keyCode==13){$("#buscarBoton").click();}
+        if(e.keyCode==13){        
+            e.preventDefault();
+            buscarPorTexto();
+        }
     });
 
 

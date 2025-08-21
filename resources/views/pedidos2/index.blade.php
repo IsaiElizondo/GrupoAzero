@@ -149,31 +149,140 @@ use App\Http\Controllers\Pedidos2Controller;
                     <legend>Sucursal</legend>
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
                     <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
-                </fieldset>
+                    
+                    <legend>Filtros por tiempo y folio </legend>
+                    <div class="checkpair parent" rel="a0">
+                        <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
+                        <label for="sp_a0"> Folios A0 </label>
+                    </div>
+                    <div class="checkpair sub" parent="a0">
+                        <input type="checkbox" name="spsub[]" value="a0_asc" id="spsub_a0_asc">
+                        <label for="spsub_a0_asc">Ascendente(A00001 -> A09999)</label>
+                    </div>
+                    <div class="checkpair sub" parent="a0">
+                        <input type="checkbox" name="spsub[]" value="a0_desc" id="spsub_a0_desc">
+                        <label for="spsub_a0_desc">Descendente(A09999 -> A00001)</label>
+                    </div>
 
-                
+                    <div class="checkpair parent" rel="bb">
+                        <input type="checkbox" name="sp[]" value="bb" id="sp_bb">
+                        <label for="sp_bb"> Folios BB </label>
+                    </div>
+                    <div class="checkpair sub" parent="bb">
+                        <input type="checkbox" name="spsub[]" value="bb_asc" id="spsub_bb_asc">
+                        <label for="spsub_bb_asc">Ascendente(BB0001 -> BB9999)</label>
+                    </div>
+                    <div class="checkpair sub" parent="bb">
+                        <input type="checkbox" name="spsub[]" value="bb_desc" id="spsub_bb_desc">
+                        <label for="spsub_bb_desc">Descendente(BB9999 -> BB0001)</label>
+                    </div>
+
+
+                    <legend>Por Antigüedad</legend>
+                    <div class="checkpair parent" rel="created">
+                        <input type="checkbox" name="sp[]" value="created" id="sp_a0">
+                        <label for="sp_created"> Filtrar por fecha de creación </label>
+                    </div>
+                    <div class="checkpair sub" parent="created">
+                        <input type="checkbox" name="spsub[]" value="created_at_asc" id="spsub_created_asc">
+                        <label for="spsub_created_asc">Más viejo primero</label>
+                    </div>
+                    <div class="checkpair sub" parent="created">
+                        <input type="checkbox" name="spsub[]" value="created_at_desc" id="spsub_created_desc">
+                        <label for="spsub_created_desc">Más reciente primero</label>
+                    </div>                    
+                </fieldset>
+                              
                 @php
 
                     $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
                                                                     
-                    if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
+                        if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
                         $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
                             return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
                         });
                     }
-
                 @endphp
 
-                <fieldset>
-                    <legend>Etiquetas</legend>
-                    @foreach ($etiquetas as $etiqueta)
-                        <div class="checkpair">
-                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{ $etiqueta->id }}">
-                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre }}</label>
-                        </div>
-                    @endforeach
-                </fieldset>
+                @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Ventas", "Auditoria"]))
+                    <fieldset>
+                        <legend>Sucursal</legend>
+                        <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
+                        <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
+                    </fieldset>
+                @endif
+
+                @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                    <fieldset>
+                        <legend>Etiquetas embarques</legend>
+                        @foreach($etiquetas as $etiqueta)
+                            <div class="checkpair">
+                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                            </div>
+                        @endforeach
+                    </fieldset>
+                @endif
+
+                @if(auth()->user()->department->name == "Embarques" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                    <fielset>
+                        <legend> Etiquetas de embarques </legend>
+                        @foreach($etiquetas as $etiqueta)
+                            @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                <div class="checkpair">
+                                    <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                    <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                </div>
+                            @endif
+                        @endforeach
+                    </fieldset>
+                @endif
+
+
+                @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
+                    <fieldset>
+                        <legend>Etiquetas fabricación</legend>
+                        @foreach($etiquetas as $etiqueta)
+                            @if (in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
+                                <div class="checkpair">
+                                    <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                    <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                </div>
+                            @endif
+                        @endforeach
+                    </fieldset>
+                @endif
+
+                @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
+                    <fieldset>
+                        <legend>Etiquetas fabricación</legend>
+                        @foreach($etiquetas as $etiqueta)
+                            @if (in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                <div class="checkpair">
+                                    <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                    <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                </div>
+                            @endif
+                        @endforeach
+                    </fieldset>
+                @endif
+
+                @if(auth()->user()->department->name == "Auditoria" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                    <fieldset>
+                        <legend>Etiquetas Auditoria</legend>
+                        @foreach($etiquetas as $etiqueta)
+                            @if (in_array($etiqueta->nombre, ['NO ESTA', 'GERENCIA', 'PERDIDA']))
+                                <div class="checkpair">
+                                    <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
+                                    <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                </div>
+                            @endif
+                        @endforeach
+                    </fieldset>
+                @endif
                 
+
+                 
                 
                 </div>
                 <div class="Fila center">
@@ -236,19 +345,25 @@ use App\Http\Controllers\Pedidos2Controller;
 
 
 
+            
 
-
+        
     @if ($user->role_id == 1 || (in_array($user->department_id, [3, 4 ,5, 7, 8,9]) ) )
     <div class="container-fluid">
         <div class="BotsPrincipales">
-        
-        @if ( !in_array($user->department_id,[3,7,8]))
-        <button class="nuevo" href="{{ url('pedidos2/multie') }}">Cambio de Estatus Masivo </button>   
-        @endif
+            <div class="left">
+                <button class="btn-danger nuevoFiltros" type="button" onclick="LimpiarFiltros()">LIMPIAR FILTROS</button>
+            </div>
+            
+            <div class="right">
+                @if ( !in_array($user->department_id,[3,7,8]))
+                <button class="nuevo" href="{{ url('pedidos2/multie') }}">Cambio de Estatus Masivo </button>   
+                @endif
 
-        @if ( !in_array($user->department_id,[9]))
-        <button class="nuevo" href="{{ url('pedidos2/nuevo') }}">Crear Nuevo Pedido</button>
-        @endif
+                @if ( !in_array($user->department_id,[9]))
+                <button class="nuevo" href="{{ url('pedidos2/nuevo') }}">Crear Nuevo Pedido</button>
+                @endif
+            </div>
 
         </div>    
     </div>
@@ -436,7 +551,7 @@ $(document).ready(function(){
 
 
 
-    Querystring();
+    //Querystring();
 
 
    GetLista();
@@ -545,7 +660,7 @@ console.log("GetLista");
         success:function(h){
         $("#Lista").html(h);
 
-        LimpiaFiltros();
+        //LimpiaFiltros();
         $("#fbuscar [name='p']").val(1);
         $("#Lista").tooltip();
 
@@ -692,7 +807,10 @@ function LimpiaFiltros(){
     FormatearFechaDeInput();
 }
 
-
+function LimpiarFiltros(){
+    LimpiaFiltros();
+    GetLista();
+}
 
 
 function Follow(ob){

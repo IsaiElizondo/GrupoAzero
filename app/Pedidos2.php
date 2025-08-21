@@ -47,6 +47,10 @@ class Pedidos2 extends Model
 
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
+        $A0order = null;
+        $BBorder = null;
+        $Createdorder = null;
+
         $wheres=["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
                 
         if(!empty($termino)){
@@ -123,7 +127,7 @@ class Pedidos2 extends Model
 
             if(in_array("devolucionp", $subprocesos)){
 
-                $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0";
+                $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0";
 
                 $tipos = [];
                 foreach($subpstatus as $sps){
@@ -139,6 +143,35 @@ class Pedidos2 extends Model
                     $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN (" . implode(",", $tipos) . ")) > 0";
                 }
 
+            }
+
+            if (in_array('a0', $subprocesos)) {
+
+                $wheres[] = "o.invoice_number LIKE 'A0%'";
+                foreach ($subpstatus as $sp) {
+                    if($sp === 'a0_asc')  { $A0order = 'ASC'; }
+                    if($sp === 'a0_desc') { $A0order = 'DESC'; }
+                }
+
+            }
+            
+
+            if(in_array('bb', $subprocesos)){
+
+                $wheres[] = "o.invoice_number LIKE 'BB%'";
+                foreach($subpstatus as $sp){
+                    if($sp == 'bb_asc') { $BBorder = 'ASC'; }
+                    if($sp == 'bb_desc') { $BBorder = 'DESC'; }
+                }
+                
+            }
+
+            if(in_array('created', $subprocesos)){
+                $wheres[] = "o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'";
+                foreach($subpstatus as $sp){
+                    if($sp == 'created_at_asc'){$Createdorder = 'ASC';}
+                    if($sp == 'created_at_desc'){$Createdorder = 'DESC';}
+                }
             }
 
         }
@@ -159,7 +192,7 @@ class Pedidos2 extends Model
             foreach($recogido as $reco){
                 $rearr[]="'".$reco."'";
             }      
-        $$wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";          
+        $wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";          
         }
 
         if (!empty($etiquetas)) {
@@ -187,6 +220,19 @@ class Pedidos2 extends Model
         WHERE ". $wherestring);
 
         self::$total = !empty($listt) ? $listt[0]->tot : 0 ;
+
+        $orderBy ="updated_at DESC";
+
+        if($A0order){
+            $orderBy = "o.invoice_number $A0order";
+        }
+        if($BBorder){
+            $orderBy = "o.invoice_number $BBorder";
+        }
+        if(!empty($Createdorder)){
+            $orderBy = "o.created_at $Createdorder";
+        }
+        
 
         //QUERY MAIN***********
         $q = "SELECT 
@@ -225,7 +271,7 @@ class Pedidos2 extends Model
         LEFT JOIN stockreq r ON r.order_id = o.id 
         LEFT JOIN users u ON u.id = o.created_by 
         WHERE 
-        ". $wherestring  ." ORDER BY updated_at DESC LIMIT ".$ini.", ". self::$rpp;
+        ". $wherestring  ." ORDER BY $orderBy LIMIT ".$ini.", ". self::$rpp;
      //echo $q;
 
         //LaravelLog::info("Consulta generada: $q");
@@ -412,6 +458,7 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
 
     $A0order = null;
     $BBorder = null;
+    $Createdorder = null;
 
     $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
@@ -547,6 +594,14 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
             
         }
 
+        if(in_array('created', $subprocesos)){
+                $wheres[] = "o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'";
+                foreach($subpstatus as $sp){
+                    if($sp == 'created_at_asc'){$Createdorder = 'ASC';}
+                    if($sp == 'created_at_desc'){$Createdorder = 'DESC';}
+                }
+            }
+
     }
 
     // Filtros por rol y departamento
@@ -578,6 +633,7 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
         $where[] = "o.status_id NOT IN (6,7,8,9,10)";
     } elseif (in_array($user->role_id, [1,2]) && $user->department_id == 9) {
         $where[] = "o.status_id IN (6,7,8,9)";
+        $where[] = "o.origin IN ('F', 'C')";
     }
 
     $whereStr = implode(" AND ", $where);
@@ -599,7 +655,9 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
     }elseif($BBorder !== null){
         $orderBy ="bb_num " . ($BBorder === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
     }elseif($sinfiltros){
-        $orderBy = "MAX(o.created_at) DESC";
+        $orderBy = "MAX(o.updated_at) DESC";
+    }elseif($Createdorder !== null){
+        $orderBy = "o.created_at $Createdorder";
     }else{
         $orderBy = "MAX(o.recibido_embarques_at)" . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
     }
