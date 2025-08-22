@@ -229,6 +229,21 @@ use App\Http\Controllers\Pedidos2Controller;
                                                         <label for="spsub_created_desc">Más reciente primero</label>
                                                     </div>   
                                                     
+                                                @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Embarques"]))
+                                                    <legend>Por Recibido por Embarques</legend>
+                                                    <div class="checkpair parent" rel="embarques">
+                                                        <input type="checkbox" name="sp[]" value="embarques" id="sp_embarques">
+                                                        <label for="sp_embarques"> Filtrar por Recibido por Embarques </label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="embarques">
+                                                        <input type="checkbox" name="spsub[]" value="recibido_embarques_at_asc" id="spsub_embarques_asc">
+                                                        <label for="spsub_embarques_asc">Más viejo primero</label>
+                                                    </div>
+                                                    <div class="checkpair sub" parent="embarques">
+                                                        <input type="checkbox" name="spsub[]" value="recibido_embarques_at_desc" id="spsub_embarques_desc">
+                                                        <label for="spsub_embarques_desc">Más reciente primero</label>
+                                                    </div>
+                                                @endif
                                                 </fieldset>
 
                                             @php

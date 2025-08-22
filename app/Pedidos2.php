@@ -459,6 +459,7 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
     $A0order = null;
     $BBorder = null;
     $Createdorder = null;
+    $Embarquesorder = null;
 
     $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
@@ -600,7 +601,15 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
                     if($sp == 'created_at_asc'){$Createdorder = 'ASC';}
                     if($sp == 'created_at_desc'){$Createdorder = 'DESC';}
                 }
-            }
+        }
+
+        if(in_array('embarques', $subprocesos)){
+                $wheres[] = "o.recibido_embarques_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'";
+                foreach($subpstatus as $sp){
+                    if($sp == 'recibido_embarques_at_asc'){$Embarquesorder = 'ASC';}
+                    if($sp == 'recibido_embarques_at_desc'){$Embarquesorder = 'DESC';}
+                }
+        }
 
     }
 
@@ -651,15 +660,17 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
         && empty($suborigen);
 
     if($A0order !== null){
-        $orderBy ="a0_num " . ($A0order === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
+    $orderBy = "a0_num " . ($A0order === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
     }elseif($BBorder !== null){
-        $orderBy ="bb_num " . ($BBorder === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
-    }elseif($sinfiltros){
-        $orderBy = "MAX(o.updated_at) DESC";
+        $orderBy = "bb_num " . ($BBorder === 'ASC' ? 'ASC' : 'DESC') . ", MAX(o.created_at) DESC";
     }elseif($Createdorder !== null){
         $orderBy = "o.created_at $Createdorder";
+    }elseif($Embarquesorder !== null){
+        $orderBy = "o.recibido_embarques_at $Embarquesorder";
+    }elseif($sinfiltros){
+        $orderBy = "MAX(o.updated_at) DESC";
     }else{
-        $orderBy = "MAX(o.recibido_embarques_at)" . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
+        $orderBy = "MAX(o.recibido_embarques_at) " . (strtoupper($ordenRecibido) === 'ASC' ? 'ASC' : 'DESC');
     }
 
 
