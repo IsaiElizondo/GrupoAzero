@@ -204,14 +204,7 @@ use App\Http\Controllers\Pedidos2Controller;
                     }
                 @endphp
 
-                @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Ventas", "Auditoria"]))
-                    <fieldset>
-                        <legend>Sucursal</legend>
-                        <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
-                        <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
-                    </fieldset>
-                @endif
-
+                
                 @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
                     <fieldset>
                         <legend>Etiquetas embarques</legend>

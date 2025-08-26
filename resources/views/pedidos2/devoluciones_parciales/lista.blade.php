@@ -38,10 +38,30 @@ use App\Libraries\Tools;
             <b>Fecha:</b> {{ Tools::fechaMedioLargo($dev->created_at) }}
         </div>
 
-        @if(!empty($dev->file))
+        @if($dev->evidencias->count() > 0)
             <div class="subfila">
-                <b>Documento:</b>
-                <a class="pdf" target="_blank" href="{{ asset('storage/'.str_replace('public/', '', $dev->file)) }}">Ver archivo</a>
+                <b>Evidencias:</b>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                    @foreach($dev->evidencias as $evidencia)
+                        @php
+                            $extension = pathinfo($evidencia->file, PATHINFO_EXTENSION);
+                        @endphp
+
+                        @if(in_array(strtolower($extension), ['jpg','jpeg','png']))
+                            {{-- Mostrar imagen en miniatura --}}
+                            <a href="{{ asset('storage/'.$evidencia->file) }}" target="_blank">
+                                <img src="{{ asset('storage/'.$evidencia->file) }}" 
+                                    alt="Evidencia" 
+                                    style="width:100px; height:100px; object-fit:cover; border:1px solid #ccc; border-radius:5px;">
+                            </a>
+                        @else
+                            {{-- Mostrar PDF como link --}}
+                            <a class="pdf" targset="_blank" href="{{ asset('storage/'.$evidencia->file) }}">
+                                Ver archivo ({{ strtoupper($extension) }})
+                            </a>
+                        @endif
+                    @endforeach
+                </div>
             </div>
         @endif
 

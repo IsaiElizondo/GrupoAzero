@@ -36,4 +36,10 @@ class DevolucionParcial extends Model
 
     }
 
+    public function evidencias(){
+
+        return $this->hasMany(\App\DevolucionParcialArchivos::class, 'devolucion_parcial_id');
+    
+    }
+
 }

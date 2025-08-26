@@ -121,11 +121,14 @@ class RecibidoAuditoria extends Command
         ];
 
         $afectados = DB::table('orders')
-            ->where('office', ['La Noria', 'San Pablo'])
+            ->whereIn('office', ['La Noria', 'San Pablo'])
             ->whereBetween('created_at', ['2025-01-01 00:00:00', '2025-07-31 23:59:59'])
             ->whereIn('origin', ['C', 'F'])
             ->whereIn('status_id', [6, 7, 8, 9])
-            ->whereNotIn('invoice_number', $excluirPedidos)
+            ->where(function($q) use ($excluirPedidos){
+                $q->whereNotIn('invoice_number', $excluirPedidos)
+                ->orWhereNull('invoice_number');
+            })
             ->update(['status_id' => 10]);
 
         $this->info("Pedidos actualizados: {$afectados}");
