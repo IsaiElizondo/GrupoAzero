@@ -491,11 +491,11 @@ $pedidoStatusId = $pedido->status_id;
             )
         <a class="NParcial Candidato subp" href="{{ url('pedidos2/parcial_nuevo/'.$pedido->id) }}">+ Salida Parcial</a>
     @endif
-{{--
+
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])))
         <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
     @endif
---}}
+
 
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
         <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 

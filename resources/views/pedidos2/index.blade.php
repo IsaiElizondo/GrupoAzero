@@ -113,7 +113,7 @@ use App\Http\Controllers\Pedidos2Controller;
 
                             <div class="checkpair parent" rel="devolucionp">
                                 <input type="checkbox" name="sp[]" value="devolucionp" id="sp_devolucionp">
-                                <label for="sp_devolucionp"> Devolución </label>
+                                <label for="sp_devolucionp"> Devolución Parciales/Totales </label>
                             </div>
 
                             <div class="checkpair sub" parent="devolucionp">

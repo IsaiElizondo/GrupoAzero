@@ -2914,72 +2914,59 @@ public function guardarEntregaProgramada(Request $request, $id){
             'motivo' => 'required|in:Error del Cliente,Error Interno',
             'descripcion' => 'nullable|string|max:300',
             'tipo' => 'required|in:total,parcial',
-            'archivos' => 'nullable|array|max:10',
+            'archivos' => 'required|array|min:1|max:10',
             'archivos.*' => 'file|mimes:pdf,jpg,jpeg,png|max:15360',
         
         ]);
 
-        $filePath = null;
-        if($request->hasFile('archivos')){
-
-            $archivo = $request->file('archivos');
-
-            if(!Storage::exists('public/DevolucionesParciales')){
-                Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
-            }
-
-            $fileName = 'dp-' . $order_id . '-' . date('dHis') . '.' . $archivo->getClientOriginalExtension();
-            $stored = $archivo->storeAs('public/DevolucionesParciales', $fileName);
-            $filePath = str_replace('public/', '',$stored);
-
-        }
-
         $devolucion = DevolucionParcial::create([
 
-            'order_id' => $order_id,
-            'folio' => $request->folio,
-            'motivo' => $request->motivo,
-            'descripcion' => $request->descripcion,
-            'tipo' => $request->tipo,
-            'file' => '',
+            'order_id'   => $order_id,
+            'folio'      => $request->folio,
+            'motivo'     => $request->motivo,
+            'descripcion'=> $request->descripcion,
+            'tipo'       => $request->tipo,
+            'file'       => '',
             'created_by' => auth()->id(),
-
+        
         ]);
 
-        if($request->hasFile('archivos')){
-            foreach($request->file('archivos') as $archivo){
-                if(!Storage::exists('public/DevolucionesParciales')){
+        if ($request->hasFile('archivos')) {
+
+            foreach ($request->file('archivos') as $archivo) {
+                if (!Storage::exists('public/DevolucionesParciales')) {
                     Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
                 }
-            
 
-            $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
-            $stored = $archivo->storeAs('public/DevolucionesParciales', $fileName);
-            $filePath = str_replace('public/', '', $stored);
+                $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
+                $stored   = $archivo->storeAs('public/DevolucionesParciales', $fileName);
+                $filePath = str_replace('public/', '', $stored);
 
-            \App\DevolucionParcialArchivos::create([
-                'devolucion_parcial_id' => $devolucion->id,
-                'file' => $filePath,
-            ]);
-
+                DevolucionParcialArchivos::create([
+                    'devolucion_parcial_id' => $devolucion->id,
+                    'file' => $filePath,
+                ]);
             }
 
         }
 
-        if($request->tipo == 'total'){
+        if ($request->tipo == 'total') {
+
             Order::where('id', $order_id)->update([
                 'status_id'=>9,
                 'updated_at' => now()
             ]);
 
             Pedidos2::Log($order_id, "Devolucion Total", "Se registró una devolución Total", 9, auth()->user());
-            
-        }else{
+
+        } else {
             Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
         }
 
         return response()->json(['status' => 1]);
+        
     }
+
 
 
 
@@ -3022,10 +3009,13 @@ public function guardarEntregaProgramada(Request $request, $id){
         }
 
         $request->validate([
+            
             'motivo' => 'required|in:Error del Cliente,Error Interno',
-            'descripcion' => 'required|string|max:300',
+            'descripcion' => 'nullable|string|max:300',
             'tipo' => 'required|in:total,parcial',
-            'archivos.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', 
+            'archivos' => 'nullable|array|max:10',
+            'archivos.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360', 
+        
         ]);
 
         $dev = DevolucionParcial::findOrFail($id);

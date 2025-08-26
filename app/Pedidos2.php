@@ -127,7 +127,7 @@ class Pedidos2 extends Model
 
             if(in_array("devolucionp", $subprocesos)){
 
-                $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0";
+                $wheres[] ="((SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0) > 0 OR o.status_id = 9)";
 
                 $tipos = [];
                 foreach($subpstatus as $sps){
@@ -140,7 +140,13 @@ class Pedidos2 extends Model
                 }
 
                 if(!empty($tipos)){
-                    $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN (" . implode(",", $tipos) . ")) > 0";
+                    if($tipos == ["'total'"]){
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0 OR o.status_id = 9)";
+                    }elseif($tipos == ["'parcial'"]){
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0)";
+                    }else{
+                        $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN ('parcial', 'total'))> 0 OR o.status_id = 9)";
+                    }
                 }
 
             }
@@ -567,7 +573,7 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
                     $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0";
                 }
                 if($sp == 'devolucionp_total'){
-                    $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total) > 0";
+                    $where[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0";
                 }
             }
 
