@@ -468,7 +468,7 @@ $pedidoStatusId = $pedido->status_id;
     
     <div class="Eleccion ">
 
-    @if ( $user->role_id == 1 || ( in_array($user->department_id, [2,4] ) && !in_array($pedido->status_id,[6,7,8,10]) )  )
+    @if ( $user->role_id == 1 || ( in_array($user->department_id, [2,4,5] ) && !in_array($pedido->status_id,[6,7,8,10]) )  )
         <a class="Candidato" rel="smaterial" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=smaterial') }}">+ Salida de Materiales</a>
     @endif
 
