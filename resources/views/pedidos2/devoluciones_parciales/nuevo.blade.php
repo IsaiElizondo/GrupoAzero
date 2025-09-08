@@ -32,8 +32,9 @@
 
         <div class="Fila">
             <label for="archivos">Adjuntar evidencias *</label>
-            <input type="file" name="archivos[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple required />
-            <small>Puedes subir entre 1 y 10 archivos, máximo 15 MB cada uno.</small>
+            <input type="file" name="archivos[]" id="inputArchivos" accept=".pdf,.jpg,.jpeg,.png" multiple />
+            <div id="preview" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px"></div>
+            <small>Puedes subir entre 1 y 10 archivos, máximo 15MB cada uno.</small>
         </div>
 
         <div class="Fila">
@@ -41,3 +42,96 @@
         </div>
     </aside>
 </form>
+
+@push('js')
+    <script>
+        let archivosTemp = [];
+
+        document.addEventListener('change', function(e) {
+
+            if (e.target && e.target.id === 'inputArchivos') {
+                let nuevos = Array.from(e.target.files);
+                archivosTemp = archivosTemp.concat(nuevos);
+                mostrarPreview();
+                e.target.value = ""; 
+            }
+
+        });
+
+        function mostrarPreview(){
+
+            let preview = document.getElementById('preview');
+            if (!preview) return;
+
+            preview.innerHTML = "";
+            archivosTemp.forEach((file, index) => {
+                let div = document.createElement('div');
+                div.style.position = "relative";
+
+                if (file.type.startsWith("image/")){
+                    let img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.width = 120;
+                    img.height = 120;
+                    img.style.objectFit = "cover";
+                    img.style.border = "1px solid #ccc";
+                    img.style.borderRadius = "8px";
+                    div.appendChild(img);
+                }else{
+                    div.innerText = file.name;
+                }
+
+                let btn = document.createElement('button');
+                btn.type = "button";
+                btn.innerText = "X";
+                btn.style.position = "absolute";
+                btn.style.top = "0";
+                btn.style.right = "0";
+                btn.style.background = "red";
+                btn.style.color = "white";
+                btn.style.border = "none";
+                btn.style.cursor = "pointer";
+
+                btn.onclick = function(){
+                    archivosTemp.splice(index, 1);
+                    mostrarPreview();
+                };
+
+                div.appendChild(btn);
+                preview.appendChild(div);
+            });
+
+        }
+
+    
+        document.getElementById('FSetAccion').addEventListener('submit', function(e) {
+
+            e.preventDefault();
+
+            let formData = new FormData(this);
+            archivosTemp.forEach((file)=>{
+                formData.append("archivos[]", file);
+            });
+
+            fetch(this.action, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status == 1){
+                    
+                    location.reload();
+                }else{
+                    alert("Error: " + (data.error || "No se pudo guardar"));
+                }
+            })
+            .catch(err =>{
+                console.error(err);
+                alert("Error en la conexión");
+            });
+            
+        });
+
+    </script>
+@endpush

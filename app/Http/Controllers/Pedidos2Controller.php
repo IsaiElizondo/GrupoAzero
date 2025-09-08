@@ -2960,7 +2960,7 @@ public function guardarEntregaProgramada(Request $request, $id){
             Pedidos2::Log($order_id, "Devolucion Total", "Se registró una devolución Total", 9, auth()->user());
 
         } else {
-            Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
+            Pedidos2::Log($order_id, "Devolución Parcial", "Se registró una devlolución parcial. Folio: {$request->folio}", 0, auth()->user());
         }
 
         return response()->json(['status' => 1]);
@@ -3000,22 +3000,21 @@ public function guardarEntregaProgramada(Request $request, $id){
     public function devolucion_parcial_actualizar(Request $request, $id){
 
         $user = auth()->user();
+        
 
-        if (
+        if(
             !in_array($user->role->name, ["Administrador", "Empleado"]) &&
             !in_array($user->department->name, ["Administrador", "Embarques"])
-        ) {
+        ){
             abort(403, 'No autorizado');
         }
 
         $request->validate([
-            
             'motivo' => 'required|in:Error del Cliente,Error Interno',
             'descripcion' => 'nullable|string|max:300',
-            'tipo' => 'required|in:total,parcial',
+            'tipo' => 'required|in:total,parcial',            
             'archivos' => 'nullable|array|max:10',
-            'archivos.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360', 
-        
+            'archivos.*' => 'file|mimes:pdf,jpg,jpeg,png|max:15360',
         ]);
 
         $dev = DevolucionParcial::findOrFail($id);
@@ -3077,10 +3076,10 @@ public function guardarEntregaProgramada(Request $request, $id){
             }
         }
 
-        Pedidos2::Log($dev->order_id, "Devolución Parcial", "Actualizada por: " . $user->name, 0, $user);
+        Pedidos2::Log($dev->order_id, "Sa registró una actualización en la devolución", "Actualizada por: " . $user->name, 0, $user);
 
         return response()->json(['status' => 1]);
-
+    
     }
 
 

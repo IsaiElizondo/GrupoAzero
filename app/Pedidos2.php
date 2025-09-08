@@ -648,7 +648,7 @@ public static function ListaDashboard(int $pag, $user, array $filtros): array{
         $where[] = "o.status_id NOT IN (6,7,8,9,10)";
     } elseif (in_array($user->role_id, [1,2]) && $user->department_id == 9) {
         $where[] = "o.status_id IN (6,7,8,9)";
-        $where[] = "o.origin IN ('F', 'C')";
+        $where[] = "(o.origin = 'F' OR (origin = 'C' AND o.invoice_number IS NOT NULL AND o.invoice_number != ''))"; 
     }
 
     $whereStr = implode(" AND ", $where);
