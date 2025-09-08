@@ -61,7 +61,7 @@
 </form>
 
 
-@push('js')
+
     <script>
         let archivosTemp = [];
 
@@ -188,4 +188,3 @@
         }, true); 
 
     </script>
-endpush('js')

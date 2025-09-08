@@ -43,7 +43,7 @@
     </aside>
 </form>
 
-@push('js')
+
     <script>
         let archivosTemp = [];
 
@@ -134,4 +134,3 @@
         });
 
     </script>
-@endpush
