@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::create('rutas', function (Blueprint $table) {
             $table->id();
-            $table->string('numero_ruta', 7)->unique();
-            $table->unsignedBigInteger('cliente_id');
-            $table->foreign('cliente_id')->references('id')->on('clientes')->onDelete('cascade');
-            $table->string('invoice_number')->nullable();
-            $table->string('invoice_number')->nullable();
-            $table->enum('estatus_pago', ['por cobrar', 'credito', 'pagado'])->default('pendiente');
+            $table->string('numero_ruta', 6)->unique();
+            $table->foreignId('cliente_id')->contrained('clientes')->restrictOnDelete();
+            $table->enum('estatus_pago', ['pendiente', 'pagado', 'cancelado'])->default('pendiente');
             $table->decimal('monto_por_cobrar', 10, 2)->default(0);
             $table->dateTime('fecha_hora')->nullable();
-            $table->unsignedBigInteger('unidad_id')->nullable();
-            $table->unsignedBigInteger('chofer_id')->nullable();
+            $table->foreignId('unidad_id')->nullable()->constrained('unidades')->nullOnDelete();
+            $table->foreignId('chofer_id')->nullable()->constrained('users')->nullOnDelete();
             $table->unisgnedBigInteger('estatus_entrega')->nullable();
             $table->text('motivo')->nullable();
-            $table->timestamps();
+            $tabel->timestamps();
+            $table->index(['cliente_id']);
+            $table->index(['unidad_id']);
+            $table->index(['chofer_id']);
         });
     }
 

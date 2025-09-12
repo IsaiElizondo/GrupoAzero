@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('codigo_cliente')->unique();
             $table->string('celular')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

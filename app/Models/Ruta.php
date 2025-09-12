@@ -35,10 +35,10 @@ class Ruta extends Model
     }
 
     public function pedidos(){
-        return $this->hasMay(RutaPedido::class, 'ruta_id');
+        return $this->hasMany(RutaPedido::class, 'ruta_id');
     }
 
     public function orders(){
-        return $this->hasManyThrough(Order::class, 'ruta_id', 'id', 'id', 'order_id');
+        return $this->belongsToMany(Order::class, 'ruta_id', 'id', 'id', 'order_id');
     }
 }

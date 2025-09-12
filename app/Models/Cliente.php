@@ -21,6 +21,6 @@ class Cliente extends Model
     }
 
     public function rutas(){
-        return $this->hasMany(Rutas::class, 'cliente_id');
+        return $this->hasMany(Ruta::class, 'cliente_id');
     }
 }

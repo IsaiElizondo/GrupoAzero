@@ -11,7 +11,7 @@ class RutaPedido extends Model
     protected $fillable = [
 
         'ruta_id',
-        'invoice_number',
+        'order_id',
     
     ];
 
@@ -23,7 +23,4 @@ class RutaPedido extends Model
         return $this->hasMany(RutaPedido::class, 'order_id');
     }
 
-    public function rutas(){
-        return $this->belongsToMany(Ruta::class, 'ruta_pedio', 'order_id', 'ruta_id');
-    }
 }

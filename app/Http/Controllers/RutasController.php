@@ -51,7 +51,7 @@ class RutasController extends Controller
             'estaus_pago' => $request->estatus_pago,
             'monto_por_cobrar' => $request->monto_por_cobrar,
             'fecha_hora' => $request->fecha_hora,
-            'estatus_entreaga' => $request->estatus_entrega,
+            'estatus_entrega' => $request->estatus_entrega,
             'motivo' => $request->motivo,
 
         ]);
@@ -59,7 +59,7 @@ class RutasController extends Controller
         foreach($request->pedidos as $invoice){
             RutaPedido::create([
                 'ruta_id' => $ruta->id,
-                'invoice_number' => $invoice,
+                'order_id' => $invoice,
             ]);
         }
 
@@ -73,7 +73,7 @@ class RutasController extends Controller
             'cliente',
             'unidad',
             'chofer',
-            'pedidos'
+            'orders'
         ])->findOrFail($id);
 
         return view('rutas.show', compact('ruta'));
@@ -113,7 +113,7 @@ class RutasController extends Controller
         foreach($request->pedidos as $invoice){
             RutaPedido::create([
                 'ruta_id' => $ruta->id,
-                'invoice_number' => $invoice,
+                'order_id' => $invoice,
             ]);
         }
 
