@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Models\Ruta;
 
 class Order extends Model
 {
@@ -99,6 +100,10 @@ class Order extends Model
 
         return $this->hasMany(\App\DevolucionParcial::class, 'order_id');
 
+    }
+
+    public function rutas(){
+        return $this->belongsToMany(Ruta::class, 'ruta_pedido', 'order_id', 'ruta_id');
     }
 
 

@@ -473,8 +473,8 @@ $pedidoStatusId = $pedido->status_id;
     @endif
 
 
-    @if ( $pedido->origin != "R" && ($user->role_id == 1 || 
-        ( in_array($user->department_id,[2,7]) &&  !in_array($pedido->status_id,[6,7,10]) && !isset($purchaseOrder->id)  ) ) 
+    @if ( ($user->role_id == 1 || 
+        ( in_array($user->department_id,[2,7]) &&  !in_array($pedido->status_id,[6,7,10])    ) ) 
       )
         <a class="Candidato" rel="requisicion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=requisicion') }}">+ Requisición</a>
     @endif

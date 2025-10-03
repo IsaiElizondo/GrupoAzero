@@ -11,10 +11,12 @@ class DireccionCliente extends Model
     protected $fillable = [
 
         'cliente_id',
+        'nombre_direccion',
         'direccion',
         'ciudad',
         'estado',
         'codigo_postal',
+        'celular',
         'url_mapa',
         'instrucciones',
 

@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('clientes_direcciones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cliente_id')->constrained('clientes')->cascadeOnDelete();
+            $table->string('nombre_direccion', 50);
             $table->string('direccion');
-            $table->string('ciudad')->nullable();
-            $table->string('estado')->nullable();
-            $table->string('codigo_postal')->nullable();
-            $table->string('url_map')->nullable();
-            $table->text('intrucciones')->nullable();
+            $table->string('ciudad', 100)->nullable();
+            $table->string('estado', 100)->nullable();
+            $table->string('codigo_postal', 20)->nullable();
+            $table->string('celular', 20)->nullable();
+            $table->string('url_mapa')->nullable();
+            $table->text('instrucciones')->nullable();
             $table->timestamps();
 
             $table->index('cliente_id');

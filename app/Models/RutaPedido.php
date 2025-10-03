@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Ruta;
+use App\Order;
 
 class RutaPedido extends Model
 {
@@ -19,8 +21,8 @@ class RutaPedido extends Model
         return $this->belongsTo(Ruta::class, 'ruta_id');
     }
 
-    public function rutaPedidos(){
-        return $this->hasMany(RutaPedido::class, 'order_id');
+    public function order(){
+        return $this->belongsTo(Order::class, 'order_id');
     }
 
 }

@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Cliente;
+use App\Models\RutaPedido;
+use App\User;
+use App\Order;
 
 class Ruta extends Model
 {
@@ -23,7 +27,7 @@ class Ruta extends Model
     ];
 
     public function cliente(){
-        return $this->belongsTo(Cliente::class, 'cliente_id');
+        return $this->belongsTo(Cliente::class, 'cliente_id')->withTrashed();
     }
 
     public function unidad(){
@@ -39,6 +43,6 @@ class Ruta extends Model
     }
 
     public function orders(){
-        return $this->belongsToMany(Order::class, 'ruta_id', 'id', 'id', 'order_id');
+        return $this->belongsToMany(Order::class, 'ruta_pedido', 'ruta_id', 'order_id');
     }
 }
