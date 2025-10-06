@@ -38,30 +38,61 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($users as $user)
-                            <tr>
-                                <td>{{ $user->id }}</td>
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
-                                <td>{{ $user->office }}</td>
-                                <td>{{ $user->department->name }}</td>
-                                <td>{{ $user->role->name }}</td>
-                                <td>
-                                    <a href="{{ route('users.show', $user->id) }}" class="btn btn-primary btn-link btn-sm">
-                                        <span class="material-icons">
-                                            visibility
-                                        </span>
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary btn-link btn-sm">
-                                        <span class="material-icons">
-                                            edit
-                                        </span>
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
+                        @if(auth()->user()->department->name == "Administrador" && auth()->user()->role->name == "Administrador")
+                            @foreach ($users as $user)
+                                <tr>
+                                    <td>{{ $user->id }}</td>
+                                    <td>{{ $user->name }}</td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>{{ $user->office }}</td>
+                                    <td>{{ $user->department->name }}</td>
+                                    <td>{{ $user->role->name }}</td>
+                                    <td>
+                                        <a href="{{ route('users.show', $user->id) }}" class="btn btn-primary btn-link btn-sm">
+                                            <span class="material-icons">
+                                                visibility
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary btn-link btn-sm">
+                                            <span class="material-icons">
+                                                edit
+                                            </span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                        
+                        @if(auth()->user()->department->name == "Embarques" && auth()->user()->role->name == "Empleado")
+                            @foreach ($users as $user)
+                                @if($user->role_id == 2 && $user->department_id == 6)
+                                    <tr>
+                                        <td>{{ $user->id }}</td>
+                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $user->office }}</td>
+                                        <td>{{ $user->department->name }}</td>
+                                        <td>{{ $user->role->name }}</td>
+                                        <td>
+                                            <a href="{{ route('users.show', $user->id) }}" class="btn btn-primary btn-link btn-sm">
+                                                <span class="material-icons">
+                                                    visibility
+                                                </span>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary btn-link btn-sm">
+                                                <span class="material-icons">
+                                                    edit
+                                                </span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
                 </div>
