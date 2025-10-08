@@ -77,6 +77,7 @@
                                                 'estado' => $d->estado,
                                                 'codigo_postal' => $d->codigo_postal,
                                                 'celular' => $d->celular,
+                                                'nombre_recibe' => $d->nombre_recibe,
                                                 'url_mapa' => $d->url_mapa,
                                                 'instrucciones' => $d->instrucciones,
                                             ];
@@ -136,7 +137,12 @@
                                             </div>
 
                                             <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label">Mapa (URL)</label>
+                                                <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                                <div class="col-sm-3">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][nombre_recibe]" type="text" placeholder="Nombre del quién recibe" value="{{ $d['nombre_recibe'] ?? '' }}">
+                                                </div>
+                                            
+                                                <label class="col-sm-1 col-form-label text-right">Mapa (URL)</label>
                                                 <div class="col-sm-3">
                                                     <input class="form-control" name="direcciones[{{ $i }}][url_mapa]" type="text" placeholder="https://maps..." value="{{ $d['url_mapa'] ?? '' }}">
                                                 </div>
@@ -203,7 +209,12 @@
                                         </div>      
                                         
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label">Mapa(URL)</label>
+                                            <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                            <div class="col-sm-3">
+                                                <input class="form-control" name="direcciones[__INDEX__][nombre_recibe]" type="text" placeholder="Nombre del quién recibe">
+                                            </div>
+
+                                            <label class="col-sm-1 col-form-label text-right">Mapa(URL)</label>
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][url_mapa]" type="text" placeholder="https://maps...">
                                             </div>

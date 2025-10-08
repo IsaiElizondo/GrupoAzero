@@ -17,6 +17,7 @@ class DireccionCliente extends Model
         'estado',
         'codigo_postal',
         'celular',
+        'nombre_recibe',
         'url_mapa',
         'instrucciones',
 

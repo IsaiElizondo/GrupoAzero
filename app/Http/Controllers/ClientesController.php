@@ -37,6 +37,7 @@ class ClientesController extends Controller
             'estado' => ['nullable', 'string', 'max:100'],
             'codigo_postal' => ['nullable', 'string', 'max:30'],
             'celular' => ['nullable', 'string', 'max:20'],
+            'nombre_recibe' => ['nullable', 'string', 'max:50'],
             'url_mapa' => ['nullable', 'string', 'max:500'],
             'instrucciones' => ['nullable', 'string', 'max:500'],
             'direcciones' => ['nullable', 'array'],
@@ -46,6 +47,7 @@ class ClientesController extends Controller
             'direcciones.*.estado' => ['nullable', 'string', 'max:100'],
             'direcciones.*.codigo_postal' => ['nullable', 'string', 'max:100'],
             'direcciones.*.celular' => ['nullable', 'string', 'max:20'],
+            'direcciones.*.nombre_recibe' => ['nullable', 'string', 'max:50'],
             'direcciones.*.url_mapa' => ['nullable', 'string', 'max:500'],
             'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500']
         ]);
@@ -67,12 +69,13 @@ class ClientesController extends Controller
                             'estado' => $dir['estado'] ?? null,
                             'codigo_postal' => $dir['codigo_postal'] ?? null,
                             'celular' => $dir['celular'] ?? null,
+                            'nombre_recibe' => $dir['nombre_recibe'] ?? null,
                             'url_mapa' => $dir['url_mapa'] ?? null,
                             'instrucciones' => $dir['instrucciones'] ?? null,
                         ]);
                     }
                 }else{
-                    if($validated['nombre_direccion'] || $validated['direccion'] || $validated['ciudad'] || $validated['estado'] || $validated['codigo_postal'] || $validated['url_mapa'] || $validated['instrucciones']){
+                    if($validated['nombre_direccion'] || $validated['direccion'] || $validated['ciudad'] || $validated['estado'] || $validated['codigo_postal'] || $validated['celular'] || $validated['nombre_recibe'] || $validated['url_mapa'] || $validated['instrucciones']){
                         DireccionCliente::create([
                             'cliente_id' => $cliente->id,
                             'nombre_direccion' => $validated['nombre_direccion'] ?? null,
@@ -81,6 +84,7 @@ class ClientesController extends Controller
                             'estado' => $validated['estado'] ?? null,
                             'codigo_postal' => $validated['codigo_postal'] ?? null,
                             'celular' => $validated['celular'] ?? null,
+                            'nombre_recibe' => $validated['nombre_recibe'] ?? null,
                             'url_mapa' => $validated['url_mapa'] ?? null,
                             'instrucciones' => $validated['instrucciones'] ?? null,
                         ]);
@@ -122,6 +126,7 @@ class ClientesController extends Controller
             'estado' => ['nullable', 'string', 'max:100'],
             'codigo_postal'=> ['nullable', 'string', 'max:30'],
             'celular' => ['nullable', 'string', 'max:20'],
+            'nombre_recibe' => ['nullable', 'string', 'max:50'],
             'url_mapa' => ['nullable', 'string', 'max:500'],
             'instrucciones' => ['nullable', 'string', 'max:50'],
             'direcciones' => ['nullable', 'array'],
@@ -132,6 +137,7 @@ class ClientesController extends Controller
             'direcciones.*.estado' => ['nullable', 'string', 'max:100'],
             'direcciones.*.codigo_postal' => ['nullable', 'string', 'max:20'],
             'direcciones.*.celular' => ['nullable', 'string', 'max:20'],
+            'direcciones.*.nombre_recibe' => ['nullable', 'string', 'max:50'],
             'direcciones.*.url_mapa' => ['nullable', 'string', 'max:500'],
             'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500']
 
@@ -155,6 +161,7 @@ class ClientesController extends Controller
                             'estado' => $dir['estado'] ?? null,
                             'codigo_postal' => $dir['codigo_postal'] ?? null,
                             'celular' => $dir['celular'] ?? null,
+                            'nombre_recibe' => $dir['nombre_recibe'] ?? null,
                             'url_mapa' => $dir['url_mapa'] ?? null,
                             'instrucciones' => $dir['instrucciones'] ?? null, 
                         ];
@@ -183,10 +190,11 @@ class ClientesController extends Controller
                     $dir->estado = $validated['estado'] ?? null;
                     $dir->codigo_postal = $validated['codigo_postal'] ?? null;
                     $dir->celular = $validated['celular'] ?? null;
+                    $dir->nombre_recibe = $validated['nombre_recibe'] ?? null;
                     $dir->url_mapa = $validated['url_mapa'] ?? null;
                     $dir->instrucciones = $validated['instrucciones'] ?? null;
 
-                    if($dir->nombre_direccion || $dir->direccion || $dir->ciudad || $dir->estado || $dir->codigo_postal|| $dir->celular || $dir->url_mapa || $dir->instrucciones){
+                    if($dir->nombre_direccion || $dir->direccion || $dir->ciudad || $dir->estado || $dir->codigo_postal|| $dir->celular || $dir->nombre_recibe || $dir->url_mapa || $dir->instrucciones){
                         $dir->save();
                     }elseif($dir->exists){
                         $dir->delete();
