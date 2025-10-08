@@ -141,15 +141,16 @@ class Pedidos2 extends Model
 
                 if(!empty($tipos)){
                     if($tipos == ["'total'"]){
-                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0 OR o.status_id = 9)";
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0 OR o.status_id = 9";
                     }elseif($tipos == ["'parcial'"]){
-                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0)";
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0";
                     }else{
-                        $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN ('parcial', 'total'))> 0 OR o.status_id = 9)";
+                        $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN ('parcial', 'total'))> 0 OR o.status_id = 9";
                     }
                 }
 
             }
+
 
             if (in_array('a0', $subprocesos)) {
 
