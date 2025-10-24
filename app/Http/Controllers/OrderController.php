@@ -140,6 +140,57 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+
+        $cliente_id = null;
+        $cliente_direccion_id = null;
+        $nombre_cliente = null;
+        $direccion = null;
+        $ciudad = null;
+        $estado = null;
+        $codigo_postal = null;
+        $celular = null;
+        $nombre_recibe = null;
+
+        $tipo_cliente = $request->input('tipo_cliente');
+
+        if($tipo_cliente == 'general'){
+            $nombre_cliente = "Cliente general";
+        }
+        
+        elseif($tipo_cliente == 'existente'){
+            $cliente = Cliente::find($request->cliente_id);
+            $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+            if($cliente && $direccionCliente){
+                $cliente_id = $cliente->id;
+                $cliente_direccion_id = $direccionCliente->id;
+                $nombre_cliente = $cliente->nombre;
+                $direccion = $direccionCliente->direccion;
+                $ciudad = $direccionCliente->ciudad;
+                $estado = $direccionCliente->estado;
+                $codigo_postal = $direccionCliente->codigo_postal;
+                $celular = $direccionCliente->celular;
+                $nombre_recibe = $direccionCliente->nombre_recibe;
+            }
+        }
+
+        elseif($tipo_cliente == 'nuevo'){
+            $cliente = Cliente::find($request->cliente_id);
+            $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+            if($cliente && $direccionCliente){
+                $cliente_id = $cliente->id;
+                $cliente_direccion_id = $direccionCliente->id;
+                $nombre_cliente = $cliente->nombre;
+                $ciudad = $direccionCliente->ciudad;
+                $estado = $direccionCliente->estado;
+                $codigo_postal = $direccionCliente->codigo_postal;
+                $celular = $direccionCliente->celular;
+                $nombre_recibe = $direccionCliente->nombre_recibe;
+            }
+        }
+
+
         // dd($request->all());
         $registro = Order::where('invoice', 'like', $request->invoice)->count();
         // dd($registro);
@@ -167,6 +218,17 @@ class OrderController extends Controller
             'invoice' => $request->invoice,
             'invoice_number' => $request->invoice_number,
             'client' => $request->client,
+            //NUEVOS CAMPOS PARA LA COPIA
+            'cliente_id' => $cliente_id,
+            'cliente_direccion_id' => $cliente_direccion_id,
+            'nombre_cliente' => $nombre_cliente,
+            'direccion' => $direccion,
+            'ciudad' => $ciudad,
+            'estado' => $estado,
+            'codigo_postal' => $codigo_postal,
+            'celular' => $celular,
+            'nombre_recibe' => $nombre_recibe,
+            //FIN DE LOS CAMPOS NUEVOS
             'credit' => $credit,
             'status_id' => $request->status_id,
             'created_at' => now(),

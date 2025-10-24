@@ -11,10 +11,10 @@ class RutaPedido extends Model
     protected $table = 'ruta_pedido';
 
     protected $fillable = [
-
         'ruta_id',
         'order_id',
-    
+        'estatus_pago',
+        'monto_por_cobrar',
     ];
 
     public function ruta(){
@@ -24,5 +24,4 @@ class RutaPedido extends Model
     public function order(){
         return $this->belongsTo(Order::class, 'order_id');
     }
-
 }

@@ -5,12 +5,33 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use App\Models\Ruta;
+use App\Models\Cliente;
+use App\Models\DireccionCliente;
 
 class Order extends Model
 {
     protected $fillable = [
-        'office', 'invoice', 'invoice_number', 'invoice_document','client', 'credit', 'status_id', 'delete',
-        'origin','embarques_by','end_at','created_by'
+        'office',
+        'invoice',
+        'invoice_number',
+        'invoice_document',
+        'client',
+        'client_id',
+        'client_direccion_id',
+        'nombre_cliente',
+        'direccion',
+        'ciudad',
+        'estado',
+        'codigo_postal',
+        'celular',
+        'nombre_recibe',
+        'credit',
+        'status_id',
+        'delete',
+        'origin',
+        'embarques_by',
+        'end_at',
+        'created_by'
     ];
     
     public static function countAll()
@@ -104,6 +125,14 @@ class Order extends Model
 
     public function rutas(){
         return $this->belongsToMany(Ruta::class, 'ruta_pedido', 'order_id', 'ruta_id');
+    }
+
+    public function cliente(){
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function direccion(){
+        return $this->belongsTo(DireccionCliente::class, 'cliente_direccion_id');
     }
 
 

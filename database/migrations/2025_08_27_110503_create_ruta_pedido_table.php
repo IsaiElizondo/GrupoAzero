@@ -17,9 +17,12 @@ return new class extends Migration
             $table->foreign('ruta_id')->references('id')->on('rutas')->onDelete('cascade');
             $table->unsignedBigInteger('order_id');
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->enum('estatus_pago', ['pendiente', 'pagado', 'cancelado'])->default('pendiente');
+            $table->decimal('monto_por_cobrar', 10, 2)->default(0);
             $table->timestamps();
             $table->unique(['ruta_id', 'order_id']);
         });
+
     }
 
     /**

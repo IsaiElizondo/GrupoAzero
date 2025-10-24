@@ -26,4 +26,8 @@ class DireccionCliente extends Model
     public function cliente(){
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }
+
+    public function orders(){
+        return $this->hasMany(Order::class, 'cliente_direccion_id');
+    }
 }

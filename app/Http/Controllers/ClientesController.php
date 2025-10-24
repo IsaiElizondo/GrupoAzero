@@ -221,4 +221,66 @@ class ClientesController extends Controller
         return redirect()->route('clientes.index')->with('success', 'Cliente eliminado correctamente');
     }
 
+
+    public function buscar(Request $request){
+        $q = $request->q;
+        $clientes = Cliente::where('nombre', 'like', "%$q%")
+                    ->orWhere('codigo_cliente', 'like', "%$q%")
+                    ->get(['id','nombre','codigo_cliente']);
+        return response()->json($clientes);
+    }
+
+    public function direcciones($id){
+        $direcciones = DireccionCliente::where('cliente_id',$id)
+                        ->get(['id','nombre_direccion','direccion']);
+        return response()->json($direcciones);
+    }
+
+
+    public function storeAjax(Request $request){
+
+        $this->store($request);
+        $cliente = Cliente::latest()->first();
+        $direccion = $cliente->direcciones()->latest()->first();
+
+        return response()->json([
+            'status' => 1,
+            'cliente_id' => $cliente->id,
+            'direccion_id' => $direccion->id ?? null,
+            'cliente_nombre' => $cliente->nombre,
+        ]);
+
+    }
+
+    public function storeDireccion(Request $request){
+    $validated = $request->validate([
+        'cliente_id' => ['required', 'exists:clientes,id'],
+        'nombre_direccion' => ['required', 'string', 'max:100'],
+        'direccion' => ['required', 'string', 'max:255'],
+        'ciudad' => ['nullable', 'string', 'max:100'],
+        'estado' => ['nullable', 'string', 'max:100'],
+        'codigo_postal' => ['nullable', 'string', 'max:20'],
+        'celular' => ['nullable', 'string', 'max:20'],
+        'nombre_recibe' => ['nullable', 'string', 'max:100'],
+        'url_mapa' => ['nullable', 'string', 'max:500'],
+        'instrucciones' => ['nullable', 'string', 'max:500'],
+    ]);
+
+    try {
+        $direccion = DireccionCliente::create($validated);
+
+        return response()->json([
+            'status' => 1,
+            'direccion' => $direccion
+        ]);
+    } catch (\Throwable $e) {
+        report($e);
+        return response()->json([
+            'status' => 0,
+            'message' => 'Error al guardar la dirección'
+        ], 500);
+    }
+}
+
+
 }
