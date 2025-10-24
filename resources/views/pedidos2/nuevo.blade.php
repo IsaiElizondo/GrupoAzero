@@ -56,7 +56,7 @@
             <dt rel='client'><label>Clave de Cliente *</label></dt> 
             <dd rel='client'> <input type="text" name="client" class="form-control"   maxlength="45"/></dd>
 
-            @if ($user->role_id == 1 || in_array($user->department_id,[4,7]) )
+            @if ($user->role_id == 1 || in_array($user->department_id,[4,5,7]) )
             
             <dt rel='archivo'><label rel="archivo" F="Archivo Factura" C="Archivo Cotizacion" R="Archivo Requisición">Archivo</label> </dt> 
             <dd rel='archivo'><input type="file" name="archivo"  class="form-control" /></dd>

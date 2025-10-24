@@ -1026,7 +1026,20 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         $orderData=["updated_at"=>$now];
             if(!empty($invoice)){$orderData["invoice"]=$invoice;}
-            if(!empty($invoice_number)){$orderData["invoice_number"]=$invoice_number;}
+            if(!empty($invoice_number)){
+                $existe = Order::where("invoice_number", $invoice_number)
+                    ->where("id", "<>", $id)
+                    ->where("status_id", "<>", 7)
+                    ->exists();
+
+                if($existe){
+                    echo "<script>alert('Ya existe un pedido activo con el número de factura \"$invoice_number\"'); window.history.back();</script>";
+                    exit;
+
+                }
+
+                $orderData["invoice_number"]=$invoice_number;
+            }
             if(!empty($client)){$orderData["client"]=$client;}
         
 
