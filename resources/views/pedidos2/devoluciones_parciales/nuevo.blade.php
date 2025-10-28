@@ -44,93 +44,102 @@
 </form>
 
 
-    <script>
-        let archivosTemp = [];
+<script>
+    let archivosTemp = [];
 
-        document.addEventListener('change', function(e) {
+    document.addEventListener('change', function(e){
 
-            if (e.target && e.target.id === 'inputArchivos') {
-                let nuevos = Array.from(e.target.files);
-                archivosTemp = archivosTemp.concat(nuevos);
-                mostrarPreview();
-                e.target.value = ""; 
-            }
-
-        });
-
-        function mostrarPreview(){
-
-            let preview = document.getElementById('preview');
-            if (!preview) return;
-
-            preview.innerHTML = "";
-            archivosTemp.forEach((file, index) => {
-                let div = document.createElement('div');
-                div.style.position = "relative";
-
-                if (file.type.startsWith("image/")){
-                    let img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    img.width = 120;
-                    img.height = 120;
-                    img.style.objectFit = "cover";
-                    img.style.border = "1px solid #ccc";
-                    img.style.borderRadius = "8px";
-                    div.appendChild(img);
-                }else{
-                    div.innerText = file.name;
-                }
-
-                let btn = document.createElement('button');
-                btn.type = "button";
-                btn.innerText = "X";
-                btn.style.position = "absolute";
-                btn.style.top = "0";
-                btn.style.right = "0";
-                btn.style.background = "red";
-                btn.style.color = "white";
-                btn.style.border = "none";
-                btn.style.cursor = "pointer";
-
-                btn.onclick = function(){
-                    archivosTemp.splice(index, 1);
-                    mostrarPreview();
-                };
-
-                div.appendChild(btn);
-                preview.appendChild(div);
-            });
-
+        if(e.target && e.target.id == 'inputArchivos'){
+            let nuevos = Array.from(e.target.files);
+            archivosTemp = archivosTemp.concat(nuevos);
+            mostrarPreview();
+            e.target.value = "";
         }
 
-    
-        document.getElementById('FSetAccion').addEventListener('submit', function(e) {
+    });
 
-            e.preventDefault();
+    function mostrarPreview(){
+        let preview = document.getElementById('preview');
+        if(!preview) return;
 
-            let formData = new FormData(this);
-            archivosTemp.forEach((file)=>{
-                formData.append("archivos[]", file);
-            });
+        preview.innerHTML = "";
+        archivosTemp.forEach((file, index) => {
+            let div = document.createElement('div');
+            div.style.position = "relative";
 
-            fetch(this.action, {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status == 1){
-                    
-                    location.reload();
-                }else{
-                    alert("Error: " + (data.error || "No se pudo guardar"));
-                }
-            })
-            .catch(err =>{
-                console.error(err);
-                alert("Error en la conexión");
-            });
-            
+            if(file.type.startsWith("image/")){
+                let img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.width = 120;
+                img.height = 120;
+                img.style.objectFit = "cover";
+                img.style.border = "1px solid #ccc";
+                img.style.borderRadius = "8px";
+                div.appendChild(img);
+            } else {
+                div.innerText = file.name;
+            }
+
+            let btn = document.createElement('button');
+            btn.type = "button";
+            btn.innerText = "X";
+            btn.style.position = "absolute";
+            btn.style.top = "0";
+            btn.style.right = "0";
+            btn.style.color = "white";
+            btn.style.background = "red";
+            btn.style.border = "none";
+            btn.style.cursor = "pointer";
+
+            btn.onclick = function(){
+                archivosTemp.splice(index, 1);
+                mostrarPreview();
+            };
+
+            div.appendChild(btn);
+            preview.appendChild(div);
+        });
+    }
+
+    document.getElementById('FSetAccion').addEventListener('submit', function(e){
+
+        e.preventDefault();
+        const btn = this.querySelector('input[type="submit"], button[type="submit"]');
+        if(btn){
+            btn.disabled = true;
+            btn.value = "Procesando...";
+        }
+
+        let formData = new FormData(this);
+        archivosTemp.forEach((file)=> {
+            formData.append("archivos[]", file);
         });
 
-    </script>
+        fetch(this.action,{
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status == 1){
+                location.reload();
+            } else {
+                alert("Error: " + (data.error || "No se pudo guardar"));
+                if(btn){
+                    btn.disabled = false;
+                    btn.value = "Continuar";
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error en la conexión");
+            if(btn){
+                btn.disabled = false;
+                btn.value = "Continuar";
+            }
+        });
+
+    });
+</script>
+
