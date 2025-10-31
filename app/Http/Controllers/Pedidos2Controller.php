@@ -245,10 +245,23 @@ class Pedidos2Controller extends Controller
         $data['etiquetasDisponibles'] = $etiquetasDisponibles;
         $data['etiquetasAsignadas'] = $etiquetasAsignadas;
         
+        $rutasAsociadas = DB::table('ruta_pedido')
+            ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
+            ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
+            ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
+            ->select(
+                'rutas.numero_ruta',
+                'unidades.nombre_unidad as unidad',
+                'users.name as chofer',
+                'rutas.created_at',
+                'ruta_pedido.estatus_pago'
+            )
+            ->where('ruta_pedido.order_id', $id)
+            ->get();
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "etiquetasAsignadas", "etiquetasDisponibles"));
+        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "etiquetasAsignadas", "etiquetasDisponibles", 'rutasAsociadas'));
     }
 
 

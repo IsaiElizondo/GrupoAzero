@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Cliente;
 use App\Models\RutaPedido;
+use App\Models\Unidad;
 use App\User;
 use App\Order;
 

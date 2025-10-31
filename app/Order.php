@@ -16,6 +16,7 @@ class Order extends Model
         'invoice_number',
         'invoice_document',
         'client',
+        //NUEVOS CAMPOS
         'client_id',
         'client_direccion_id',
         'nombre_cliente',
@@ -25,6 +26,9 @@ class Order extends Model
         'codigo_postal',
         'celular',
         'nombre_recibe',
+        'url_mapa',
+        'instrucciones',
+        //FIN DE LOS NUEVOS CAMPOS
         'credit',
         'status_id',
         'delete',

@@ -39,17 +39,7 @@
 
                         <div class="card-body">
                             <div class="row">
-                                <label class="col-sm-2 col-form-label text-right">Cliente</label>
-                                <div class="col-sm-4">
-                                    <select class="form-control" name="cliente_id" required>
-                                        @foreach($clientes as $c)
-                                            <option value="{{ $c->id }}" {{ $ruta->cliente_id == $c->id ? 'selected' : '' }}>
-                                                {{ $c->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
+                                
                                 <label class="col-sm-2 col-form-label text-right">Unidad</label>
                                 <div class="col-sm-4">
                                     <select class="form-control" name="unidad_id">
@@ -75,25 +65,6 @@
                                     </select>
                                 </div>
 
-                                <label class="col-sm-2 col-form-label text-right">Fecha y Hora</label>
-                                <div class="col-sm-4">
-                                    <input type="datetime-local" name="fecha_hora"
-                                        class="form-control"
-                                        value="{{ $ruta->fecha_hora ? \Carbon\Carbon::parse($ruta->fecha_hora)->format('Y-m-d\TH:i') : '' }}">
-                                </div>
-                            </div>
-
-                            <div class="row mt-3">
-                                <label class="col-sm-2 col-form-label text-right">Estatus de Entrega</label>
-                                <div class="col-sm-4">
-                                    <input type="number" name="estatus_entrega" class="form-control"
-                                        value="{{ $ruta->estatus_entrega ?? '' }}">
-                                </div>
-
-                                <label class="col-sm-2 col-form-label text-right">Motivo</label>
-                                <div class="col-sm-4">
-                                    <textarea name="motivo" class="form-control" rows="2">{{ $ruta->motivo ?? '' }}</textarea>
-                                </div>
                             </div>
 
                             <hr class="mt-4 mb-3">

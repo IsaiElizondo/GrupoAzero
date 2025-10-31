@@ -533,7 +533,39 @@ $pedidoStatusId = $pedido->status_id;
 </div>
 
 
+{{-- NUEVA SECCIÓN PARA RUTAS --}}
 
+@if(in_array($user->role_id, [1,2]) && in_array($user->department_id, [2,4,6]) && isset($rutasAsociadas) && count($rutasAsociadas) > 0)
+    <div class="card">
+        <div class="headersub"> Rutas </div>
+        <div class="Eleccion">
+            <table class="table table-bordered table-sm" style="width:100%; margin-top:10px;">
+                <thead style="background-color:#f2f2f2;">
+                    <tr>
+                        <th> #Ruta </th>
+                        <th> Unidades </th>
+                        <th> Chofer </th>
+                        <th> Fecha </th>
+                        <th> Estatus entrega </th>
+                        <th> Monto por cobrar </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($rutasAsociadas as $ruta)
+                        <tr>
+                            <td> {{ $ruta->id ?? '-' }} </td>
+                            <td> {{ $ruta->unidad->nombre ?? 'Sin unidad' }} </td>
+                            <td> {{ $ruta->chofer->name ?? 'Sin chofer' }} </td>
+                            <td> {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') : '-' }} </td>
+                            <td> {{ ucfirst($ruta->estatus_entrega ?? 'enrutado') }} </td>
+                            <td> {{ number_format($ruta->monto_por_cobrar ?? 0, 2) }} </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
 
 {{-- NUEVA SECCIÓN DE ETIQUETADO --}}
 
@@ -696,17 +728,6 @@ $pedidoStatusId = $pedido->status_id;
     @endif
 
 {{-- FIN DE SECCIÓN DE ETIQUETADO --}}
-
-
-
-
-
-
-
-
-
-
-
 
 
 

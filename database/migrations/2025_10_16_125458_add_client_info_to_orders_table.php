@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('codigo_postal', 20)->nullable();
             $table->string('celular', 20)->nullable();
             $table->string('nombre_recibe',100)->nullable();
+            $table->string('url_mapa')->nullable();
+            $table->string('instrucciones')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -43,7 +46,9 @@ return new class extends Migration
                 'estado', 
                 'codigo_postal',
                 'celular',
-                'nombre_recibe'
+                'nombre_recibe',
+                'url_mapa',
+                'instrucciones'
             ]);
         });
     }

@@ -57,7 +57,7 @@
                                                 <td>{{ ucfirst($order->pivot->estatus_pago ?? 'pendiente') }}</td>
                                                 <td>${{ number_format($order->pivot->monto_por_cobrar ?? 0, 2) }}</td>
                                                 <td>{{ $ruta->cliente->nombre ?? 'Sin cliente' }}</td>
-                                                <td>{{ $ruta->fecha_hora ? \Carbon\Carbon::parse($ruta->fecha_hora)->format('d/m/Y H:i') : '-' }}</td>
+                                                <td>{{ $ruta->created_at }}</td>
                                                 <td class="text-center">
                                                     <a href="{{ route('rutas.show', $ruta->id) }}" class="btn btn-sm btn-info" title="Ver">
                                                         <span class="material-icons"> visibility </span>

@@ -150,6 +150,8 @@ class OrderController extends Controller
         $codigo_postal = null;
         $celular = null;
         $nombre_recibe = null;
+        $url_mapa = null;
+        $instrucciones = null;
 
         $tipo_cliente = $request->input('tipo_cliente');
 
@@ -171,6 +173,8 @@ class OrderController extends Controller
                 $codigo_postal = $direccionCliente->codigo_postal;
                 $celular = $direccionCliente->celular;
                 $nombre_recibe = $direccionCliente->nombre_recibe;
+                $url_mapa = $direccionCliente->url_mapa;
+                $instrucciones = $direccionCliente->instrucciones;
             }
         }
 
@@ -187,6 +191,8 @@ class OrderController extends Controller
                 $codigo_postal = $direccionCliente->codigo_postal;
                 $celular = $direccionCliente->celular;
                 $nombre_recibe = $direccionCliente->nombre_recibe;
+                $url_mapa = $direccionCliente->url_mapa;
+                $instrucciones = $direccionCliente->instrucciones;
             }
         }
 
@@ -228,6 +234,8 @@ class OrderController extends Controller
             'codigo_postal' => $codigo_postal,
             'celular' => $celular,
             'nombre_recibe' => $nombre_recibe,
+            'url_mapa' => $url_mapa,
+            'instrucciones' => $instrucciones,
             //FIN DE LOS CAMPOS NUEVOS
             'credit' => $credit,
             'status_id' => $request->status_id,
