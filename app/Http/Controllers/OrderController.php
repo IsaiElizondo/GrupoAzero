@@ -18,6 +18,8 @@ use App\Rebilling;
 use App\Shipment;
 use App\Status;
 use App\User;
+use App\Models\Cliente;
+use App\Models\DireccionCliente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -144,6 +146,7 @@ class OrderController extends Controller
         $cliente_id = null;
         $cliente_direccion_id = null;
         $nombre_cliente = null;
+        $nombre_direccion = null;
         $direccion = null;
         $ciudad = null;
         $estado = null;
@@ -185,6 +188,7 @@ class OrderController extends Controller
             if($cliente && $direccionCliente){
                 $cliente_id = $cliente->id;
                 $cliente_direccion_id = $direccionCliente->id;
+                $nombre_direccion = $direccionCliente->nombre_direccion;
                 $nombre_cliente = $cliente->nombre;
                 $ciudad = $direccionCliente->ciudad;
                 $estado = $direccionCliente->estado;
@@ -228,6 +232,7 @@ class OrderController extends Controller
             'cliente_id' => $cliente_id,
             'cliente_direccion_id' => $cliente_direccion_id,
             'nombre_cliente' => $nombre_cliente,
+            'nombre_direccion' => $nombre_direccion,
             'direccion' => $direccion,
             'ciudad' => $ciudad,
             'estado' => $estado,

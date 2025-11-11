@@ -222,13 +222,32 @@ class ClientesController extends Controller
     }
 
 
-    public function buscar(Request $request){
-        $q = $request->q;
-        $clientes = Cliente::where('nombre', 'like', "%$q%")
-                    ->orWhere('codigo_cliente', 'like', "%$q%")
-                    ->get(['id','nombre','codigo_cliente']);
-        return response()->json($clientes);
+    public function buscar(Request $request)
+{
+    \Log::info('🔹 Entrando a ClientesController@buscar');
+
+    $q = $request->q;
+    \Log::info('🔹 Valor de $q: ' . $q);
+
+    if (empty($q)) {
+        \Log::warning('⚠️ No se recibió parámetro q en la búsqueda');
+        return response()->json([]);
     }
+
+    try {
+        $clientes = \App\Models\Cliente::where('nombre', 'like', "%$q%")
+            ->orWhere('codigo_cliente', 'like', "%$q%")
+            ->get(['id', 'nombre', 'codigo_cliente']);
+
+        \Log::info('✅ Clientes encontrados:', $clientes->toArray());
+
+        return response()->json($clientes);
+    } catch (\Throwable $e) {
+        \Log::error('❌ Error en ClientesController@buscar: ' . $e->getMessage());
+        return response()->json([]);
+    }
+}
+
 
     public function direcciones($id){
         $direcciones = DireccionCliente::where('cliente_id',$id)

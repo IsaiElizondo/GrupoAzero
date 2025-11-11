@@ -20,6 +20,7 @@ class Order extends Model
         'client_id',
         'client_direccion_id',
         'nombre_cliente',
+        'nombre_direccion',
         'direccion',
         'ciudad',
         'estado',

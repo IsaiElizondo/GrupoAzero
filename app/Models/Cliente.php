@@ -15,7 +15,6 @@ class Cliente extends Model
 
         'nombre',
         'codigo_cliente',
-        'celular',
 
     ];
 

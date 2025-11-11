@@ -25,6 +25,8 @@ use App\Stockreq;
 use App\User;
 use App\DevolucionParcial;
 use App\DevolucionParcialArchivos;
+use App\Models\Cliente;
+use App\Models\DireccionCliente;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -803,33 +805,72 @@ public function guardarEntregaProgramada(Request $request, $id){
         }
 
         $user = User::find(auth()->user()->id);
-        
-       // $user = User::find(auth()->user()->id);
         $userOffice = !empty($user->office) ? $user->office : "San Pablo";
-
         $origin = $request->origin;
 
         $code = !empty($request->code) ? Tools::_string($request->code,18) : "" ;
         $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
         $nota = !empty($request->nota) ? Tools::_string($request->nota,190) : '';
-
-       // $invoice = Tools::_string($request->invoice,24);
-
-        //Validación requerida
-        if($origin!="R" &&  empty($client)){
-        Feedback::error("El código de cliente es requerido");
-        Feedback::j(0);  
-        }
-        if(empty($code)){
-        Feedback::error("El folio es requerido");
-        Feedback::j(0);  
-        }
-
-
         $now =date("Y-m-d H:i:s");
 
-        //********************* */
+        $direccion = '';
+        $cliente_id = null;
+        $cliente_direccion_id = null;
 
+        if($request->tipo_cliente === 'general'){
+            $client = $request->client;
+            $direccion = $request->direccion_general;
+        }elseif ($request->tipo_cliente === 'existente'){
+            $cliente = Cliente::find($request->cliente_id);
+            $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+            if ($cliente && $direccionCliente) {
+                $client = $cliente->codigo_cliente ?? '';
+                $direccion = $direccionCliente->direccion;
+                $cliente_id = $cliente->id;
+                $cliente_direccion_id = $direccionCliente->id;
+            }
+        }elseif ($request->tipo_cliente === 'nuevo'){
+            $cliente = Cliente::create([
+                'nombre' => $request->nuevo_nombre,
+                'codigo_cliente' => $request->nuevo_codigo,
+            ]);
+
+            $direccionCliente = DireccionCliente::create([
+                'cliente_id' => $cliente->id,
+                'nombre_direccion' => $request->nuevo_nombre_direccion ?? $request->nombre_direccion,
+                'direccion' => $request->nuevo_direccion ?? $request->direccion,
+                'ciudad' => $request->nuevo_ciudad ?? $request->ciudad,
+                'estado' => $request->nuevo_estado ?? $request->estado,
+                'codigo_postal' => $request->nuevo_cp ?? $request->codigo_postal,
+                'celular' => $request->nuevo_celular ?? $request->celular,
+                'nombre_recibe' => $request->nuevo_nombre_recibe ?? $request->nombre_recibe,
+                'url_mapa' => $request->nuevo_url_mapa ?? $request->url_mapa,
+                'instrucciones' => $request->nuevo_instrucciones ?? $request->instrucciones,
+            ]);
+
+            $client = $cliente->codigo_cliente ?? '';
+            $direccion = $direccionCliente->direccion;
+            $cliente_id = $cliente->id;
+            $cliente_direccion_id = $direccionCliente->id;
+        }
+
+        $nombre_cliente = $cliente->nombre ?? null;
+        $nombre_direccion_sn = $direccionCliente->nombre_direccion ?? null;
+        $direccion_sn = $direccionCliente->direccion ?? null;
+        $ciudad_sn = $direccionCliente->ciudad ?? null;
+        $estado_sn = $direccionCliente->estado ?? null;
+        $codigo_postal_sn = $direccionCliente->codigo_postal ?? null;
+        $celular_sn = $direccionCliente->celular ?? null;
+        $nombre_recibe_sn = $direccionCliente->nombre_recibe ?? null;
+
+        if($origin!="R" &&  empty($client)){
+            Feedback::error("El código de cliente es requerido");
+            Feedback::j(0);  
+        }
+        if(empty($code)){
+            Feedback::error("El folio es requerido");
+            Feedback::j(0);  
+        }
 
         if($origin =="F"){
             $orderData =[
@@ -838,59 +879,46 @@ public function guardarEntregaProgramada(Request $request, $id){
                 'invoice'=>'',
                 'origin'=> $origin,
                 'client' => $client,
+                'nombre_cliente' => $nombre_cliente,
+                'nombre_direccion' => $nombre_direccion_sn,
+                'direccion' => $direccion_sn,
+                'ciudad' => $ciudad_sn,
+                'estado' => $estado_sn,
+                'codigo_postal' => $codigo_postal_sn,
+                'celular' => $celular_sn,
+                'nombre_recibe' => $nombre_recibe_sn,
+                'cliente_id' => $cliente_id ?? null,
+                'cliente_direccion_id' => $cliente_direccion_id ?? null,
                 'credit' => 0,
                 'status_id' => 1,
                 'created_at' => $now
             ];
 
-            //Preexistente
             $existe = Order::where(["invoice_number"=>$code])
             ->where("status_id","<>",7)
             ->get()->toArray();
             if(count($existe) > 0 ){
-            Feedback::error("Ya existe un pedido activo con el número de factura '$code'");
-            Feedback::j(0);    
+                Feedback::error("Ya existe un pedido activo con el número de factura '$code'");
+                Feedback::j(0);    
             }
 
             $order = Order::create($orderData);
 
-            
-            
             if($request->hasFile('archivo')){
-                //ARCHIVO
                 $file = $request->file('archivo');
                 $name = $order["id"].".".$file->getClientOriginalExtension();
                 $sqlPath = 'OrdenesDeCompra/' . $name;
                 Storage::putFileAs('/public/OrdenesDeCompra/', $file, $name );
-    
-    /*
-                $purchaseOrder=[
-                    "required"=> 1,
-                    "document"=> $sqlPath,
-                    "order_id"=>$order["id"],
-                    "is_covered"=> 1,
-                    "created_at"=> $now,
-                    "updated_at"=> $now,
-                    "v2"=>1
-                ];      
-                PurchaseOrder::create($purchaseOrder);
-                */
-       
                 Order::where("id",$order->id)->update(["invoice_document"=>$sqlPath]);
             }
-
-            
         }
         else if($origin =="C"){
-
-            //Existe folio
             $existe = Order::where(["invoice"=>$code])
             ->where("status_id","<>",7)
             ->get()->toArray();
             if(count($existe) > 0 ){
-            
-            Feedback::error("Ya existe una ".($existe[0]["status_id"])." cotización con el folio '$code'");
-            Feedback::j(0);    
+                Feedback::error("Ya existe una ".($existe[0]["status_id"])." cotización con el folio '$code'");
+                Feedback::j(0);    
             }
 
             $orderData =[
@@ -898,6 +926,16 @@ public function guardarEntregaProgramada(Request $request, $id){
                 'invoice'=>$code,
                 'origin'=> $origin,
                 'client' => $client,
+                'nombre_cliente' => $nombre_cliente,
+                'nombre_direccion' => $nombre_direccion_sn,
+                'direccion' => $direccion_sn,
+                'ciudad' => $ciudad_sn,
+                'estado' => $estado_sn,
+                'codigo_postal' => $codigo_postal_sn,
+                'celular' => $celular_sn,
+                'nombre_recibe' => $nombre_recibe_sn,
+                'cliente_id' => $cliente_id ?? null,
+                'cliente_direccion_id' => $cliente_direccion_id ?? null,
                 'credit' => 0,
                 'status_id' => 1,
                 'created_at' => $now,
@@ -905,9 +943,6 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             $order = Order::create($orderData);
 
-
-
-            //ARCHIVO
             $sqlPath="";
             if($request->hasFile("archivo")){
                 $file = $request->file('archivo');
@@ -916,7 +951,6 @@ public function guardarEntregaProgramada(Request $request, $id){
                 Storage::putFileAs('/public/Cotizaciones/', $file, $name );
             }
 
-
             $quoteData=[
                 "order_id"=>$order["id"],
                 "number"=>$code,
@@ -924,32 +958,26 @@ public function guardarEntregaProgramada(Request $request, $id){
                 "created_at"=>$now
             ];
 
-            //Preexistente
             $existe = Quote::where(["number"=>$code])->get()->toArray();
 
-                if(count($existe) > 0 ){
+            if(count($existe) > 0 ){
                 unset($quoteData["created_at"]);
                 $quoteData["updated_at"]=$now;
                 Quote::where("number",$code)->update($quoteData);  
-                }
-                else{
+            }
+            else{
                 Quote::create($quoteData);
-                }
-            
-
+            }
         }     
-
         else if($origin =="R"){
-
-            //Preexistente
             $existe = Stockreq::where(["stockreq.number"=>$code])
             ->join("orders","orders.id",'=','stockreq.order_id')
             ->where("orders.status_id","<>",7)
             ->get()->toArray();
-                if(count($existe) > 0 ){
+            if(count($existe) > 0 ){
                 Feedback::error("Ya existe un requerimiento de stock con el folio '$code'");
                 Feedback::j(0);    
-                }
+            }
 
             $orderData =[
                 'office' => $userOffice,
@@ -963,7 +991,6 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             $order = Order::create($orderData);
 
-            //ARCHIVO
             $sqlPath="";
             if($request->hasFile("archivo")){
                 $file = $request->file('archivo');
@@ -996,8 +1023,6 @@ public function guardarEntregaProgramada(Request $request, $id){
             "updated_at"=>$now
         ]);
 
-
-        //******************************************     LOG ****
         $status = Status::find(1);
 
         $origins=["C"=>"con cotización","F"=>"Con factura","R"=>"como requisición stock"];

@@ -18,354 +18,215 @@
 
 
 
-    <form action="{{ url('pedidos2/crear') }}" id="FNuevo" class="Cuerpo" method="post" enctype="multipart/form-data">
-        @csrf
-    <fieldset>
-            
-    <h3 class="center">Iniciar con </h3>
+        <form action="{{ url('pedidos2/crear') }}" id="FNuevo" class="Cuerpo" method="post" enctype="multipart/form-data">
+            @csrf
 
-            <div class="Eleccion">
-            
-                @if ($user->role_id ==1 || in_array($user->department_id,[3,4,8]) )
-                <button class="Tipo" rel="F">Factura</button>
-                @endif
+            <fieldset>
+                <h3 class="center">Iniciar con </h3>
+                <div class="Eleccion">
+                    @if ($user->role_id ==1 || in_array($user->department_id,[3,4,8]))
+                        <button class="Tipo" rel="F">Factura</button>
+                    @endif
+                    @if ($user->role_id ==1 || in_array($user->department_id,[3,4]))
+                        <button class="Tipo" rel="C" title="Cotización">Pedido</button>
+                    @endif
+                    @if ($user->role_id ==1 || in_array($user->department_id,[5,7]))
+                        <button class="Tipo" rel="R">Requisición Stock</button>
+                    @endif
+                </div>
+            </fieldset>
 
+            <input type="hidden" name="origin" value=""/>
+            <div>&nbsp;</div>
 
-                @if ($user->role_id ==1 || in_array($user->department_id,[3,4]) )
-                <button class="Tipo" rel="C" title="Cotización">Pedido</button>
-                @endif
+            <fieldset class="Tiposet or">
+                <dl>
+                    <dt><label rel="code" F="Folio Factura *" C="Num Cotizacion *" R="Num Requisición *">Folio/Código</label></dt>
+                    <dd><input type="text" name="code" class="form-control" maxlength="24" autocomplete="off" placeholder="Min 4 caracteres" /></dd>
 
-
-
-                @if ($user->role_id ==1 || in_array($user->department_id,[5,7]) )
-                <button class="Tipo" rel="R">Requisición Stock</button>
-                @endif
-            
-            </div>
-
-    </fieldset>
-
-        <input type="hidden" name="origin" value=""/>
-        <div>&nbsp;</div>
-
-        <fieldset class="Tiposet or">
-            <dl>
-            <dt><label rel="code" F="Folio Factura *" C="Num Cotizacion *" R="Num Requisici[on *">Folio/Codigo</label></dt> 
-            <dd><input type="text" name="code" class="form-control"  maxlength="24" autocomplete="off" placeholder="Min 4 caracteres" /></dd>
-            
-            {{--BLOQUE CLIENTE --}}
-            <dt><label> Tipo de Cliente * </label></dt>
-            <dd>
-                <select name="tipo_cliente" id="tipo_cliente" class="form-control">
-                    <option value="">--Selecciona una opción --</option>
-                    <option value="general"> Cliente General </option>
-                    <option value="existente"> Cliente Existente </option>
-                    <option value="nuevo"> Crear Cliente </option>
-                </select>
-            {{-- CLIENTE GENERAL--}}
-            <div id="bloque_general" class="bloque-cliente" style="display:none;">
-                <dt><label> Código Cliente * </label></dt>
-                <dd><input type="text" name="client" class="form-control" maxlength="45" placeholder="Código de Cliente General"></dd>
-                
-                <dt><label> Dirección * </label></dt>
-                <dd><input type="text" name="direccion_general" class="form-control" maxlength="45" placeholder="Dirección del Cliente General"></dd>
-            </div>
-
-            {{-- CLIENTE EXISTENTE --}}
-            <div id="bloque_existente" class="bloque-cliente" style="display:none;">
-                <dt><label> Buscar Cliente * </label></dt>
-                <dd>
-                    <input type="text" id="buscar_cliente" class="form-control" placeholder="Buscar por Nombre o Código">
-                    <input type="hidden" name="cliente_id" id="cliente_id">
-                </dd>
-
-                <dt><label> Dirección * </label></dt>
-                <dd>
-                    <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
-                        <option value="">-- Selecciona una dirección --</option>
-                    </select>
-                    <button type="button" id="btn_nueva_direccion" class="btn btn-sm btn-secondary mt-1"> + Agregar NUeva Dirección </button>
-                </dd>
-
-                <div id="form_nueva_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
-                    <h5 style="margine:0 0 10px;"> Nueva Dirección </h5>
-                    <input type="text" id="nombre_direccion" class="form-control mb-2" placeholder="Nombre de la dirección">
-                    <input type="text" id="direccion" class="form-control mb" placeholder="Calle, número, colonia">
-                    <div class="row">
-                        <div class="col"><input type="text" id="ciudad" class="form-control mb-2" placeholder="Ciudad"></div>
-                        <div class="col"><input type="text" id="estado" class="form-control mb-2" placeholder="Estado"></div>
-                        <div class="col"><input type="text" id="codigo_postal" class="form-control mb-2" placeholder="CP"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col"><input type="text" id="celular" class="form-control mb-2" placeholder="Celular"></div>
-                        <div class="col"><input type="text" id="nombre_recibe" class="form-control mb-2" placeholder="¿Quién recibe?"></div>
-                    </div>
-                    <input type="text" id="url_mapa" class="form-control mb-2" placeholder="https://maps...">
-                    <textarea id="instrucciones" class="form-control mb-2" rows="2" placeholder="Instrucciones de entrega"></textarea>
                     
-                    <button type="button" id="guardar_direccion" class="btn btn-sm btn-primary"> Guardar Dirección </button>
-                </div>
-            </div>
+                    {{-- ///////// BLOQUE CLIENTE ////////// --}}
+                    
+                    <dt rel="client" id="dt_cliente" style="display:none;">
+                        <label>Tipo de Cliente *</label>
+                    </dt>
+                    <dd rel="client" id="dd_cliente" style="display:none;">
+                        <select name="tipo_cliente" id="tipo_cliente" class="form-control">
+                            <option value="">--Selecciona una opción--</option>
+                            <option value="general">Cliente General</option>
+                            <option value="existente">Cliente Existente</option>
+                            <option value="nuevo">Crear Cliente</option>
+                        </select>
 
-            {{-- CREAR NUEVO CLIENTE --}}
-            <div id="bloque_nuevo" class="bloque-cliente" style="display:none;">
-                <dt><label> Nombre Cliente * </label></dt>
-                <dd><input type="text" name="nuevo_nombre" class="form-control" maxlength="100" placeholder="Nombre completo del Cliente"></dd>
+                        {{--///// BLOQUE CLIENTE GENERAL ////--}}
+                        <div id="bloque_general" class="bloque-cliente" style="display:none; margin-top:10px;">
+                            <label class="mt-2">Código Cliente *</label>
+                            <input type="text" name="client" class="form-control" maxlength="45" placeholder="Código de Cliente General">
 
-                <dt><label> Código Cliente * </label></dt>
-                <dd><input type="text" name="nuevo_nombre" class="form-control" maxlength="20" placeholder="Código unico para el Cliente"></dd>
+                            <label class="mt-2">Dirección *</label>
+                            <input type="text" name="direccion_general" class="form-control" maxlength="100" placeholder="Dirección del Cliente General">
+                        </div>
 
-                <dt><label> Dirección * </label></dt>
-                <dd><input type="text" name="nuevo_direccion" class="form-control" maxlength="255" placeholder="Calle, número, colonia"></dd>
+                        {{--///// BLOQUE CLIENTE EXISTENTE /////--}}
+                        <div id="bloque_existente" class="bloque-cliente" style="display:none; margin-top:10px;">
+                            <label class="mt-2">Buscar Cliente *</label>
+                            <input type="text" id="buscar_cliente" class="form-control" placeholder="Buscar por nombre o código">
+                            <input type="hidden" name="cliente_id" id="cliente_id">
 
-                <div class="row">
-                    <div class="col">
-                        <label> Ciudad * </label>
-                        <input type="text" name="nuevo_ciudad" class="form-control" maxlength="100">
-                    </div>
+                            <label class="mt-2">Dirección *</label>
+                            <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
+                                <option value="">--Selecciona una dirección--</option>
+                            </select>
+                            <button type="button" id="btn_nueva_direccion" class="btn btn-sm btn-secondary mt-2">+ Agregar Nueva Dirección</button>
 
-                    <div class="col">
-                        <label> Estado * </label>
-                        <input type="text" name="nuevo_estado" class="form-control" maxlength="100">
-                    </div>
+                            <div id="form_nueva_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
+                                <h5>Nueva Dirección</h5>
 
-                    <div class="col">
-                        <label> CP </label>
-                        <input type="text" name="nuevo_cp" class="form-control" maxlength="20">
-                    </div>
-                </div>
+                                <div class="form-group">
+                                    <label>Nombre de la dirección *</label>
+                                    <input type="text" id="nombre_direccion" class="form-control mb-2" placeholder="Nombre identificativo para la dirección">
+                                </div>
 
-                <div class="row mt-2">
-                    <div class="col">
-                        <label> Celular </label>
-                        <input type="text" name="nuevo_celular" class="form-control" maxlength="20">
-                    </div>
+                                <div class="form-group">
+                                    <label>Dirección *</label>
+                                    <input type="text" id="direccion" class="form-control mb-2" placeholder="Calle, número, colonia">
+                                </div>
 
-                    <div class="col">
-                        <label> ¿Quién recibe? </label>
-                        <input type="text" name="nuevo_nombre_recibe" class="form-control" maxlength="100">
-                    </div>
-                </div>
+                                <div class="row">
+                                    <div class="col-md-4"><input type="text" id="ciudad" class="form-control mb-2" placeholder="Ciudad"></div>
+                                    <div class="col-md-4"><input type="text" id="estado" class="form-control mb-2" placeholder="Estado"></div>
+                                    <div class="col-md-4"><input type="text" id="codigo_postal" class="form-control mb-2" placeholder="CP"></div>
+                                </div>
 
-                <div class="mt-2">
-                    <label> URL Mapa </label>
-                    <input type="text" name="nuevo_url_mapa" class="form-control" maxlength="255" placeholder="https://maps...">
-                </div>
+                                <div class="row">
+                                    <div class="col-md-6"><input type="text" id="celular" class="form-control mb-2" placeholder="Celular"></div>
+                                    <div class="col-md-6"><input type="text" id="nombre_recibe" class="form-control mb-2" placeholder="¿Quién recibe?"></div>
+                                </div>
 
-                <div class="mt-2">
-                    <label> Instrucciones </label>
-                    <textarea name="nuevo_instrucciones" class="form-control" row="2" maxlength="500" placeholder="Instrucciones de entrega"></textarea>
-                </div>
-            </div>
-            {{--FIN BLOQUE CLIENTE--}}            
+                                <input type="text" id="url_mapa" class="form-control mb-2" placeholder="https://maps...">
+                                <textarea id="instrucciones" class="form-control mb-2" rows="2" placeholder="Instrucciones de entrega"></textarea>
+                                <button type="button" id="guardar_direccion" class="btn btn-sm btn-primary">Guardar Dirección</button>
+                            </div>
+                        </div>
 
-            @if ($user->role_id == 1 || in_array($user->department_id,[4,5,7]) )
-            
-            <dt rel='archivo'><label rel="archivo" F="Archivo Factura" C="Archivo Cotizacion" R="Archivo Requisición">Archivo</label> </dt> 
-            <dd rel='archivo'><input type="file" name="archivo"  class="form-control" /></dd>
-            
-            @endif
+                        {{--///// BLOQUE NUEVO CLIENTE /////--}}
+                        <div id="bloque_nuevo" class="bloque-cliente" style="display:none; margin-top:10px;">
+                            <label class="mt-2">Nombre Cliente *</label>
+                            <input type="text" name="nuevo_nombre" class="form-control" maxlength="100" placeholder="Nombre completo del Cliente">
 
-            <dt><label>Note</label></dt> 
-            <dd> <textarea  name="nota" class="form-control" maxlength="520" ></textarea></dd>
+                            <label class="mt-2">Código Cliente *</label>
+                            <input type="text" name="nuevo_codigo" class="form-control" maxlength="20" placeholder="Código único para el Cliente">
 
-            <dt></dt> 
-            <dd><input type="submit" name="sb" value="Guardar"><span id="preGuardar">Indique todos los datos obligatorios * para guardar</span></dd>
-        </dl>
-        </fieldset>
+                            <label>Nombre de Dirección *</label> 
+                            <input type="text" name="nuevo_nombre_direccion" class="form-control" maxlength="100" placeholder="Ejemplo: Principal o Sucursal Norte">
 
-        <blockquote class="Monitor"></blockquote>
+                            <label class="mt-2">Dirección *</label>
+                            <input type="text" name="nuevo_direccion" class="form-control" maxlength="255" placeholder="Calle, número, colonia">
 
-    
-    </form>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <label>Ciudad *</label>
+                                    <input type="text" name="nuevo_ciudad" class="form-control" maxlength="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Estado *</label>
+                                    <input type="text" name="nuevo_estado" class="form-control" maxlength="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>CP</label>
+                                    <input type="text" name="nuevo_cp" class="form-control" maxlength="20">
+                                </div>
+                            </div>
+
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label>Celular</label>
+                                    <input type="text" name="nuevo_celular" class="form-control" maxlength="20">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>¿Quién recibe?</label>
+                                    <input type="text" name="nuevo_nombre_recibe" class="form-control" maxlength="100">
+                                </div>
+                            </div>
+
+                            <label class="mt-2">URL Mapa</label>
+                            <input type="text" name="nuevo_url_mapa" class="form-control" maxlength="255" placeholder="https://maps...">
+
+                            <label class="mt-2">Instrucciones</label>
+                            <textarea name="nuevo_instrucciones" class="form-control" rows="2" maxlength="500" placeholder="Instrucciones de entrega"></textarea>
+
+                            {{-- Campo oculto para evitar error SQL --}}
+                            <input type="hidden" name="nombre_direccion" value="Principal">
+                        </div>
+                    </dd>
+        
+                    {{-- /////// FIN BLOQUE CLIENTE ///////// --}}
+                    
+                    {{-- ARCHIVO SOLO PARA PEDIDO/COTIZACIÓN Y REQUISICIÓN --}}
+                    @if ($user->role_id == 1 || in_array($user->department_id,[4,5,7]) )
+                        <dt rel='archivo'><label rel="archivo" F="Archivo Factura" C="Archivo Cotizacion" R="Archivo Requisición">Archivo</label></dt>
+                        <dd rel='archivo'><input type="file" name="archivo" class="form-control" /></dd>
+                    @endif
+
+                    <dt><label>Nota</label></dt>
+                    <dd><textarea name="nota" class="form-control" maxlength="520"></textarea></dd>
+
+                    <dt></dt>
+                    <dd><input type="submit" name="sb" value="Guardar"><span id="preGuardar">Indique todos los datos obligatorios * para guardar</span></dd>
+                </dl>
+            </fieldset>
+
+            <blockquote class="Monitor"></blockquote>
+        </form>
+    </section>
 </main>
-
-    @endsection
+@endsection
 
 @push('js')
-<script type="text/javascript" src="{{ asset('js/jquery.form.js')  }}" ></script>
-<script type="text/javascript" >
-
+<script type="text/javascript" src="{{ asset('js/jquery.form.js') }}"></script>
+<script type="text/javascript">
 $(document).ready(function(){
 
-$(".Eleccion button").click(function(e){
-    e.preventDefault();
-
-    $(".Eleccion button").removeClass("activo");
-    $(this).addClass("activo");
-    let r = $(this).attr("rel");
-
-    ShowTiposet(r);
-});
-
-
-
-
+    //SELECCIÓN DE TIPO DE PEDIDO
+    $(".Eleccion button").click(function(e){
+        e.preventDefault();
+        $(".Eleccion button").removeClass("activo");
+        $(this).addClass("activo");
+        let r = $(this).attr("rel");
+        ShowTiposet(r);
+    });
 
     $("#FNuevo").ajaxForm({
         dataType:"json",
-        error:function(err){
-            alert(err.statuText);
-        },
+        error:function(err){ alert(err.statusText); },
         success:function(json){
-            if(json.status==0){
-                alert(json.errors);
-            }else{
-                window.location.href = json.goto;
-            }
+            if(json.status==0){ alert(json.errors); }
+            else{ window.location.href = json.goto; }
         }
     });
 
-
+    //ACTIVACIÓN DE BOTÓN GUARDAR
     const codeInput = document.querySelector(".Tiposet input[name='code']");
-    codeInput.addEventListener("change",UnlockContinuar);
-
-    const clientInput = document.querySelector(".Tiposet input[name='client']");
-    clientInput.addEventListener("change",UnlockContinuar);
-
+    if(codeInput) codeInput.addEventListener("change", UnlockContinuar);
     const notaInput = document.querySelector(".Tiposet textarea[name='nota']");
-    notaInput.addEventListener("change",UnlockContinuar);
+    if(notaInput) notaInput.addEventListener("change", UnlockContinuar);
 
-/*
-    $(".Tiposet input[name='code']").on("change",function(e){
-    console.log("change");
-    setTimeout(UnlockContinuar,100);
+    //ESCOGER TIPO DE CLIENTE
+    $("#tipo_cliente").on("change", function(){
+        $(".bloque-cliente").hide();
+        let tipo = $(this).val();
+        if(tipo){ $("#bloque_" + tipo).slideDown(200); }
     });
 
-    $(".Tiposet input[name='client']").on("change",function(e){
-    setTimeout(UnlockContinuar,100);
+    $("#btn_nueva_direccion").on("click", function(){
+        $("#form_nueva_direccion").slideToggle(200);
     });
-*/
-
 
     $(".Tiposet.or").hide();
-
-    // TIPO DE CLIENTE
-    $('#tipo_cliente').on('change', function(){
-        let tipo = $(this).val();
-        $('.bloque-cliente').hide();
-
-        if(tipo == 'general'){
-            $('#bloque_general').show();
-        }else if(tipo == 'existente'){
-            $('#bloque_existente').show();
-        }else if(tipo == 'nuevo'){
-            $('#bloque_nuevo').show();
-        }
-    });
-
-    //BUSCAR CLIENTE
-
-    let timerBusqueda = null;
-    $('#buscar_cliente').on('keyup', function(){
-        clearTimeout(timerBusqueda);
-        let q = $(this).val().trim();
-        if(q-length > 2) return;
-
-        timerBusqueda = setTimeout(function(){
-            $.ajax({
-                url: "{{url('clientes/buscar') }}",
-                data: {q: q},
-                success: function(resp){
-                    mostrarClientes(resp);
-                },
-                error: function(){
-                    console.error('Error buscando cliente');
-                }
-            });
-        }, 400);
-    });
-
-    function mostrarClientes(clientes){
-        $('. sugerecias-clientes').remove();
-        let lista = $('<ul class="sugerencias-clientes list-group mt-1"></ul>');
-        if(clientes.length == 0){
-            lista.append('<li class="list-group-item"> Sin Resultados</li>');
-        }else{
-            clientes.forEach(c => {
-                let li = $('<li class="list-group-item list-group-item-action" style="cursor.pointer;"></li>');
-                li.text(c.nombre + ' ('+ c.codigo +')');
-                li.on('click', function(){
-                    $('#buscar_cliente').val(c.nombre);
-                    $('#cliente_id').val(c.id);
-                    lista.remove();
-                    cargarDirecciones(c.id);
-                });
-                lista.append(li);
-            });
-        }
-        $('buscar_cliente').after(lista);
-    }
-
-    function cargarDirecciones(clienteId){
-        $('#cliente_direccion_id').empty().append('<option value=""> Cargando... </option>');
-        $.ajax({
-            url: "{{ url('clientes') }}/" + clienteId + "/direcciones",
-            success: function(resp){
-                $('cliente_direccion_id').empty().append('<option value="">-- Selecciona una dirección --</option>');
-                resp.forEach(dir => {
-                    $('#cliente_direccion_id').append('<option value="${dir.id}">${dir.nombre_direccion} - ${dir.direccion}</option>');
-                });
-            },
-            error: function(){
-                alert('Error al cargar direcciones.');
-            }
-        });
-    }
-
-    //MOSTRAR FORMULARIO DIRECCIÓN NUEVA
-    $('#btn_nueva_direccion').on('click', function(){
-        $('#form_nueva_direccion').slideToggle();
-    });
-
-    //GUARDAR NUEVA DIRECCIÓN
-    $('#guardar_direccion').on('click', function(){
-        let clienteId = $('#cliente_id').val();
-        if(!clienteId){
-            alert('Primero selecciona un cliente');
-            return;
-        }
-        
-        let data= {
-            cliente_id = clienteId,
-            nombre_direccion: $('#nombre_direccion').val(),
-            direccion: $('#direccion').val(),
-            ciudad: $('#ciudad').val(),
-            estado: $('#estado').val(),
-            codigo_postal: $('#codigo_postal').val(),
-            celular: $('#celular').val(),
-            nombre_recibe: $('#nombre_recibe').val(),
-            url_mapa: $('#instrucciones').val(),
-            _token: '{{csrf_token()}}'
-        };
-
-        $.ajax({
-            url: "{{ url('clientes/storeDireccion') }}",
-            method: 'POST',
-            data: data,
-            success: function(resp){
-                if(resp.status == 1){
-                    alert('Direccion guardada correctamente');
-                    $('#form_nueva_direccion').sideUp();
-                    limpiarFormularioDireccion();
-                    cargarDirecciones(clienteId);
-                }else{
-                    alert('Error al guardar direccion.');
-                }
-            },
-        });
-
-    }):
-
-    function limpiarFormularioDireccion(){
-        $('#form_nueva_direccion input, #form_nueva_direccion textarea').val('');
-    }
-
 });
 
 
-
-
+//TIPO DE FORMULARIO DEPENDIENDO DEL TIPO DE CLIENTE
 function ShowTiposet(r){   
 
     $(".Tiposet.or").show();
@@ -374,68 +235,57 @@ function ShowTiposet(r){
     $(".Tiposet label[rel='code']").text($(".Tiposet label[rel='code']").attr(r));
     $(".Tiposet label[rel='archivo']").text($(".Tiposet label[rel='archivo']").attr(r));
 
-    if(r=="F"){
-        $("dt[rel='archivo']").hide();
-        $("dd[rel='archivo']").hide();
-    }else{
-        $("dt[rel='archivo']").show();
-        $("dd[rel='archivo']").show();       
+    //OCULTAR EL ANTERIOR CAMPO DE CÓDIGO CLIENTE ACTUALMENTE EL CAMPO DE ESCOGER EL TIPO DE CLIENTE
+    if(r=="F" || r=="C"){
+        $("#dt_cliente, #dd_cliente").show();
+        $("dt[rel='archivo'], dd[rel='archivo']").toggle(r=="C");
     }
-
-    if(r=="R"){
-        $("dt[rel='client']").hide();
-        $("dd[rel='client']").hide();       
-    }else{
-        $("dt[rel='client']").show();
-        $("dd[rel='client']").show();        
+    else if(r=="R"){
+        $("#dt_cliente, #dd_cliente").hide(); 
+        $("dt[rel='archivo'], dd[rel='archivo']").show();
     }
-
 }
 
+
+//VALIDAR DATOS PARA ACTIVAR BOTÓN GUARDAR
 function UnlockContinuar(){
     let cd = $(".Tiposet").find("[name='code']").val();
-    let ar = $(".Tiposet").find("[name='archivo']").val();
     let cli = $(".Tiposet").find("[name='client']").val();
     let ori = $("[name='origin']").val();
+    let tipoCliente = $("#tipo_cliente").val();
 
     var mostrar = true;
-    //var formato = true;
-    var errMsg="";
-    //Code Len
+    var errMsg = "";
+
     if(cd.length < 4){ 
-        mostrar=false;
+        mostrar = false;
         errMsg += "El folio/número debe contener mínimo 4 caracteres. ";
     }
-    //Cliente
-    if(ori!="R" && cli.length < 3){
-    mostrar=false;
-    errMsg += "El número de cliente debe contener mínimo 3 caracteres. ";
+
+    if(ori != "R" && tipoCliente === "general" && (!cli || cli.length < 3)){
+        mostrar = false;
+        errMsg += "El código de cliente debe contener mínimo 3 caracteres. ";
     }
 
-    //Formato Factura
-        if(cd.length>2){
-            cd = cd.toLowerCase();
-            let ini = cd.substr(0,2);            
-            console.log(ini);
-            if(ori == "F" && ini!="a0" && ini!="bb"){
-                
-                mostrar = false;
-               // formato = false;
-                errMsg += "El folio de la factura debe iniciar con A0 o BB. ";
-            }
+    if(cd.length > 2){
+        cd = cd.toLowerCase();
+        let ini = cd.substr(0,2);            
+        if(ori == "F" && ini != "a0" && ini != "bb"){
+            mostrar = false;
+            errMsg += "El folio de la factura debe iniciar con A0 o BB. ";
         }
+    }
 
     if(mostrar){
-    $("#FNuevo [name='sb']").show();
-    $("#preGuardar").hide();
-    $(".Monitor").text("");
-    }
-    else{
+        $("#FNuevo [name='sb']").show();
+        $("#preGuardar").hide();
+        $(".Monitor").text("");
+    } else {
         $("#FNuevo [name='sb']").hide();
         $("#preGuardar").show();
         $(".Monitor").text(errMsg);
     }
-    
+
 }
 
 
