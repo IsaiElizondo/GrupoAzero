@@ -87,6 +87,11 @@
                                                     <div class="col-sm-7">
                                                         <input class="form-control" name="direcciones[{{ $i }}][direccion]" type="text" placeholder="Calle, número, colonia" value="{{ $d['direccion'] ?? '' }}">
                                                     </div>
+
+                                                    <label class="col-sm-2 col-form-label">Colonia</label>
+                                                    <div class="col-sm-7">
+                                                        <input class="form-control" name="direcciones[{{ $i }}][direccion]" type="text" placeholder="Colonia" value="{{ $d['direccion'] ?? '' }}">
+                                                    </div>
                                                 </div>
 
                                                 <div class="row mt-2">
@@ -154,8 +159,13 @@
 
                                         <div class="row mt-2">
                                             <label class="col-sm-2 col-form-label">Dirección</label>
-                                            <div class="col-sm-7">
+                                            <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][direccion]" type="text" placeholder="Calle, número, colonia">
+                                            </div>
+
+                                            <label class="col-sm-1 col-form-label text-right">Colonia</label>
+                                            <div class="col-sm-3">
+                                                <input class="form-control" name="direcciones[__INDEX__][colonia]" type="text" placeholder="Colonia">
                                             </div>
                                         </div>
 
@@ -172,29 +182,35 @@
                                         </div>
 
                                         <div class="row mt-2">
+                                            <label class="col-sm-2 col-form-label">Celular</label>
+                                            <div class="col-sm-3">
+                                                <input class="form-control" name="direcciones[__INDEX__][celular]" type="text" placeholder="Código Postal">
+                                            </div>
+
+                                            <label class="col-sm-1 col-form-label text-right">Telefono</label>
+                                            <div class="col-sm-3">
+                                                <input class="form-control" name="direcciones[__INDEX__][telefono]" type="text" placeholder="Celular">
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-2">
                                             <label class="col-sm-2 col-form-label">CP</label>
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][codigo_postal]" type="text" placeholder="Código Postal">
                                             </div>
 
-                                            <label class="col-sm-1 col-form-label text-right">Celular</label>
+                                            <label class="col-sm-1 col-form-label text-rightl">¿Quién recibe?</label>
                                             <div class="col-sm-3">
-                                                <input class="form-control" name="direcciones[__INDEX__][celular]" type="text" placeholder="Celular">
+                                                <input class="form-control" name="direcciones[__INDEX__][nombre_recibe]" type="text" placeholder="Nombre de quién recibe">
                                             </div>
                                         </div>
 
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
-                                            <div class="col-sm-3">
-                                                <input class="form-control" name="direcciones[__INDEX__][nombre_recibe]" type="text" placeholder="Nombre del quien recibe">
-                                            </div>
-
-                                            <label class="col-sm-1 col-form-label text-rightl">Mapa (URL)</label>
-                                            <div class="col-sm-3">
-                                                <input class="form-control" name="direcciones[__INDEX__][url_mapa]" type="text" placeholder="https://maps...">
+                                            <label class="col-sm-2 col-form-label">Mapa(URL)</label>
+                                            <div class="col-sm-7">
+                                                <textarea class="form-control" name="direcciones[__INDEX__][url_mapa]" rows="2" placeholder="https://maps..."></textarea>
                                             </div>
                                         </div>
-
 
                                         <div class="row mt-2">
                                             <label class="col-sm-2 col-form-label">Instrucciones</label>

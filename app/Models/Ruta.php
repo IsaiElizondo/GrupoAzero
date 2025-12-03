@@ -15,8 +15,8 @@ class Ruta extends Model
 
     protected $fillable = [
         'numero_ruta',
-        'cliente_id',
         'fecha_hora',
+        'numero_dia',
         'unidad_id',
         'chofer_id',
         'estatus_entrega',
@@ -41,7 +41,12 @@ class Ruta extends Model
 
     public function orders(){
         return $this->belongsToMany(Order::class, 'ruta_pedido', 'ruta_id', 'order_id')
-                    ->withPivot('estatus_pago', 'monto_por_cobrar')
-                    ->withTimestamps();
+            ->withPivot([
+                'estatus_pago',
+                'monto_por_cobrar',
+                'numero_pedido_ruta',
+                'cliente_codigo',
+                'cliente_nombre',
+            ]);
     }
 }

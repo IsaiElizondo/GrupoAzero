@@ -171,7 +171,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 </fieldset>
                                                 <fieldset>
                                                     <legend>Origen</legend>
-                                                    <div class="checkpair parent" rel="C"><input type="checkbox" name="or[]" value="C" id="or_C"> <label for="or_C">Cotización</label></div>
+                                                    <div class="checkpair parent" rel="C"><input type="checkbox" name="or[]" value="C" id="or_C"> <label for="or_C">Pedido</label></div>
                                                         <div class="checkpair sub" parent="C"><input type="checkbox" name="orsub[]" value="C_0" id="orsub_C_0"> <label for="orsub_C_0">Sin Factura</label></div>
                                                         <div class="checkpair sub" parent="C"><input type="checkbox" name="orsub[]" value="C_1" id="orsub_C_1"> <label for="orsub_C_1">Con Factura</label></div>
                                                     

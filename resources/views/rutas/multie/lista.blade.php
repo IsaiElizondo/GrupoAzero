@@ -15,14 +15,19 @@
         <tbody>
             @forelse($shipments as $pedido)
                 <tr>
-                    <td><input type="checkbox" name="pedido_id[]" value="{{ $pedido->id }}"></td>
-                    <td> {{ $pedido->id }} </td>
-                    <td> {{ $pedido->invoice_number ?? '-' }} </td>
-                    <td> {{ $pedido->client ?? '-' }} </td>
-                    <td> {{ $pedido->origin ?? '-' }} </td>
-                    <td> {{ $pedido->office ?? '-' }} </td>
-                    <td> {{ $pedido->created_at }} </td>
-                    <td> {{ $pedido->status_id }} </td>
+                    <td>
+                        <input type="checkbox"
+                            name="pedido_id[]"
+                            value="{{ $pedido->order_id }}"
+                            data-folio="{{ $pedido->folio }}">
+                    </td>
+                    <td>{{ $pedido->order_id }}</td>
+                    <td>{{ $pedido->folio }}</td>
+                    <td>{{ $pedido->client ?? '-' }}</td>
+                    <td>{{ $pedido->origin ?? '-' }}</td>
+                    <td>{{ $pedido->office ?? '-' }}</td>
+                    <td>{{ $pedido->created_at }}</td>
+                    <td>{{ $pedido->status_id }}</td>
                 </tr>
             @empty
                 <tr><td colspan="8" class="text-center">No se encontraron pedidos.</td></tr>

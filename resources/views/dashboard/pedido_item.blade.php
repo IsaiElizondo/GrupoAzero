@@ -70,7 +70,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
                     @if (!empty($item->invoice_number)) 
                     <div class="datito" rel="main"><label>Factura</label>{{$item->invoice_number}}</div>
                     @elseif (!empty($item->invoice)) 
-                    <div class="datito" rel="main"><label>Cotización</label>{{$item->invoice}}</div>
+                    <div class="datito" rel="main"><label>Pedido</label>{{$item->invoice}}</div>
                     @else
                     <div class="datito" rel="main"> &nbsp;</div>
                     @endif

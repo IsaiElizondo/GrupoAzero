@@ -15,13 +15,16 @@ return new class extends Migration
             $table->foreignId('cliente_id')->nullable()->constrained('clientes')->nullOnDelete();
             $table->foreignId('cliente_direccion_id')->nullable()->constrained('clientes_direcciones')->nullOnDelete();
 
-            $table->string('nombre_direccion')->nullable();
+            $table->enum('estado_direccion', ['completa', 'pendiente', 'recoge'])->default('pendiente');
+            $table->string('nombre_direccion', 50)->nullable();
             $table->string('nombre_cliente')->nullable();
             $table->string('direccion')->nullable();
-            $table->string('ciudad')->nullable();
-            $table->string('estado')->nullable();
+            $table->string('ciudad', 100)->nullable();
+            $table->string('estado', 100)->nullable();
+            $table->string('colonia', 100)->nullable();
             $table->string('codigo_postal', 20)->nullable();
             $table->string('celular', 20)->nullable();
+            $table->string('telefono', 20)->nullable();
             $table->string('nombre_recibe',100)->nullable();
             $table->string('url_mapa')->nullable();
             $table->string('instrucciones')->nullable();
@@ -54,13 +57,16 @@ return new class extends Migration
             $columns = [
                 'cliente_id',
                 'cliente_direccion_id',
+                'estado_direccion',
                 'nombre_direccion',
                 'nombre_cliente',
                 'direccion',
                 'ciudad',
                 'estado',
+                'colonia',
                 'codigo_postal',
                 'celular',
+                'telefono',
                 'nombre_recibe',
                 'url_mapa',
                 'instrucciones',

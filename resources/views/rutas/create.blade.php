@@ -139,9 +139,9 @@
                             </td>
                             <td>
                                 <select name="estatus_pago[]" class="form-control form-control-sm">
-                                    <option value="pendiente">Pendiente</option>
                                     <option value="pagado">Pagado</option>
-                                    <option value="cancelado">Cancelado</option>
+                                    <option value="por_cobrar">Por cobrar</option>
+                                    <option value="credito">Crédito</option>
                                 </select>
                             </td>
                             <td>

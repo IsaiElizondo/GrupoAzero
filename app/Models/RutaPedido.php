@@ -15,6 +15,9 @@ class RutaPedido extends Model
         'order_id',
         'estatus_pago',
         'monto_por_cobrar',
+        'numero_pedido_ruta',
+        'cliente_codigo',
+        'cliente_nombre',
     ];
 
     public function ruta(){

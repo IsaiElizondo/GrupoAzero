@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('ruta_pedido', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('ruta_id');
-            $table->foreign('ruta_id')->references('id')->on('rutas')->onDelete('cascade');
-            $table->unsignedBigInteger('order_id');
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
-            $table->enum('estatus_pago', ['pendiente', 'pagado', 'cancelado'])->default('pendiente');
+            $table->foreignId('ruta_id')->constrained('rutas')->onDelete('cascade');
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->unsignedInteger('numero_pedido_ruta')->default(1);
+            $table->string('cliente_codigo', 20);
+            $table->string('cliente_nombre', 100)->nullable();
+            $table->enum('estatus_pago', ['pagado', 'por_cobrar', 'credito'])->default('pagado');
             $table->decimal('monto_por_cobrar', 10, 2)->default(0);
             $table->timestamps();
             $table->unique(['ruta_id', 'order_id']);

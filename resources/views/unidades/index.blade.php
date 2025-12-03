@@ -1,4 +1,4 @@
-@extends('layouts.app', ['activePage' => 'unit-management', 'titlePage' => __('Unidades (Camiones/Trailers)')])
+@extends('layouts.app', ['activePage' => 'unidades', 'titlePage' => __('Unidades (Camiones/Trailers)')])
 
 @section('content')
     <div class="content">

@@ -5,7 +5,6 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
-
                     <div class="card">
                         <div class="card-header card-header-primary">
                             <div class="row">
@@ -23,37 +22,51 @@
                         </div>
 
                         <div class="card-body">
+                            @php
+                                $pedido = $ruta->orders->first();
+                                $codigo = $pedido->pivot->cliente_codigo ?? null;
+                                $nombre = $pedido->pivot->cliente_nombre ?? null;
+                            @endphp
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <strong>Cliente:</strong> {{ $ruta->cliente->nombre ?? 'Sin cliente' }}
+                                    <strong>Cliente:</strong>
+                                    @if($codigo)
+                                        {{ $nombre ? "$codigo — $nombre" : $codigo }}
+                                    @else
+                                        Sin cliente
+                                    @endif
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>Unidad:</strong> {{ $ruta->unidad->nombre ?? 'Sin unidad asignada' }}
+                                    <strong>Unidad:</strong>
+                                    {{ $ruta->unidad->nombre_unidad ?? 'Sin unidad asignada' }}
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <strong>Chofer:</strong> {{ $ruta->chofer->name ?? 'Sin chofer asignado' }}
+                                    <strong>Chofer:</strong>
+                                    {{ $ruta->chofer->name ?? 'Sin chofer asignado' }}
                                 </div>
                                 <div class="col-md-6">
                                     <strong>Fecha / Hora:</strong>
-                                    {{ $ruta->fecha_hora ? \Carbon\Carbon::parse($ruta->fecha_hora)->format('d/m/Y H:i') : '-' }}
+                                    {{ \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') }}
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <strong>Estatus de entrega:</strong> {{ $ruta->estatus_entrega ?? '-' }}
+                                    <strong>Estatus de entrega:</strong>
+                                    {{ $ruta->estatus_entrega ?? '-' }}
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>Motivo:</strong> {{ $ruta->motivo ?? 'Sin motivo registrado' }}
+                                    <strong>Motivo:</strong>
+                                    {{ $ruta->motivo ?? 'Sin motivo registrado' }}
                                 </div>
                             </div>
 
                             <hr>
-                            <h5 style="font-weight:bold;">Pedidos asignados a esta ruta</h5>
 
+                            <h5 style="font-weight:bold;">Pedidos asignados a esta ruta</h5>
                             <div class="table-responsive mt-3">
                                 <table class="table table-bordered">
                                     <thead>
@@ -74,16 +87,16 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center">No hay pedidos asignados.</td>
+                                                <td colspan="4" class="text-center">
+                                                    No hay pedidos asignados.
+                                                </td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

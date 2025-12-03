@@ -53,18 +53,100 @@
                     <dd rel="client" id="dd_cliente" style="display:none;">
                         <select name="tipo_cliente" id="tipo_cliente" class="form-control">
                             <option value="">--Selecciona una opción--</option>
-                            <option value="general">Cliente General</option>
+                            <option value="general">Cliente XAXX</option>
                             <option value="existente">Cliente Existente</option>
                             <option value="nuevo">Crear Cliente</option>
                         </select>
 
                         {{--///// BLOQUE CLIENTE GENERAL ////--}}
                         <div id="bloque_general" class="bloque-cliente" style="display:none; margin-top:10px;">
+                            <h5>Cliente General (XAXX)</h5>
                             <label class="mt-2">Código Cliente *</label>
-                            <input type="text" name="client" class="form-control" maxlength="45" placeholder="Código de Cliente General">
+                            <input type="text" name="client_general" class="form-control" maxlength="20" value="XAXX" readonly>
+                            <label class="mt-3">Dirección del cliente *</label>
+                            <label class="mt-2">Estado de dirección *</label>
+                            <select name="estado_direccion_general" id="estado_direccion_general" class="form-control">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="completa">Dirección completa</option>
+                                <option value="recoge">Cliente recoge</option>
+                            </select>
+                            <div id="form_general_direccion" style="display:none; margin-top:10px;">
 
-                            <label class="mt-2">Dirección *</label>
-                            <input type="text" name="direccion_general" class="form-control" maxlength="100" placeholder="Dirección del Cliente General">
+                                <h5>Dirección completa</h5>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Nombre de la dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="general_nombre_direccion">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="general_direccion" placeholder="Calle, número">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Estado</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_estado">
+                                    </div>
+
+                                    <label class="col-sm-1 col-form-label">Ciudad</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_ciudad">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Colonia</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_colonia">
+                                    </div>
+
+                                    <label class="col-sm-1 col-form-label">CP</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_codigo_postal">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Celular</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_celular">
+                                    </div>
+
+                                    <label class="col-sm-1 col-form-label">Teléf</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="general_telefono">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="general_nombre_recibe">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">URL Mapa</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="general_url_mapa" placeholder="https://maps...">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Instrucciones</label>
+                                    <div class="col-sm-7">
+                                        <textarea class="form-control" rows="2" name="general_instrucciones"></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+
                         </div>
 
                         {{--///// BLOQUE CLIENTE EXISTENTE /////--}}
@@ -72,91 +154,186 @@
                             <label class="mt-2">Buscar Cliente *</label>
                             <input type="text" id="buscar_cliente" class="form-control" placeholder="Buscar por nombre o código">
                             <input type="hidden" name="cliente_id" id="cliente_id">
-
+                            <input type="hidden" name="client" id="cliente_codigo">
+                            <div id="lista_clientes"></div>
                             <label class="mt-2">Dirección *</label>
-                            <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
-                                <option value="">--Selecciona una dirección--</option>
+                            <select name="mode_direccion_existente" id="modo_direccion_existente" class="form-control">
+                                <option value="">--Selecciona una opcion--</option>
+                                <option value="escoger">Escoger dirección existente</option>
+                                <option value="nueva">Agregar nueva dirección</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="recoge">Cliente recoge</option>
                             </select>
-                            <button type="button" id="btn_nueva_direccion" class="btn btn-sm btn-secondary mt-2">+ Agregar Nueva Dirección</button>
 
+                            {{--///// ESCOGER DIRECCIÓN EXISTENTE /////--}}
+                            <div id="bloque_escoger_direccion" style="display:none; margin-top:10px">
+                                <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
+                                    <option value="">--Selecciona una dirección--</option>
+                                </select>
+                            </div>
+
+                            {{--////// AGREGAR NUEVA DIRECCIÓN //////--}}
                             <div id="form_nueva_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
                                 <h5>Nueva Dirección</h5>
-
-                                <div class="form-group">
-                                    <label>Nombre de la dirección *</label>
-                                    <input type="text" id="nombre_direccion" class="form-control mb-2" placeholder="Nombre identificativo para la dirección">
+                                <input type="hidden" name="cliente_id" id="cliente_id_ajax">
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Nombre de la dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nombre_direccion" id="nombre_direccion">
+                                    </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Dirección *</label>
-                                    <input type="text" id="direccion" class="form-control mb-2" placeholder="Calle, número, colonia">
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="direccion" id="direccion" placeholder="Calle, número">
+                                    </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-4"><input type="text" id="ciudad" class="form-control mb-2" placeholder="Ciudad"></div>
-                                    <div class="col-md-4"><input type="text" id="estado" class="form-control mb-2" placeholder="Estado"></div>
-                                    <div class="col-md-4"><input type="text" id="codigo_postal" class="form-control mb-2" placeholder="CP"></div>
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Colonia</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="colonia" id="colonia">
+                                    </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6"><input type="text" id="celular" class="form-control mb-2" placeholder="Celular"></div>
-                                    <div class="col-md-6"><input type="text" id="nombre_recibe" class="form-control mb-2" placeholder="¿Quién recibe?"></div>
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Estado</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="estado" id="estado">
+                                    </div>
+                                    <label class="col-sm-1 col-form-label">Ciudad</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="ciudad" id="ciudad">
+                                    </div>
                                 </div>
 
-                                <input type="text" id="url_mapa" class="form-control mb-2" placeholder="https://maps...">
-                                <textarea id="instrucciones" class="form-control mb-2" rows="2" placeholder="Instrucciones de entrega"></textarea>
-                                <button type="button" id="guardar_direccion" class="btn btn-sm btn-primary">Guardar Dirección</button>
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">CP</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="codigo_postal" id="codigo_postal">
+                                    </div>
+                                    <label class="col-sm-1 col-form-label">Celular</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="celular" id="celular">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Teléfono</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="telefono" id="telefono">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nombre_recibe" id="nombre_recibe">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">URL Mapa</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="url_mapa" id="url_mapa">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Instrucciones</label>
+                                    <div class="col-sm-7">
+                                        <textarea class="form-control" rows="2" name="instrucciones" id="instrucciones"></textarea>
+                                    </div>
+                                </div>
+                                <button type="button" id="guardar_direccion" class="btn btn-sm btn-primary mt-2">Guardar Dirección</button>
                             </div>
                         </div>
 
                         {{--///// BLOQUE NUEVO CLIENTE /////--}}
                         <div id="bloque_nuevo" class="bloque-cliente" style="display:none; margin-top:10px;">
                             <label class="mt-2">Nombre Cliente *</label>
-                            <input type="text" name="nuevo_nombre" class="form-control" maxlength="100" placeholder="Nombre completo del Cliente">
-
+                            <input type="text" name="nuevo_nombre" class="form-control" maxlength="100">
                             <label class="mt-2">Código Cliente *</label>
-                            <input type="text" name="nuevo_codigo" class="form-control" maxlength="20" placeholder="Código único para el Cliente">
-
-                            <label>Nombre de Dirección *</label> 
-                            <input type="text" name="nuevo_nombre_direccion" class="form-control" maxlength="100" placeholder="Ejemplo: Principal o Sucursal Norte">
-
-                            <label class="mt-2">Dirección *</label>
-                            <input type="text" name="nuevo_direccion" class="form-control" maxlength="255" placeholder="Calle, número, colonia">
-
-                            <div class="row mt-2">
-                                <div class="col-md-4">
-                                    <label>Ciudad *</label>
-                                    <input type="text" name="nuevo_ciudad" class="form-control" maxlength="100">
+                            <input type="text" name="nuevo_codigo" class="form-control" maxlength="20">
+                            <label class="mt-3">Dirección del cliente *</label>
+                            <select name="estado_direccion" id="estado_direccion_nuevo" class="form-control">
+                                <option value="">--Selecciona una opción--</option>
+                                <option value="completa">Agregar dirección</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="recoge">Cliente recoge</option>
+                            </select>
+                            <div id="bloque_direccion_detalle" style="display:none; margin-top:10px;">
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Nombre de Dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_nombre_direccion">
+                                    </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label>Estado *</label>
-                                    <input type="text" name="nuevo_estado" class="form-control" maxlength="100">
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Dirección *</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_direccion" placeholder="Calle, número">
+                                    </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label>CP</label>
-                                    <input type="text" name="nuevo_cp" class="form-control" maxlength="20">
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Colonia</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_colonia">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Ciudad *</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="nuevo_ciudad">
+                                    </div>
+                                    <label class="col-sm-1 col-form-label">Estado *</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="nuevo_estado">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">CP</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="nuevo_cp">
+                                    </div>
+                                    <label class="col-sm-1 col-form-label">Celular</label>
+                                    <div class="col-sm-3">
+                                        <input class="form-control" type="text" name="nuevo_celular">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Teléfono</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_telefono">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_nombre_recibe">
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">URL Mapa</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" type="text" name="nuevo_url_mapa">
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <label class="col-sm-2 col-form-label">Instrucciones</label>
+                                    <div class="col-sm-7">
+                                        <textarea class="form-control" rows="2" name="nuevo_instrucciones"></textarea>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="row mt-2">
-                                <div class="col-md-6">
-                                    <label>Celular</label>
-                                    <input type="text" name="nuevo_celular" class="form-control" maxlength="20">
-                                </div>
-                                <div class="col-md-6">
-                                    <label>¿Quién recibe?</label>
-                                    <input type="text" name="nuevo_nombre_recibe" class="form-control" maxlength="100">
-                                </div>
-                            </div>
-
-                            <label class="mt-2">URL Mapa</label>
-                            <input type="text" name="nuevo_url_mapa" class="form-control" maxlength="255" placeholder="https://maps...">
-
-                            <label class="mt-2">Instrucciones</label>
-                            <textarea name="nuevo_instrucciones" class="form-control" rows="2" maxlength="500" placeholder="Instrucciones de entrega"></textarea>
-
-                            {{-- Campo oculto para evitar error SQL --}}
-                            <input type="hidden" name="nombre_direccion" value="Principal">
                         </div>
                     </dd>
         
@@ -187,7 +364,6 @@
 <script type="text/javascript">
 $(document).ready(function(){
 
-    //SELECCIÓN DE TIPO DE PEDIDO
     $(".Eleccion button").click(function(e){
         e.preventDefault();
         $(".Eleccion button").removeClass("activo");
@@ -205,28 +381,124 @@ $(document).ready(function(){
         }
     });
 
-    //ACTIVACIÓN DE BOTÓN GUARDAR
     const codeInput = document.querySelector(".Tiposet input[name='code']");
     if(codeInput) codeInput.addEventListener("change", UnlockContinuar);
     const notaInput = document.querySelector(".Tiposet textarea[name='nota']");
     if(notaInput) notaInput.addEventListener("change", UnlockContinuar);
 
-    //ESCOGER TIPO DE CLIENTE
     $("#tipo_cliente").on("change", function(){
         $(".bloque-cliente").hide();
         let tipo = $(this).val();
         if(tipo){ $("#bloque_" + tipo).slideDown(200); }
     });
 
-    $("#btn_nueva_direccion").on("click", function(){
-        $("#form_nueva_direccion").slideToggle(200);
+    $("#estado_direccion_general").on("change", function(){
+        let v = $(this).val();
+        if(v == "completa"){
+            $("#form_general_direccion").slideDown(200);
+        }else{
+            $("#form_general_direccion").slideUp(200);
+        }
+    });
+
+    $("#estado_direccion_nuevo").on("change", function(){
+        let v = $(this).val();
+        if(v == "completa"){
+            $("#bloque_direccion_detalle").slideDown(200);
+        }else{
+            $("#bloque_direccion_detalle").slideUp(200);
+        }
+    });
+
+    $('#buscar_cliente').on('keyup', function() {
+        let q = $(this).val().trim();
+        if(q.length < 2){
+            $('#lista_clientes').html('');
+            return;
+        }
+
+        $.get("{{ url('clientes/buscar') }}", { q: q }, function(data){
+            $('#lista_clientes').html(data);
+        }).fail(function(){
+            alert("Error al buscar clientes");
+        });
+    });
+
+    $(document).on('click', '.seleccionar-cliente', function(){
+        let id = $(this).data('id');
+        let nombre = $(this).data('nombre');
+        
+        $('#cliente_id').val(id);
+        $('#buscar_cliente').val(nombre);
+        $('#cliente_codigo').val($(this).data('codigo'));
+        $('#lista_clientes').html(""); 
+        
+        $.get("{{ url('clientes') }}/" + id + "/direcciones", function(resp){
+            let opciones = '<option value="">--Selecciona una dirección--</option>';
+            resp.forEach(function(dir){
+                opciones += `<option value="${dir.id}">${dir.nombre_direccion}</option>`;
+            });
+            $('#cliente_direccion_id').html(opciones);
+        }).fail(function(){
+            alert("Error cargando direcciones del cliente");
+        });
+    });
+
+    $('#modo_direccion_existente').on('change', function() {
+        let modo = $(this).val();
+        $('#bloque_escoger_direccion').hide();
+        $('#form_nueva_direccion').hide();
+
+        if (modo === 'escoger') {
+            $('#bloque_escoger_direccion').slideDown(200);
+        }
+        if (modo === 'nueva') {
+            $('#form_nueva_direccion').slideDown(200);
+        }
+    });
+
+    $(document).on('click', '.seleccionar-cliente', function() {
+        let id = $(this).data('id');
+        $('#cliente_id_ajax').val(id);
+    });
+
+    $('#guardar_direccion').on('click', function(){
+        let datos = {
+            cliente_id: $('#cliente_id_ajax').val(),
+            nombre_direccion: $('#nombre_direccion').val(),
+            direccion: $('#direccion').val(),
+            colonia: $('#colonia').val(),
+            ciudad: $('#ciudad').val(),
+            estado: $('#estado').val(),
+            codigo_postal: $('#codigo_postal').val(),
+            celular: $('#celular').val(),
+            telefono: $('#telefono').val(),
+            nombre_recibe: $('#nombre_recibe').val(),
+            url_mapa: $('#url_mapa').val(),
+            instrucciones: $('#instrucciones').val(),
+            _token: "{{ csrf_token() }}"
+        };
+
+        $.post("{{ url('clientes/storeDireccion') }}", datos, function(resp){
+            if(resp.status == 1){
+                alert("Dirección guardada correctamente");
+                $('#cliente_direccion_id').append(
+                    `<option value="${resp.direccion.id}">${resp.direccion.nombre_direccion}</option>`
+                );
+                $('#cliente_direccion_id').val(resp.direccion.id);
+                $('#form_nueva_direccion').slideUp();
+            }else{
+                alert("Error al guardar dirección");
+            }
+        }).fail(function(){
+            alert("Error en el servidor");
+        });
     });
 
     $(".Tiposet.or").hide();
 });
 
 
-//TIPO DE FORMULARIO DEPENDIENDO DEL TIPO DE CLIENTE
 function ShowTiposet(r){   
 
     $(".Tiposet.or").show();
@@ -234,8 +506,6 @@ function ShowTiposet(r){
     $("#FNuevo [name='sb']").hide();
     $(".Tiposet label[rel='code']").text($(".Tiposet label[rel='code']").attr(r));
     $(".Tiposet label[rel='archivo']").text($(".Tiposet label[rel='archivo']").attr(r));
-
-    //OCULTAR EL ANTERIOR CAMPO DE CÓDIGO CLIENTE ACTUALMENTE EL CAMPO DE ESCOGER EL TIPO DE CLIENTE
     if(r=="F" || r=="C"){
         $("#dt_cliente, #dd_cliente").show();
         $("dt[rel='archivo'], dd[rel='archivo']").toggle(r=="C");
@@ -247,7 +517,6 @@ function ShowTiposet(r){
 }
 
 
-//VALIDAR DATOS PARA ACTIVAR BOTÓN GUARDAR
 function UnlockContinuar(){
     let cd = $(".Tiposet").find("[name='code']").val();
     let cli = $(".Tiposet").find("[name='client']").val();
@@ -262,7 +531,7 @@ function UnlockContinuar(){
         errMsg += "El folio/número debe contener mínimo 4 caracteres. ";
     }
 
-    if(ori != "R" && tipoCliente === "general" && (!cli || cli.length < 3)){
+    if(ori != "R" && tipoCliente == "general" && (!cli || cli.length < 3)){
         mostrar = false;
         errMsg += "El código de cliente debe contener mínimo 3 caracteres. ";
     }
@@ -290,5 +559,4 @@ function UnlockContinuar(){
 
 
 </script>
-
 @endpush

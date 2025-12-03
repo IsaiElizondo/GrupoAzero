@@ -61,7 +61,15 @@
                                 <div class="card p-3 mb-2">
                                     <h3>{{ $dir->nombre_direccion }} </h3>
                                     <h4><strong>{{ $dir->direccion }}</strong></h4>
-                                    <h5 class="mb-1">{{ $dir->ciudad }}, {{ $dir->estado }} - CP: {{ $dir->codigo_postal }} - Celular: {{$dir->celular}} - Recibe: {{$dir->nombre_recibe}}</h5>
+                                    <h5 class="mb-1">
+                                        {{ $dir->ciudad }},
+                                        {{ $dir->estado }}
+                                        — Colonia: {{ $dir->colonia }}
+                                        — CP: {{ $dir->codigo_postal }}
+                                        — Celular: {{ $dir->celular }}
+                                        — Tel: {{ $dir->telefono }}
+                                        — Recibe: {{ $dir->nombre_recibe }}
+                                    </h5>
                                     @if($dir->url_mapa)
                                         <p class="mb-1">
                                             <a href="{{ $dir->url_mapa }}" target="_blank">Ver en mapa</a>

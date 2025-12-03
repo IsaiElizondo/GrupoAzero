@@ -191,6 +191,48 @@ var_dump($pedido);
      
 
             <div><label>Cliente</label><span>{{$pedido->client}}</span></div>
+            @if($pedido->nombre_cliente)
+                <div><label>Nombre Cliente</label><span>{{$pedido->nombre_cliente}}</span></div>
+            @endif
+
+            @if($pedido->nombre_direccion)
+                <div><label>Nombre Dirección</label><span>{{$pedido->nombre_direccion}}</span></div>
+            @endif
+
+            <div>
+                <label>Dirección</label>
+                <span>
+                    {{$pedido->direccion}}
+                    @if($pedido->ciudad), {{$pedido->ciudad}} @endif
+                    @if($pedido->estado), {{$pedido->estado}} @endif
+                    @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
+                </span>
+            </div>
+
+            @if($pedido->celular)
+                <div><label>Celular</label><span>{{$pedido->celular}}</span></div>
+            @endif
+
+            @if($pedido->telefono)
+                <div><label>Telefono</label><span>{{$pedido->telefono}}</span></div>
+            @endif
+            
+            @if($pedido->nombre_recibe)
+                <div><label>Persona que recibe</label><span>{{$pedido->nombre_recibe}}</span></div>
+            @endif
+            
+            @if($pedido->url_mapa)
+                <div><label>URl</label><span>{{$pedido->url_mapa}}</span></div>
+            @endif
+            
+            @if($pedido->instrucciones)
+                <div><label>Instrucciones</label><span>{{$pedido->instrucciones}}</span></div>
+            @endif
+            
+            <div>
+                <label>Estado Dirección</label>
+                <span>{{ucfirst($pedido->estado_direccion)}}</span>
+            </div>
 
            @endif
 
@@ -539,33 +581,57 @@ $pedidoStatusId = $pedido->status_id;
     <div class="card">
         <div class="headersub"> Rutas </div>
         <div class="Eleccion">
+
             <table class="table table-bordered table-sm" style="width:100%; margin-top:10px;">
                 <thead style="background-color:#f2f2f2;">
                     <tr>
-                        <th> #Ruta </th>
-                        <th> Unidades </th>
-                        <th> Chofer </th>
-                        <th> Fecha </th>
-                        <th> Estatus entrega </th>
-                        <th> Monto por cobrar </th>
+                        <th>#Ruta</th>
+                        <th>Unidad</th>
+                        <th>Chofer</th>
+                        <th>Fecha</th>
+                        <th>Estatus entrega</th>
+                        <th>Cliente</th>
+                        <th>Monto por cobrar</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach($rutasAsociadas as $ruta)
+
                         <tr>
-                            <td> {{ $ruta->id ?? '-' }} </td>
-                            <td> {{ $ruta->unidad->nombre ?? 'Sin unidad' }} </td>
-                            <td> {{ $ruta->chofer->name ?? 'Sin chofer' }} </td>
-                            <td> {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') : '-' }} </td>
-                            <td> {{ ucfirst($ruta->estatus_entrega ?? 'enrutado') }} </td>
-                            <td> {{ number_format($ruta->monto_por_cobrar ?? 0, 2) }} </td>
+                            <td>{{ $ruta->numero_ruta ?? '-' }}</td>
+
+                            <td>{{ $ruta->unidad ?? 'Sin unidad' }}</td>
+
+                            <td>{{ $ruta->chofer ?? 'Sin chofer' }}</td>
+
+                            <td>
+                                {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') : '-' }}
+                            </td>
+
+                            <td>{{ ucfirst($ruta->estatus_entrega ?? 'enrutado') }}</td>
+
+                            <td>
+                                @if($ruta->cliente_codigo)
+                                    {{ $ruta->cliente_nombre ? ($ruta->cliente_codigo . ' — ' . $ruta->cliente_nombre) : $ruta->cliente_codigo }}
+                                @else
+                                    Sin cliente
+                                @endif
+                            </td>
+
+                            <td>${{ number_format($ruta->monto_total ?? 0, 2) }}</td>
                         </tr>
+
                     @endforeach
                 </tbody>
+
             </table>
+
         </div>
     </div>
 @endif
+
+
 
 {{-- NUEVA SECCIÓN DE ETIQUETADO --}}
 

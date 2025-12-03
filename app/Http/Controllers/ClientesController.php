@@ -33,23 +33,27 @@ class ClientesController extends Controller
             'codigo_cliente' => ['nullable', 'string', 'max:50'],
             'nombre_direccion' => ['nullable', 'string', 'max:100'],
             'direccion' => ['nullable', 'string', 'max:255'],
+            'colonia' => ['nullable', 'string', 'max:100'],
             'ciudad' => ['nullable', 'string', 'max:100'],
             'estado' => ['nullable', 'string', 'max:100'],
             'codigo_postal' => ['nullable', 'string', 'max:30'],
             'celular' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:20'],
             'nombre_recibe' => ['nullable', 'string', 'max:50'],
             'url_mapa' => ['nullable', 'string', 'max:500'],
             'instrucciones' => ['nullable', 'string', 'max:500'],
             'direcciones' => ['nullable', 'array'],
             'direcciones.*.nombre_direccion' => ['nullable', 'string', 'max:100'],
             'direcciones.*.direccion' => ['required_with:direcciones', 'string', 'max:255'],
+            'direcciones.*.colonia' => ['nullable', 'string', 'max:100'],
             'direcciones.*.ciudad' => ['nullable', 'string', 'max:100'],
             'direcciones.*.estado' => ['nullable', 'string', 'max:100'],
             'direcciones.*.codigo_postal' => ['nullable', 'string', 'max:100'],
             'direcciones.*.celular' => ['nullable', 'string', 'max:20'],
+            'direcciones.*.telefono' => ['nullable', 'string', 'max:20'],
             'direcciones.*.nombre_recibe' => ['nullable', 'string', 'max:50'],
             'direcciones.*.url_mapa' => ['nullable', 'string', 'max:500'],
-            'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500']
+            'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500'],
         ]);
 
         DB::beginTransaction();
@@ -59,31 +63,35 @@ class ClientesController extends Controller
                     'codigo_cliente' => $validated['codigo_cliente'] ?? null,
                 ]);
 
-                if(!empty($validated['direcciones']) && is_array($validated['direcciones'])){
-                    foreach($validated['direcciones'] as $dir){
+                if (!empty($validated['direcciones']) && is_array($validated['direcciones'])) {
+                    foreach ($validated['direcciones'] as $dir) {
                         DireccionCliente::create([
                             'cliente_id' => $cliente->id,
-                            'nombre_direccion' => $dir['nombre_direccion'],
+                            'nombre_direccion' => $dir['nombre_direccion'] ?? null,
                             'direccion' => $dir['direccion'] ?? null,
+                            'colonia' => $dir['colonia'] ?? null,
                             'ciudad' => $dir['ciudad'] ?? null,
                             'estado' => $dir['estado'] ?? null,
                             'codigo_postal' => $dir['codigo_postal'] ?? null,
                             'celular' => $dir['celular'] ?? null,
+                            'telefono' => $dir['telefono'] ?? null,
                             'nombre_recibe' => $dir['nombre_recibe'] ?? null,
                             'url_mapa' => $dir['url_mapa'] ?? null,
                             'instrucciones' => $dir['instrucciones'] ?? null,
                         ]);
                     }
                 }else{
-                    if($validated['nombre_direccion'] || $validated['direccion'] || $validated['ciudad'] || $validated['estado'] || $validated['codigo_postal'] || $validated['celular'] || $validated['nombre_recibe'] || $validated['url_mapa'] || $validated['instrucciones']){
+                    if($validated['nombre_direccion'] || $validated['direccion'] || $validated['colonia'] || $validated['ciudad'] || $validated['estado'] || $validated['codigo_postal'] || $validated['celular'] || $validated['telefono'] || $validated['nombre_recibe'] || $validated['url_mapa'] || $validated['instrucciones']){
                         DireccionCliente::create([
                             'cliente_id' => $cliente->id,
                             'nombre_direccion' => $validated['nombre_direccion'] ?? null,
                             'direccion' => $validated['direccion'] ?? null,
+                            'colonia' => $validated['colonia'] ?? null,
                             'ciudad' => $validated['ciudad'] ?? null,
                             'estado' => $validated['estado'] ?? null,
                             'codigo_postal' => $validated['codigo_postal'] ?? null,
                             'celular' => $validated['celular'] ?? null,
+                            'telefono' => $validated['telefono'] ?? null,
                             'nombre_recibe' => $validated['nombre_recibe'] ?? null,
                             'url_mapa' => $validated['url_mapa'] ?? null,
                             'instrucciones' => $validated['instrucciones'] ?? null,
@@ -92,11 +100,11 @@ class ClientesController extends Controller
                 }
 
                 DB::commit();
-                    return redirect()->route('clientes.index')->with('success', 'Cliente creado correctamente.');
+                return redirect()->route('clientes.index')->with('success', 'Cliente creado correctamente.');
             }catch(Throwable $e){
-                DB::rollback();
+                DB::rollBack();
                 report($e);
-                return bacK()->withErrors('Ocurrio un error al crear el cliente')->withInput();
+                return back()->withErrors('Ocurrió un error al crear el cliente')->withInput();
             }
 
     }
@@ -117,62 +125,64 @@ class ClientesController extends Controller
     public function update(Request $request, $id){
 
         $validated = $request->validate([
-
             'nombre' => ['required', 'string', 'max:255'],
             'codigo_cliente' => ['nullable', 'string', 'max:50'],
             'nombre_direccion' => ['nullable', 'string', 'max:100'],
             'direccion' => ['nullable', 'string', 'max:255'],
+            'colonia' => ['nullable', 'string', 'max:100'],
             'ciudad' => ['nullable', 'string', 'max:100'],
             'estado' => ['nullable', 'string', 'max:100'],
             'codigo_postal'=> ['nullable', 'string', 'max:30'],
             'celular' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:20'],
             'nombre_recibe' => ['nullable', 'string', 'max:50'],
             'url_mapa' => ['nullable', 'string', 'max:500'],
-            'instrucciones' => ['nullable', 'string', 'max:50'],
+            'instrucciones' => ['nullable', 'string', 'max:500'],
             'direcciones' => ['nullable', 'array'],
             'direcciones.*.id' => ['nullable', 'integer'],
             'direcciones.*.nombre_direccion' => ['nullable', 'string', 'max:100'],
             'direcciones.*.direccion' => ['required_with:direcciones', 'string', 'max:255'],
+            'direcciones.*.colonia' => ['nullable', 'string', 'max:100'],
             'direcciones.*.ciudad' => ['nullable', 'string', 'max:100'],
             'direcciones.*.estado' => ['nullable', 'string', 'max:100'],
             'direcciones.*.codigo_postal' => ['nullable', 'string', 'max:20'],
             'direcciones.*.celular' => ['nullable', 'string', 'max:20'],
+            'direcciones.*.telefono' => ['nullable', 'string', 'max:20'],
             'direcciones.*.nombre_recibe' => ['nullable', 'string', 'max:50'],
             'direcciones.*.url_mapa' => ['nullable', 'string', 'max:500'],
-            'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500']
-
+            'direcciones.*.instrucciones' => ['nullable', 'string', 'max:500'],
         ]);
-
         DB::beginTransaction();
             try{
                 $cliente = Cliente::findOrFail($id);
-                $cliente->updated([
+                $cliente->update([
                     'nombre'=> $validated['nombre'],
                     'codigo_cliente' => $validated['codigo_cliente'] ?? null,
-                    ]);
-
-                if(!empty($validated['direcciones']) && is_array($validated['direcciones'])){
+                ]);
+                if (!empty($validated['direcciones']) && is_array($validated['direcciones'])) {
                     $idsEnviados = [];
-                    foreach($validated['direcciones'] as $dir){
+                    foreach ($validated['direcciones'] as $dir) {
                         $payload = [
                             'nombre_direccion' => $dir['nombre_direccion'] ?? null,
                             'direccion' => $dir['direccion'] ?? null,
+                            'colonia' => $dir['colonia'] ?? null,
                             'ciudad' => $dir['ciudad'] ?? null,
                             'estado' => $dir['estado'] ?? null,
                             'codigo_postal' => $dir['codigo_postal'] ?? null,
                             'celular' => $dir['celular'] ?? null,
+                            'telefono' => $dir['telefono'] ?? null,
                             'nombre_recibe' => $dir['nombre_recibe'] ?? null,
                             'url_mapa' => $dir['url_mapa'] ?? null,
-                            'instrucciones' => $dir['instrucciones'] ?? null, 
+                            'instrucciones' => $dir['instrucciones'] ?? null,
                         ];
 
-                        if(!empty($dir['id'])){
+                        if (!empty($dir['id'])) {
                             DireccionCliente::where('id', $dir['id'])
                                 ->where('cliente_id', $cliente->id)
                                 ->update($payload);
-                                $idsEnviados[] = (int)$dir['id'];
+                            $idsEnviados[] = (int)$dir['id'];
                         }else{
-                            $nueva = DireccionCliente::create(array_merge($payload,[
+                            $nueva = DireccionCliente::create(array_merge($payload, [
                                 'cliente_id' => $cliente->id,
                             ]));
                             $idsEnviados[] = $nueva->id;
@@ -182,32 +192,33 @@ class ClientesController extends Controller
                     DireccionCliente::where('cliente_id', $cliente->id)
                         ->whereNotIn('id', $idsEnviados)
                         ->delete();
+
                 }else{
                     $dir = DireccionCliente::firstOrNew(['cliente_id' => $cliente->id]);
                     $dir->nombre_direccion = $validated['nombre_direccion'] ?? null;
                     $dir->direccion = $validated['direccion'] ?? null;
+                    $dir->colonia = $validated['colonia'] ?? null;
                     $dir->ciudad = $validated['ciudad'] ?? null;
                     $dir->estado = $validated['estado'] ?? null;
                     $dir->codigo_postal = $validated['codigo_postal'] ?? null;
                     $dir->celular = $validated['celular'] ?? null;
+                    $dir->telefono = $validated['telefono'] ?? null;
                     $dir->nombre_recibe = $validated['nombre_recibe'] ?? null;
                     $dir->url_mapa = $validated['url_mapa'] ?? null;
                     $dir->instrucciones = $validated['instrucciones'] ?? null;
-
-                    if($dir->nombre_direccion || $dir->direccion || $dir->ciudad || $dir->estado || $dir->codigo_postal|| $dir->celular || $dir->nombre_recibe || $dir->url_mapa || $dir->instrucciones){
+                    if ($dir->nombre_direccion || $dir->direccion || $dir->colonia || $dir->ciudad || $dir->estado || $dir->codigo_postal || $dir->celular || $dir->telefono || $dir->nombre_recibe || $dir->url_mapa || $dir->instrucciones){
                         $dir->save();
-                    }elseif($dir->exists){
+                    }elseif ($dir->exists){
                         $dir->delete();
                     }
                 }
 
                 DB::commit();
-                    return redirect()->route('clientes.edit', $id)->with('success', 'Cliente actualizado correctamente.');
-
+                return redirect()->route('clientes.edit', $id)->with('success', 'Cliente actualizado correctamente.');
             }catch(Throwable $e){
                 DB::rollBack();
                 report($e);
-                return back()->withErrors("Ocurrio un error al actualizar cliente")->withInput();
+                return back()->withErrors('Ocurrió un error al actualizar el cliente')->withInput();
             }
 
     }
@@ -222,31 +233,15 @@ class ClientesController extends Controller
     }
 
 
-    public function buscar(Request $request)
-{
-    \Log::info('🔹 Entrando a ClientesController@buscar');
-
-    $q = $request->q;
-    \Log::info('🔹 Valor de $q: ' . $q);
-
-    if (empty($q)) {
-        \Log::warning('⚠️ No se recibió parámetro q en la búsqueda');
-        return response()->json([]);
+    public function buscar(Request $request){
+        //\Log::info('Buscando cliente', ['q' => $request->q]);
+        $q = trim($request->q);
+        $clientes = Cliente::where('nombre', 'like', "%$q%")
+                    ->orWhere('codigo_cliente', 'like', "%$q%")
+                    ->limit(20)
+                    ->get();
+        return view('clientes.lista_busqueda.lista_clientes', compact('clientes'));
     }
-
-    try {
-        $clientes = \App\Models\Cliente::where('nombre', 'like', "%$q%")
-            ->orWhere('codigo_cliente', 'like', "%$q%")
-            ->get(['id', 'nombre', 'codigo_cliente']);
-
-        \Log::info('✅ Clientes encontrados:', $clientes->toArray());
-
-        return response()->json($clientes);
-    } catch (\Throwable $e) {
-        \Log::error('❌ Error en ClientesController@buscar: ' . $e->getMessage());
-        return response()->json([]);
-    }
-}
 
 
     public function direcciones($id){
@@ -258,16 +253,68 @@ class ClientesController extends Controller
 
     public function storeAjax(Request $request){
 
-        $this->store($request);
-        $cliente = Cliente::latest()->first();
-        $direccion = $cliente->direcciones()->latest()->first();
-
-        return response()->json([
-            'status' => 1,
-            'cliente_id' => $cliente->id,
-            'direccion_id' => $direccion->id ?? null,
-            'cliente_nombre' => $cliente->nombre,
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'codigo_cliente' => ['nullable', 'string', 'max:50'],
+            'estado_direccion' => ['required', 'in:completa,pendiente,recoge'],
+            'nombre_direccion' => ['nullable', 'string', 'max:255'],
+            'ciudad' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', 'string', 'max:100'],
+            'codigo_postal' => ['nullable', 'string', 'max:30'],
+            'celular' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'nombre_recibe' => ['nullable', 'string', 'max:50'],
+            'url_mapa' => ['nullable', 'string', 'max:50'],
+            'instrucciones' => ['nullable', 'string', 'max:500'],
         ]);
+
+        try{
+            $cliente = Cliente::create([
+                'nombre' => $validated['nombre'],
+                'codigo_cliente' => $validated['codigo_cliente'] ?? null,
+            ]);
+            
+            $estadoDireccion = $validated['estado_direccion'];
+            $direccion = null;
+
+            if($estadoDireccion == 'completa'){
+                $direccion = DireccionCliente::create([
+                    'cliente_id' => $cliente->id,
+                    'estado_direccion' => 'completa',
+                    'nombre_direccion' => $validated['nombre_direccion'] ?? null,
+                    'direccion' => $validated['direccion'] ?? null,
+                    'ciudad' => $validated['ciudad'] ?? null,
+                    'estado' => $validated['estado'] ?? null,
+                    'codigo_postal' => $validated['codigo_postal'] ?? null,
+                    'celular' => $validated['celular'] ?? null,
+                    'telefono' => $validated['telefono'] ?? null,
+                    'nombre_recibe' => $validated['nombre_recibe'] ?? null,
+                    'url_mapa' => $validated['url_mapa'] ?? null,
+                    'instrucciones' => $validated['instrucciones'] ?? null,
+                ]);
+            }else{
+                $direccion = DireccionCliente::create([
+                    'cliente_id' => $cliente->id,
+                    'estado_direccion' => $estadoDireccion,
+                    'nombre_direccion' => null,
+                    'direccion' => null,
+                ]);
+            }
+
+            return response()->json([
+                'status' => 1,
+                'cliente_id' => $cliente->id,
+                'direccion_id' => $direccion->id ?? null,
+                'estado_direccion' => $estadoDireccion,
+                'cliente_nombre' => $cliente->nombre,
+            ]);
+        }catch(\Throwable $e){
+            report($e);
+            return response()->json([
+                'status' => 0,
+                'message' => 'Error al crear el cliente o la dirección'
+            ],500);
+        }
 
     }
 
@@ -281,6 +328,7 @@ class ClientesController extends Controller
             'estado' => ['nullable', 'string', 'max:100'],
             'codigo_postal' => ['nullable', 'string', 'max:20'],
             'celular' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:20'],
             'nombre_recibe' => ['nullable', 'string', 'max:100'],
             'url_mapa' => ['nullable', 'string', 'max:500'],
             'instrucciones' => ['nullable', 'string', 'max:500'],

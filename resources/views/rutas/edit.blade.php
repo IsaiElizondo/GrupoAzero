@@ -38,15 +38,15 @@
                         </div>
 
                         <div class="card-body">
+
                             <div class="row">
-                                
                                 <label class="col-sm-2 col-form-label text-right">Unidad</label>
                                 <div class="col-sm-4">
                                     <select class="form-control" name="unidad_id">
                                         <option value="">-- Seleccionar unidad --</option>
                                         @foreach($unidades as $u)
                                             <option value="{{ $u->id }}" {{ $ruta->unidad_id == $u->id ? 'selected' : '' }}>
-                                                {{ $u->nombre }}
+                                                {{ $u->nombre_unidad }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -64,12 +64,33 @@
                                         @endforeach
                                     </select>
                                 </div>
+                            </div>
 
+                            <div class="row mt-4">
+                                <label class="col-sm-2 col-form-label text-right">Fecha Ruta</label>
+                                <div class="col-sm-4">
+                                    <input type="datetime-local" name="fecha_hora"
+                                        class="form-control"
+                                        value="{{ $ruta->fecha_hora ? \Carbon\Carbon::parse($ruta->fecha_hora)->format('Y-m-d\TH:i') : '' }}">
+                                </div>
                             </div>
 
                             <hr class="mt-4 mb-3">
 
-                            <h5 style="font-weight: bold;">Pedidos asignados a esta ruta</h5>
+                            <h5 style="font-weight:bold;">Pedidos asignados a esta ruta</h5>
+
+                            <div class="row mt-3 mb-3">
+                                <div class="col-md-6">
+                                    <input type="text" id="buscadorPedidos" class="form-control" placeholder="Buscar pedido...">
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <button type="button" id="btnBuscarPedidos" class="btn btn-primary btn-sm">
+                                        Buscar nuevos pedidos
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="listaPedidos" class="mt-3"></div>
 
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="tablaSeleccionados">
@@ -90,9 +111,9 @@
                                                 </td>
                                                 <td>
                                                     <select name="estatus_pago[]" class="form-control form-control-sm">
-                                                        <option value="pendiente" {{ $order->pivot->estatus_pago == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                                         <option value="pagado" {{ $order->pivot->estatus_pago == 'pagado' ? 'selected' : '' }}>Pagado</option>
-                                                        <option value="cancelado" {{ $order->pivot->estatus_pago == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+                                                        <option value="por_cobrar" {{ $order->pivot->estatus_pago == 'por_cobrar' ? 'selected' : '' }}>Por cobrar</option>
+                                                        <option value="credito" {{ $order->pivot->estatus_pago == 'credito' ? 'selected' : '' }}>Crédito</option>
                                                     </select>
                                                 </td>
                                                 <td>
@@ -110,21 +131,12 @@
                                 </table>
                             </div>
 
-                            <div class="row mt-3">
-                                <div class="col-md-12 text-right">
-                                    <button type="button" class="btn btn-sm btn-primary" id="btnBuscarPedidos">
-                                        <span class="material-icons">search</span> Buscar nuevos pedidos
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="listaPedidos" class="mt-3">
-                            </div>
                         </div>
 
                         <div class="card-footer text-right">
                             <button type="submit" class="btn btn-success">Guardar Cambios</button>
                         </div>
+
                     </div>
                 </form>
 
@@ -143,12 +155,10 @@ $(document).ready(function(){
         $('#pedido_'+id).remove();
     });
 
-    // Buscar nuevos pedidos con AJAX (igual que en create)
     $('#btnBuscarPedidos').click(function(){
-        var term = prompt('Escribe el folio o parte del nombre del cliente para buscar pedidos:');
+        var term = $('#buscadorPedidos').val();
         if(!term) return;
-
-        $.post("{{ route('rutas.multie_lista') }}", {
+        $.post("{{ route('rutas.multie_lista') }}",{
             term: term,
             _token: "{{ csrf_token() }}"
         }, function(data){
@@ -168,12 +178,14 @@ $(document).ready(function(){
                     <td>${folio}<input type="hidden" name="pedidos[]" value="${pedidoId}"></td>
                     <td>
                         <select name="estatus_pago[]" class="form-control form-control-sm">
-                            <option value="pendiente">Pendiente</option>
                             <option value="pagado">Pagado</option>
-                            <option value="cancelado">Cancelado</option>
+                            <option value="por_cobrar">Por cobrar</option>
+                            <option value="credito">Crédito</option>
                         </select>
                     </td>
-                    <td><input type="number" step="0.01" name="monto_por_cobrar[]" class="form-control form-control-sm" value="0.00"></td>
+                    <td>
+                        <input type="number" step="0.01" name="monto_por_cobrar[]" class="form-control form-control-sm" value="0.00">
+                    </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-sm quitarPedido" data-id="${pedidoId}">
                             <span class="material-icons" style="font-size:18px;">remove_circle</span>
@@ -182,7 +194,7 @@ $(document).ready(function(){
                 </tr>
             `;
             $('#tablaSeleccionados tbody').append(fila);
-        } else {
+        }else{
             $('#pedido_'+pedidoId).remove();
         }
     });

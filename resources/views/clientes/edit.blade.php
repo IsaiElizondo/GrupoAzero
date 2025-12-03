@@ -26,9 +26,9 @@
                                         <p class="card-category"> Información del cliente y sus direcciones</p>
                                     </div>
                                     <div class="col-md-8 col-sm-12 col-xs-12 text-right">
-                                       <a href="{{route('clientes.index')}}" class="btn btn-sm btn-primary">
+                                        <a href="{{route('clientes.index')}}" class="btn btn-sm btn-primary">
                                             <span class="material-icons"> arrow_back</span>
-                                                Regresar
+                                            Regresar
                                         </a>
                                     </div>
                                 </div>
@@ -39,16 +39,16 @@
                                     <label class="col-sm-2 col-form-label">Nombre</label>
                                     <div class="col-sm-7">
                                         <div class="form-goup bmd-form-group is-filled">
-                                            <input class="form-control" name="nombre" type="text" placeholder="Nombre del cliente" value="{{old('nombre', $cliente->nombre)}}" required>
+                                            <input class="form-control" name="nombre" type="text" placeholder="Nombre del cliente" value="{{ old('nombre', $cliente->nombre) }}" required>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="row">
-                                    <label class="col-sm-2 col-form-label">Codigo cliente </label>
+                                    <label class="col-sm-2 col-form-label">Código del Cliente</label>
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
-                                            <input class="form-control" name="codigo_cliente" type="text" placeholder="Códico único de cliente" value="{{  old('codigo_cliente', $cliente->codigo_cliente) }}">
+                                            <input class="form-control" name="codigo_cliente" type="text" placeholder="Código único de cliente" value="{{ old('codigo_cliente', $cliente->codigo_cliente) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -59,68 +59,76 @@
                                     <div class="col-sm-12">
                                         <h5 style="margin:6px 0 14px;">Direcciones</h5>
                                         <p class="text-muted" style="margin-top:-6px">Editar, elimina o añade direcciones nuevas.</p>
-                                        <button type="button"id="btn-add-direccion" class="btn btn-sm btn-secondary"> + Añadir dirección</button>
+                                        <button type="button" id="btn-add-direccion" class="btn btn-sm btn-secondary">+ Añadir dirección</button>
                                     </div>
                                 </div>
 
-                                <div id="direcciones-wrapper" class="mt-">
-                                    @php 
-                                    $oldDirs = old('direcciones');
-                                    $renderDirs = is_array($oldDirs)
-                                        ? $oldDirs
-                                        : ($cliente->direcciones->map(function($d){
-                                            return [
-                                                'id' => $d->id,
-                                                'nombre_direccion' => $d->nombre_direccion,
-                                                'direccion' => $d->direccion,
-                                                'ciudad' => $d->ciudad,
-                                                'estado' => $d->estado,
-                                                'codigo_postal' => $d->codigo_postal,
-                                                'celular' => $d->celular,
-                                                'nombre_recibe' => $d->nombre_recibe,
-                                                'url_mapa' => $d->url_mapa,
-                                                'instrucciones' => $d->instrucciones,
-                                            ];
-                                        })->toArray());
+                                <div id="direcciones-wrapper" class="mt-3">
+                                    @php
+                                        $oldDirs = old('direcciones');
+                                        $renderDirs = is_array($oldDirs)
+                                            ? $oldDirs
+                                            : ($cliente->direcciones->map(function($d){
+                                                return [
+                                                    'id' => $d->id,
+                                                    'nombre_direccion' => $d->nombre_direccion,
+                                                    'direccion' => $d->direccion,
+                                                    'colonia' => $d->colonia,
+                                                    'ciudad' => $d->ciudad,
+                                                    'estado' => $d->estado,
+                                                    'codigo_postal' => $d->codigo_postal,
+                                                    'celular' => $d->celular,
+                                                    'telefono' => $d->telefono,
+                                                    'nombre_recibe' => $d->nombre_recibe,
+                                                    'url_mapa' => $d->url_mapa,
+                                                    'instrucciones' => $d->instrucciones,
+                                                ];
+                                            })->toArray());
                                     @endphp
-
                                     @foreach($renderDirs as $i => $d)
-                                        <div class="card p-3 mb-3 direccion-item" data-index="{{$i}}">
+                                        <div class="card p-3 mb-3 direccion-item" data-index="{{ $i }}">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <strong>Direccion #{{$i + 1}}</strong>
+                                                <strong>Dirección #{{ $i + 1 }}</strong>
                                                 <div>
                                                     <button type="button" class="btn btn-xs btn-danger btn-remove-direccion">Eliminar</button>
                                                 </div>
                                             </div>
 
                                             @if(!empty($d['id']))
-                                                <input type="hidden" name="direcciones[{{$i}}] [id]" value="{{$d['id']}}">
+                                                <input type="hidden" name="direcciones[{{ $i }}][id]" value="{{ $d['id'] }}">
                                             @endif
 
-                                            <input type="hidden" name="direcciones[{{$i }}] [_delete]" value="0" class="flag-delete">
+                                            <input type="hidden" name="direcciones[{{ $i }}][_delete]" value="0" class="flag-delete">
                                             <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label"> Nombre de la dirección </label>
+                                                <label class="col-sm-2 col-form-label">Nombre de la dirección</label>
                                                 <div class="col-sm-7">
-                                                    <input class="form-control" name="direcciones[{{$i}}][nombre_direccion]" type="text" placeholder="Nombre de la dirección" value="{{$d['nombre_direccion'] ?? '' }}">
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label"> Dirección</label>
-                                                <div class="col-sm-7">
-                                                    <input class="form-control" name="direcciones[{{$i}}][direccion]" type="text" placeholder="Calle, número, colonia" value="{{$d['direccion'] ?? '' }}">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][nombre_direccion]" type="text" placeholder="Nombre de la dirección" value="{{ $d['nombre_direccion'] ?? '' }}">
                                                 </div>
                                             </div>
 
                                             <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label"> Ciudad </label>
+                                                <label class="col-sm-2 col-form-label">Dirección</label>
+                                                <div class="col-sm-7">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][direccion]" type="text" placeholder="Calle, número, colonia" value="{{ $d['direccion'] ?? '' }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-2">
+                                                <label class="col-sm-2 col-form-label">Colonia</label>
+                                                <div class="col-sm-7">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][colonia]" type="text" placeholder="Colonia" value="{{ $d['colonia'] ?? '' }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-2">
+                                                <label class="col-sm-2 col-form-label">Ciudad</label>
                                                 <div class="col-sm-3">
-                                                    <input class="form-control" name="direcciones[{{$i}}][ciudad]" type="text" placeholder="Ciudad" value="{{$d['ciudad'] ?? '' }}">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][ciudad]" type="text" placeholder="Ciudad" value="{{ $d['ciudad'] ?? '' }}">
                                                 </div>
 
-                                                <label class="col-sm-1 col-form-label text-right"> Estado </label>
+                                                <label class="col-sm-1 col-form-label text-right">Estado</label>
                                                 <div class="col-sm-3">
-                                                    <input class="form-control" name="direcciones[{{$i}}][estado]" type="text" placeholder="Estado" value="{{ $d['estado'] ?? '' }}">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][estado]" type="text" placeholder="Estado" value="{{ $d['estado'] ?? '' }}">
                                                 </div>
                                             </div>
 
@@ -137,23 +145,30 @@
                                             </div>
 
                                             <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                                <label class="col-sm-2 col-form-label">Teléfono</label>
+                                                <div class="col-sm-3">
+                                                    <input class="form-control" name="direcciones[{{ $i }}][telefono]" type="text" placeholder="Teléfono" value="{{ $d['telefono'] ?? '' }}">
+                                                </div>
+                                                <label class="col-sm-1 col-form-label text-right">¿Quién recibe?</label>
                                                 <div class="col-sm-3">
                                                     <input class="form-control" name="direcciones[{{ $i }}][nombre_recibe]" type="text" placeholder="Nombre del quién recibe" value="{{ $d['nombre_recibe'] ?? '' }}">
                                                 </div>
-                                            
-                                                <label class="col-sm-1 col-form-label text-right">Mapa (URL)</label>
-                                                <div class="col-sm-3">
+                                            </div>
+
+                                            <div class="row mt-2">
+                                                <label class="col-sm-2 col-form-label">Mapa (URL)</label>
+                                                <div class="col-sm-7">
                                                     <input class="form-control" name="direcciones[{{ $i }}][url_mapa]" type="text" placeholder="https://maps..." value="{{ $d['url_mapa'] ?? '' }}">
                                                 </div>
                                             </div>
 
                                             <div class="row mt-2">
-                                                <label class="col-sm-2 col-form-label"> Instrucciones </label>
+                                                <label class="col-sm-2 col-form-label">Instrucciones</label>
                                                 <div class="col-sm-7">
-                                                    <textarea class="form-control" name="direcciones[{{ $i }}][instrucciones]" rows="2" placeholder="Referencias, horarios de entrega, etc..."> {{$d['instrucciones'] ?? ''}}</textarea>
+                                                    <textarea class="form-control" name="direcciones[{{ $i }}][instrucciones]" rows="2" placeholder="Referencias, horarios de entrega, etc...">{{ $d['instrucciones'] ?? '' }}</textarea>
                                                 </div>
                                             </div>
+
                                         </div>
                                     @endforeach
                                 </div>
@@ -161,36 +176,43 @@
                                 <template id="direccion-template">
                                     <div class="card p-3 mb-3 direccion-item" data-index="__INDEX__">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <strong>Direccion #__HUMAN_INDEX__</strong>
+                                            <strong>Dirección #__HUMAN_INDEX__</strong>
                                             <div>
-                                                <button type="button" class="btn btn-xs btn-danger btn-remove-direccion"> Eliminar </button>
+                                                <button type="button" class="btn btn-xs btn-danger btn-remove-direccion">Eliminar</button>
                                             </div>
                                         </div>
 
                                         <input type="hidden" name="direcciones[__INDEX__][id]" value="">
                                         <input type="hidden" name="direcciones[__INDEX__][_delete]" value="0" class="flag-delete">
-                                        
+
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label"> Nombre de la dirección</label>
+                                            <label class="col-sm-2 col-form-label">Nombre de la dirección</label>
                                             <div class="col-sm-7">
                                                 <input class="form-control" name="direcciones[__INDEX__][nombre_direccion]" type="text" placeholder="Nombre de la dirección">
                                             </div>
                                         </div>
 
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label"> Dirección </label>
+                                            <label class="col-sm-2 col-form-label">Dirección</label>
                                             <div class="col-sm-7">
                                                 <input class="form-control" name="direcciones[__INDEX__][direccion]" type="text" placeholder="Calle, número, colonia">
                                             </div>
                                         </div>
 
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label"> Ciudad </label>
+                                            <label class="col-sm-2 col-form-label">Colonia</label>
+                                            <div class="col-sm-7">
+                                                <input class="form-control" name="direcciones[__INDEX__][colonia]" type="text" placeholder="Colonia">
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-2">
+                                            <label class="col-sm-2 col-form-label">Ciudad</label>
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][ciudad]" type="text" placeholder="Ciudad">
                                             </div>
 
-                                            <label class="col-sm-1 col-form-label text-right"> Estado </label>
+                                            <label class="col-sm-1 col-form-label text-right">Estado</label>
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][estado]" type="text" placeholder="Estado">
                                             </div>
@@ -206,34 +228,44 @@
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][celular]" type="text" placeholder="Celular">
                                             </div>
-                                        </div>      
-                                        
+                                        </div>
+
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label">¿Quién recibe?</label>
+                                            <label class="col-sm-2 col-form-label">Teléfono</label>
+                                            <div class="col-sm-3">
+                                                <input class="form-control" name="direcciones[__INDEX__][telefono]" type="text" placeholder="Teléfono">
+                                            </div>
+
+                                            <label class="col-sm-1 col-form-label text-right">¿Quién recibe?</label>
                                             <div class="col-sm-3">
                                                 <input class="form-control" name="direcciones[__INDEX__][nombre_recibe]" type="text" placeholder="Nombre del quién recibe">
                                             </div>
+                                        </div>
 
-                                            <label class="col-sm-1 col-form-label text-right">Mapa(URL)</label>
-                                            <div class="col-sm-3">
+                                        <div class="row mt-2">
+                                            <label class="col-sm-2 col-form-label">Mapa (URL)</label>
+                                            <div class="col-sm-7">
                                                 <input class="form-control" name="direcciones[__INDEX__][url_mapa]" type="text" placeholder="https://maps...">
                                             </div>
                                         </div>
 
                                         <div class="row mt-2">
-                                            <label class="col-sm-2 col-form-label"> Instrucciones </label>
+                                            <label class="col-sm-2 col-form-label">Instrucciones</label>
                                             <div class="col-sm-7">
-                                                <textarea class="form-control" name="direcciones[__INDEX__][instrucciones]" rows="2" placeholder="Referencis, horarios de entrega, etc..."></textarea>
+                                                <textarea class="form-control" name="direcciones[__INDEX__][instrucciones]" rows="2" placeholder="Referencias, horarios de entrega, etc..."></textarea>
                                             </div>
                                         </div>
+
                                     </div>
                                 </template>
+
                             </div>
 
                             <div class="card-footer ml-auto mr-auto">
                                 <button type="submit" class="btn btn-primary"> Actualizar </button>
                                 <a href="{{route('clientes.index')}}" class="btn btn-danger"> Cancelar </a>
                             </div>
+
                         </div>
                     </form>
                 </div>

@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Follow::class);
     }
+    public function unidades(){
+        return $this->belongsToMany(Unidad::class, 'unidad_chofer', 'chofer_id', 'unidad_id')
+                    ->withPivot(['uso_count', 'last_used_at']);
+    }
+
 }

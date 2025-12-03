@@ -18,8 +18,10 @@ return new class extends Migration
             $table->string('direccion');
             $table->string('ciudad', 100)->nullable();
             $table->string('estado', 100)->nullable();
+            $table->string('colonia', 100)->nullable();
             $table->string('codigo_postal', 20)->nullable();
             $table->string('celular', 20)->nullable();
+            $table->string('telefono', 20)->nullable();
             $table->string('nombre_recibe', 50)->nullable();
             $table->string('url_mapa')->nullable();
             $table->text('instrucciones')->nullable();
