@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('ruta_id')->constrained('rutas')->onDelete('cascade');
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->string('partial_folio', 50)->nullable();
+            $table->string('smaterial_folio', 50)->nullable();
             $table->unsignedInteger('numero_pedido_ruta')->default(1);
             $table->string('cliente_codigo', 20);
             $table->string('cliente_nombre', 100)->nullable();

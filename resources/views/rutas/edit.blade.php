@@ -171,11 +171,17 @@ $(document).ready(function(){
     $(document).on('change', 'input[name="pedido_id[]"]', function(){
         var pedidoId = $(this).val();
         var folio = $(this).data('folio');
+        var origin = $(this).data('origin');
 
         if($(this).is(':checked')){
             var fila = `
                 <tr id="pedido_${pedidoId}">
-                    <td>${folio}<input type="hidden" name="pedidos[]" value="${pedidoId}"></td>
+                    <td>
+                        ${folio}
+                        <input type="hidden" name="pedidos[]" value="${pedidoId}">
+                        <input type="hidden" name="partial_folio[]" value="${origin == 'P' ? folio : '' }">
+                        <input type="hidden" name="sm_folio[]" value="${origin == 'SM' ? folio : '' }">
+                    </td>
                     <td>
                         <select name="estatus_pago[]" class="form-control form-control-sm">
                             <option value="pagado">Pagado</option>

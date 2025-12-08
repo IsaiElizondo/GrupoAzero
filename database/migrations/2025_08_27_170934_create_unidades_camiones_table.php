@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('unidades', function (Blueprint $table) {
             $table->id();
             $table->string('nombre_unidad');
+            $table->decimal('capacidad_kg', 10, 2)->nullable();
             $table->string('marca', 50)->nullable();
             $table->string('modelo', 50)->nullable();
             $table->string('numero_de_serie', 100)->nullable();
             $table->string('placas', 20)->nullable();
+            $table->enum('tipo_epp', range('A', 'G'))->nullable();
             $table->string('epp', 200)->nullable();
             $table->enum('estatus', ['activo', 'mantenimiento', 'inactivo'])->default('activo');
             $table->timestamps();

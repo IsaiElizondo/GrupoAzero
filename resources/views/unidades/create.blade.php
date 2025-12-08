@@ -1,4 +1,4 @@
-@extends('layouts.app', ['activePage' => 'unit-management', 'titlePage' => __('Crear nueva unidad')])
+@extends('layouts.app', ['activePage' => 'unidades', 'titlePage' => __('Crear nueva unidad')])
 
 @section('content')
     <div class="content">
@@ -44,10 +44,28 @@
                                 </div>
 
                                 <div class="row">
+                                    <label class="col-sm-2 col-form-label"> Capacidad (KG) </label>
+                                    <div class="col-sm-7">
+                                        <div class="form-group bmd-form-group is-filled">
+                                            <input class="form-control" name="capacidad_kg" type="number" step="0.01" placeholder="Ej: 500.00" value="{{ old('capacidad_kg') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
                                     <label class="col-sm-2 col-form-label"> Marca </label>
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" name="marca" id="input_marca" type="text" placeholder="Marca" value="{{ old('marca') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-2 col-form-label"> Modelo </label>
+                                    <div class="col-sm-7">
+                                        <div class="form-group bmd-form-group is-filled">
+                                            <input class="form-control" name="modelo" id="input_modelo" type="text" placeholder="Modelo" value="{{ old('modelo') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -67,6 +85,20 @@
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" name="placas" id="input_placas" type="text" placeholder="Placas" value="{{ old('placas') }}">
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-2 col-form-label"> Capacidad(KG) </label>
+                                    <div class="col-sm-7">
+                                        <select class="form-control" name="tipo_epp">
+                                            <option value="">-- Seleccionar --</option>
+                                            @foreach(range('A', 'G') as $letra)
+                                                <option value="{{ $letra }}" {{old('tipo_epp') == $letra ? 'selected' : ''}}>
+                                                    {{ $letra }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
 

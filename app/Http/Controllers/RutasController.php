@@ -125,6 +125,8 @@ class RutasController extends Controller
                     'numero_pedido_ruta' => $this->correlativoPedidoRuta($ruta->id),
                     'cliente_codigo' => $clienteCodigo,
                     'cliente_nombre' => $clienteNombre,
+                    'partial_folio' => $request->partial_folio[$i] ?? null,
+                    'smaterial_folio' => $request->smaterial_folio[$i] ?? null,
                 ]);
             }
 
@@ -191,8 +193,8 @@ class RutasController extends Controller
             RutaPedido::where('ruta_id', $ruta->id)->delete();
 
             //Registrar nuevos pedidos
-            foreach ($validated['pedidos'] as $i => $orderId)
-            {
+            foreach ($validated['pedidos'] as $i => $orderId){
+
                 $pedido = DB::table('orders')->where('id', $orderId)->first();
 
                 $clienteCodigo = $pedido->client ?? null;
@@ -206,6 +208,8 @@ class RutasController extends Controller
                     'numero_pedido_ruta' => $this->correlativoPedidoRuta($ruta->id),
                     'cliente_codigo' => $clienteCodigo,
                     'cliente_nombre' => $clienteNombre,
+                    'partial_folio' => $request->partial_folio[$i] ?? null,
+                    'smaterial_folio' => $request->smaterial_folio[$i] ?? null,
                 ]);
 
             }
@@ -362,6 +366,8 @@ class RutasController extends Controller
                     'order_id' => (int) $order_id,
                     'estatus_pago' => 'pendiente',
                     'monto_por_cobrar' => 0,
+                    'partial_folio' => $request->partial_folio[$k] ?? null,
+                    'smaterial_folio' => $request->smaterial_folio[$k] ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
 

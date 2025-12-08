@@ -1,4 +1,4 @@
-@extends('layouts.app', ['activePage' => 'unit-management', 'titlePage' => __('Editar unidad')])
+@extends('layouts.app', ['activePage' => 'unidades', 'titlePage' => __('Editar unidad')])
 
 @section('content')
     <div class="content">
@@ -43,12 +43,27 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="nombre_unidad" 
-                                                   id="input_nombre_unidad" 
-                                                   type="text" 
-                                                   placeholder="Nombre de la unidad" 
-                                                   value="{{ old('nombre_unidad', $unidad->nombre_unidad) }}" 
-                                                   required>
+                                                name="nombre_unidad" 
+                                                id="input_nombre_unidad" 
+                                                type="text" 
+                                                placeholder="Nombre de la unidad" 
+                                                value="{{ old('nombre_unidad', $unidad->nombre_unidad) }}" 
+                                                required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-2 col-form-label"> Capacidad (KG) </label>
+                                    <div class="col-sm-7">
+                                        <div class="form-group bmd-form-group is-filled">
+                                            <input class="form-control"
+                                                name="capacidad_kg"
+                                                id="input_capacidad_kg"
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Ej. 500.00"
+                                                value="{{ old('capacidad_kg', $unidad->capacidad_kg) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -58,11 +73,11 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="marca" 
-                                                   id="input_marca" 
-                                                   type="text" 
-                                                   placeholder="Marca" 
-                                                   value="{{ old('marca', $unidad->marca) }}">
+                                                name="marca" 
+                                                id="input_marca" 
+                                                type="text" 
+                                                placeholder="Marca" 
+                                                value="{{ old('marca', $unidad->marca) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -72,11 +87,11 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="modelo" 
-                                                   id="input_modelo" 
-                                                   type="text" 
-                                                   placeholder="Modelo" 
-                                                   value="{{ old('modelo', $unidad->modelo) }}">
+                                                name="modelo" 
+                                                id="input_modelo" 
+                                                type="text" 
+                                                placeholder="Modelo" 
+                                                value="{{ old('modelo', $unidad->modelo) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -86,11 +101,11 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="numero_de_serie" 
-                                                   id="input_numero_de_serie" 
-                                                   type="text" 
-                                                   placeholder="Número de serie" 
-                                                   value="{{ old('numero_de_serie', $unidad->numero_de_serie) }}">
+                                                name="numero_de_serie" 
+                                                id="input_numero_de_serie" 
+                                                type="text" 
+                                                placeholder="Número de serie" 
+                                                value="{{ old('numero_de_serie', $unidad->numero_de_serie) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -100,11 +115,27 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="placas" 
-                                                   id="input_placas" 
-                                                   type="text" 
-                                                   placeholder="Placas" 
-                                                   value="{{ old('placas', $unidad->placas) }}">
+                                                name="placas" 
+                                                id="input_placas" 
+                                                type="text" 
+                                                placeholder="Placas" 
+                                                value="{{ old('placas', $unidad->placas) }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-2 col-form-label"> Tipo Epp </label>
+                                    <div class="col-sm-7">
+                                        <div class="form-group bmd-form-group is-filled">
+                                            <select class="form-control" name="tipo_epp" id="select_tipo_epp">
+                                                <option value="">-- Seleccionar --</option>
+                                                @foreach(range('A', 'G') as $t)
+                                                    <option value="{{ $t }}" {{ old('tipo_epp', $unidad->tipo_epp) == $t ? 'selected' : ''}}>
+                                                        {{ $t }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -114,11 +145,11 @@
                                     <div class="col-sm-7">
                                         <div class="form-group bmd-form-group is-filled">
                                             <input class="form-control" 
-                                                   name="epp" 
-                                                   id="input_epp" 
-                                                   type="text" 
-                                                   placeholder="Equipo de protección personal" 
-                                                   value="{{ old('epp', $unidad->epp) }}">
+                                                name="epp" 
+                                                id="input_epp" 
+                                                type="text" 
+                                                placeholder="Equipo de protección personal" 
+                                                value="{{ old('epp', $unidad->epp) }}">
                                         </div>
                                     </div>
                                 </div>

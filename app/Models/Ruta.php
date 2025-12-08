@@ -47,6 +47,8 @@ class Ruta extends Model
                 'numero_pedido_ruta',
                 'cliente_codigo',
                 'cliente_nombre',
+                'partial_folio',
+                'smaterial_folio',
             ]);
     }
 }

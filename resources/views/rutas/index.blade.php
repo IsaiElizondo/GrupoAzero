@@ -31,15 +31,22 @@
                             <table class="table data-table" id="rutas">
                                 <thead class="text-primary">
                                     <tr>
-                                        <th>#</th>
                                         <th>Número Ruta</th>
-                                        <th>Unidad</th>
-                                        <th>Chofer</th>
-                                        <th>Pedido (Folio)</th>
+                                        <th>Factura (Folio)</th>
+                                        <th>Folio SP</th>
+                                        <th>Folio SM</th>
+                                        <th>Cliente</th>
                                         <th>Estatus Pago</th>
                                         <th>Monto por Cobrar</th>
-                                        <th>Cliente</th>
+                                        <th>Nombre Recibe</th>
+                                        <th>Telefono / Celular</th>
+                                        <th>Dirección</th>
+                                        <th>URL Mapa</th>
+                                        <th>Estatus</th>
+                                        <th>Unidad</th>
+                                        <th>Chofer</th>
                                         <th>Fecha / Hora</th>
+                                        <th>Comentarios</th>
                                         <th width="50px"></th>
                                         <th width="50px"></th>
                                         <th width="50px"></th>
@@ -52,14 +59,40 @@
                                                 $codigo = $order->pivot->cliente_codigo ?? null;
                                                 $nombre = $order->pivot->cliente_nombre ?? null;
                                             @endphp
+                                            @php
+                                                $telefonos = [];
+                                                if($order->telefono){
+                                                    $telefonos[] = '<a href="tel:'.$order->telefono.'">'.$order->telefono.'</a>';
+                                                }
+                                                if($order->celular){
+                                                    $telefonos[] = '<a href="tel:'.$order->celular.'">'.$order->celular.'</a>';
+                                                }
+                                            @endphp
                                             <tr>
-                                                <td>{{ $ruta->id }}</td>
                                                 <td>{{ $ruta->numero_ruta }}</td>
-                                                <td>{{ $ruta->unidad->nombre_unidad ?? 'Sin unidad' }}</td>
-                                                <td>{{ $ruta->chofer->name ?? 'Sin chofer' }}</td>
-                                                <td>{{ $order->invoice_number ?? 'Sin folio' }}</td>
-                                                <td>{{ ucfirst($order->pivot->estatus_pago ?? 'pendiente') }}</td>
-                                                <td>${{ number_format($order->pivot->monto_por_cobrar ?? 0, 2) }}</td>
+                                                <td>
+                                                    <a href="{{ url('pedidos2/pedido/'.$order->id) }}">
+                                                        {{ $order->invoice_number ?? 'Sin Folio'}}
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @if($order->pivot->partial_folio)
+                                                        <a href="{{ url('pedidos2/pedido/'.$order->id) }}">
+                                                            {{ $order->pivot->partial_folio }}
+                                                        </a>
+                                                    @else 
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($order->pivot->smaterial_folio)
+                                                        <a href="{{ url('pedidos2/pedido/'.$order->id) }}">
+                                                            {{ $order->pivot->smaterial_folio }}
+                                                        </a>
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if($codigo)
                                                         {{ $nombre ? "$codigo — $nombre" : $codigo }}
@@ -67,7 +100,23 @@
                                                         Sin cliente
                                                     @endif
                                                 </td>
+                                                <td>{{ ucfirst($order->pivot->estatus_pago ?? 'Pagado') }}</td>
+                                                <td>{{ number_format($order->pivot->monto_por_cobrar ?? 0, 2) }}</td>
+                                                <td>{{ $order->nombre_recibe ?? '-'}}</td>
+                                                <td>{!! count($telefonos) ? implode(' / ', $telefonos) : '-' !!}</td>
+                                                <td>{{ $order->direccion ?? '-'}}</td>
+                                                <td>
+                                                    @if($order->url_mapa)
+                                                        <a href="{{ $order->url_mapa }}" target="_blank">Ver Mapa</a>
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td>{{ ucfirst($ruta->estatus_entrega) }}</td>
+                                                <td>{{ $ruta->unidad->nombre_unidad ?? 'Sin unidad' }}</td>
+                                                <td>{{ $ruta->chofer->name ?? 'Sin chofer' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') }}</td>
+                                                <td>{{ $ruta->motivo ?? '-'}}</td>
                                                 <td class="text-center">
                                                     <a href="{{ route('rutas.show', $ruta->id) }}" class="btn btn-sm btn-info" title="Ver">
                                                         <span class="material-icons">visibility</span>

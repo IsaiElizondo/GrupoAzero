@@ -1,4 +1,4 @@
-@extends('layouts.app', ['activePage' => 'unit-management', 'titlePage' => __('Detalles de la unidad')])
+@extends('layouts.app', ['activePage' => 'unidades', 'titlePage' => __('Detalles de la unidad')])
 
 @section('content')
     <div class="content">
@@ -33,6 +33,16 @@
                                 </div>
                             </div>
 
+                            
+                            <div class="row">
+                                <label class="col-sm-2 col-form-label"> Capacidad (KG) </label>
+                                <div class="col-sm-7">
+                                    <p class="form-control-static">
+                                        {{ $unidad->capacidad_kg ? number_format($unidad->capacidad_kg, 2).'kg':'-' }}
+                                    </p>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <label class="col-sm-2 col-form-label"> Marca </label>
                                 <div class="col-sm-7">
@@ -58,6 +68,15 @@
                                 <label class="col-sm-2 col-form-label"> Placas </label>
                                 <div class="col-sm-7">
                                     <p class="form-control-static">{{ $unidad->placas ?? '-' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <label class="col-sm-2 col-form-label"> Tipo EPP </label>
+                                <div class="col-sm-7">
+                                    <p class="fom-control-static">
+                                        {{ $unidad->tipo_epp ?? '-' }}
+                                    </p>
                                 </div>
                             </div>
 

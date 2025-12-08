@@ -30,12 +30,14 @@
                             <table class="table data-table" id="unidades">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Nombre</th>
+                                        <th>Capacidad (KG)</th>
                                         <th>Marca</th>
                                         <th>Modelo</th>
                                         <th>Número de serie</th>
                                         <th>Placas</th>
+                                        <th>Tipo EPP</th>
+                                        <th>EPP</th>
                                         <th>Estatus</th>
                                         <th width="50px">&nbsp;</th>
                                         <th width="50px">&nbsp;</th>
@@ -45,12 +47,14 @@
                                 <tbody>
                                     @foreach($unidades as $unidad)
                                         <tr>
-                                            <td>{{ $unidad->id }}</td>
                                             <td>{{ $unidad->nombre_unidad }}</td>
+                                            <td>{{ $unidad->capacidad_kg ? number_format($unidad->capacidad_kg, 2).'kg':'-' }}</td>
                                             <td>{{ $unidad->marca ?? '-' }}</td>
                                             <td>{{ $unidad->modelo ?? '-' }}</td>
                                             <td>{{ $unidad->numero_de_serie ?? '-' }}</td>
                                             <td>{{ $unidad->placas ?? '-' }}</td>
+                                            <td>{{ $unidad->tipo_epp ?? '-' }}</td>
+                                            <td>{{ $unidad->epp ?? '-' }}</td>
                                             <td>
                                                 <span class="badge 
                                                     @if($unidad->estatus == 'activo') badge-success 

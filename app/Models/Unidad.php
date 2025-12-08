@@ -13,10 +13,12 @@ class Unidad extends Model
     protected $fillable = [
 
         'nombre_unidad',
+        'capacidad_kg',
         'marca',
         'modelo',
         'numero_de_serie',
         'placas',
+        'tipo_epp',
         'epp',
         'estatus',
         
