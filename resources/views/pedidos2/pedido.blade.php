@@ -581,52 +581,68 @@ $pedidoStatusId = $pedido->status_id;
     <div class="card">
         <div class="headersub"> Rutas </div>
         <div class="Eleccion">
-
             <table class="table table-bordered table-sm" style="width:100%; margin-top:10px;">
                 <thead style="background-color:#f2f2f2;">
                     <tr>
-                        <th>#Ruta</th>
-                        <th>Unidad</th>
-                        <th>Chofer</th>
-                        <th>Fecha</th>
-                        <th>Estatus entrega</th>
-                        <th>Cliente</th>
-                        <th>Monto por cobrar</th>
+                        <th> Número Ruta </th>
+                        <th> Cliente </th>
+                        <th> Estatus Pago </th>
+                        <th> Monto por Cobrar </th>
+                        <th> Nombre Recibe </th>
+                        <th> Celular / Teléfono </th>
+                        <th> Dirección </th>
+                        <th> URL Mapa </th>
+                        <th> Estatuses </th>
+                        <th> Unidad </th>
+                        <th> Chofer </th>
+                        <th> Fecha / Hora </th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @foreach($rutasAsociadas as $ruta)
+                        @php
+                            $codigo = $ruta->cliente_codigo ?? null;
+                            $nombre = $ruta->cliente_nombre ?? null;
 
+                            $telefonos = [];
+                            if($ruta->celular){
+                                $telefonos[] = '<a href="tel:'.$ruta->celular.'">'.$ruta->celular.'</a>';
+                            }
+                            if($ruta->telefono){
+                                $telefonos[] = '<a href="tel:'.$ruta->telefono.'">'.$ruta->telefono.'</a>';
+                            }
+                        @endphp
                         <tr>
                             <td>{{ $ruta->numero_ruta ?? '-' }}</td>
-
-                            <td>{{ $ruta->unidad ?? 'Sin unidad' }}</td>
-
-                            <td>{{ $ruta->chofer ?? 'Sin chofer' }}</td>
-
                             <td>
-                                {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i') : '-' }}
-                            </td>
-
-                            <td>{{ ucfirst($ruta->estatus_entrega ?? 'enrutado') }}</td>
-
-                            <td>
-                                @if($ruta->cliente_codigo)
-                                    {{ $ruta->cliente_nombre ? ($ruta->cliente_codigo . ' — ' . $ruta->cliente_nombre) : $ruta->cliente_codigo }}
+                                @if($codigo)
+                                    {{ $nombre ? "$codigo - $nombre" : $codigo }}
                                 @else
                                     Sin cliente
                                 @endif
                             </td>
-
-                            <td>${{ number_format($ruta->monto_total ?? 0, 2) }}</td>
+                            <td>{{ ucfirst($ruta->estatus_pago ?? 'Pagado') }}</td>
+                            <td>${{ number_format($ruta->monto_total ?? 0,2) }}</td>
+                            <td>{{ $ruta->nombre_recibe ?? '-' }}</td>
+                            <td>{!! count($telefonos) ? implode('/', $telefonos):'-' !!}</td>
+                            <td>{{ $ruta->direccion ?? '-' }}</td>
+                            <td>
+                                @if($ruta->url_mapa)
+                                    <a href="{{ $ruta->url_mapa }}" target="_blank"> Ver Mapa</a></td>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>{{ ucfirst($ruta->estatus_entrega ?? 'enrutado') }}</td>
+                            <td>{{ $ruta->unidad ?? 'Sin unidad' }}</td>
+                            <td>{{ $ruta->chofer ?? 'Sin chofer' }}</td>
+                            <td>
+                                {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i'): '-' }}</td>
+                            </td>
                         </tr>
-
                     @endforeach
                 </tbody>
-
             </table>
-
         </div>
     </div>
 @endif

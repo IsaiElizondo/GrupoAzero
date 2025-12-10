@@ -251,6 +251,7 @@ class Pedidos2Controller extends Controller
             ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
             ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
             ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
+            ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
             ->select(
                 'rutas.id as ruta_id',
                 'rutas.numero_ruta',
@@ -258,9 +259,19 @@ class Pedidos2Controller extends Controller
                 'users.name as chofer',
                 'rutas.created_at',
                 'rutas.estatus_entrega',
+
+                //TABLA ORDERS
+                DB::raw('MAX(orders.nombre_recibe) as nombre_recibe'),
+                DB::raw('MAX(orders.telefono) as telefono'),
+                DB::raw('MAX(orders.celular) as celular'),
+                DB::raw('MAX(orders.direccion) as direccion'),
+                DB::raw('MAX(orders.url_mapa) as url_mapa'),
+
+                //TABLA RUTA_PEDIDO
                 DB::raw('SUM(ruta_pedido.monto_por_cobrar) as monto_total'),
                 DB::raw('MAX(ruta_pedido.cliente_codigo) as cliente_codigo'),
-                DB::raw('MAX(ruta_pedido.cliente_nombre) as cliente_nombre')
+                DB::raw('MAX(ruta_pedido.cliente_nombre) as cliente_nombre'),
+                DB::raw('MAX(ruta_pedido.estatus_pago) as estatus_pago'),
             )
             ->where('ruta_pedido.order_id', $id)
             ->groupBy(
