@@ -103,25 +103,25 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($ruta->orders as $order)
-                                            <tr id="pedido_{{ $order->id }}">
+                                        @foreach($ruta->pedidos as $pedido)
+                                            <tr id="pedido_{{ $pedido->order_id }}">
                                                 <td>
-                                                    {{ $order->invoice_number ?? 'Sin folio' }}
-                                                    <input type="hidden" name="pedidos[]" value="{{ $order->id }}">
+                                                    {{ $pedido->order->invoice_number ?? 'Sin folio' }}
+                                                    <input type="hidden" name="pedidos[]" value="{{ $pedido->order_id }}">
                                                 </td>
                                                 <td>
                                                     <select name="estatus_pago[]" class="form-control form-control-sm">
-                                                        <option value="pagado" {{ $order->pivot->estatus_pago == 'pagado' ? 'selected' : '' }}>Pagado</option>
-                                                        <option value="por_cobrar" {{ $order->pivot->estatus_pago == 'por_cobrar' ? 'selected' : '' }}>Por cobrar</option>
-                                                        <option value="credito" {{ $order->pivot->estatus_pago == 'credito' ? 'selected' : '' }}>Crédito</option>
+                                                        <option value="pagado" {{ $pedido->estatus_pago == 'pagado' ? 'selected' : '' }}>Pagado</option>
+                                                        <option value="por_cobrar" {{ $pedido->estatus_pago == 'por_cobrar' ? 'selected' : '' }}>Por cobrar</option>
+                                                        <option value="credito" {{ $pedido->estatus_pago == 'credito' ? 'selected' : '' }}>Crédito</option>
                                                     </select>
                                                 </td>
                                                 <td>
                                                     <input type="number" step="0.01" name="monto_por_cobrar[]" class="form-control form-control-sm"
-                                                        value="{{ $order->pivot->monto_por_cobrar ?? 0 }}">
+                                                        value="{{ $pedido->monto_por_cobrar ?? 0 }}">
                                                 </td>
                                                 <td class="text-center">
-                                                    <button type="button" class="btn btn-danger btn-sm quitarPedido" data-id="{{ $order->id }}">
+                                                    <button type="button" class="btn btn-danger btn-sm quitarPedido" data-id="{{ $pedido->order_id }}">
                                                         <span class="material-icons" style="font-size:18px;">remove_circle</span>
                                                     </button>
                                                 </td>

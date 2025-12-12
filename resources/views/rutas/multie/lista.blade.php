@@ -34,14 +34,21 @@
                             name="pedido_id[]"
                             value="{{ $pedido->order_id }}"
                             data-folio="{{ $pedido->folio }}"
-                            data-origin="{{ $pedido->origin }}">
+                            data-tipo="{{ $pedido->tipo }}"
+                            data-id-real="{{ $pedido->id_real }}">
                     </td>
                     <td>
                         <a href="{{ url('pedidos2/pedido/'.$order->id) }}">
-                            {{ $order->invoice_number }}
+                            @if($pedido->origin == 'P')
+                                {{ $pedido->folio }}
+                            @elseif($pedido->origin == 'SM')
+                                {{ $pedido->folio }}
+                            @else
+                                {{ $order->invoice_number }}
+                            @endif
                         </a>
                     </td>
-                    <td>{{ $pedido->client ?? '-' }}</td>
+                    <td>{{ $order->client ?? '-' }}</td>
                     <td>{{ $order->direccion ?? '-'}}</td>
                     <td>
                         @if($order && $order->url_mapa)
@@ -51,7 +58,7 @@
                         @endif
                     </td>
                     <td>{{ count($telefonos) ? implode ('/', $telefonos) : '-'}}</td>
-                    <td>{{ $pedido->office ?? '-' }}</td>
+                    <td>{{ $order->office ?? '-' }}</td>
                     <td>{{ $pedido->created_at }}</td>
                     <td>{{ $estatus }}</td>
                 </tr>

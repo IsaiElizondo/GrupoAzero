@@ -23,9 +23,9 @@
 
                         <div class="card-body">
                             @php
-                                $pedido = $ruta->orders->first();
-                                $codigo = $pedido->pivot->cliente_codigo ?? null;
-                                $nombre = $pedido->pivot->cliente_nombre ?? null;
+                                $primer = $ruta->pedidos->first();
+                                $codigo = $primer->cliente_codigo ?? null;
+                                $nombre = $primer->cliente_nombre ?? null;
                             @endphp
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -55,10 +55,6 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <strong>Estatus de entrega:</strong>
-                                    {{ $ruta->estatus_entrega ?? '-' }}
-                                </div>
-                                <div class="col-md-6">
                                     <strong>Motivo:</strong>
                                     {{ $ruta->motivo ?? 'Sin motivo registrado' }}
                                 </div>
@@ -72,22 +68,31 @@
                                     <thead>
                                         <tr>
                                             <th>Folio Pedido</th>
-                                            <th>Estatus de Pago</th>
+                                            <th>Folio SP</th>
+                                            <th>Folio SM</th>
+                                            <th>Estatus Pago</th>
                                             <th>Monto por Cobrar</th>
+                                            <th>Estatus Entrega</th>
                                             <th>Fecha Pedido</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($ruta->orders as $order)
+                                        @forelse($ruta->pedidos as $pivote)
+                                            @php
+                                                $order = $pivote->order;
+                                            @endphp
                                             <tr>
                                                 <td>{{ $order->invoice_number ?? 'Sin folio' }}</td>
-                                                <td>{{ ucfirst($order->pivot->estatus_pago ?? 'pendiente') }}</td>
-                                                <td>${{ number_format($order->pivot->monto_por_cobrar ?? 0, 2) }}</td>
+                                                <td>{{ $pivote->partial_folio ?? '-' }}</td>
+                                                <td>{{ $pivote->smaterial_folio ?? '-' }}</td>
+                                                <td>{{ ucfirst($pivote->estatus_pago ?? 'pendiente') }}</td>
+                                                <td>${{ number_format($pivote->monto_por_cobrar ?? 0, 2) }}</td>
+                                                <td>{{ ucfirst($pivote->estatus_entrega ?? 'enrutado') }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($order->created_at)->format('d/m/Y') }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center">
+                                                <td colspan="7" class="text-center">
                                                     No hay pedidos asignados.
                                                 </td>
                                             </tr>

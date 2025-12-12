@@ -19,8 +19,6 @@ class Ruta extends Model
         'numero_dia',
         'unidad_id',
         'chofer_id',
-        'estatus_entrega',
-        'motivo',
     ];
 
     public function cliente(){
@@ -39,16 +37,8 @@ class Ruta extends Model
         return $this->hasMany(RutaPedido::class, 'ruta_id');
     }
 
-    public function orders(){
-        return $this->belongsToMany(Order::class, 'ruta_pedido', 'ruta_id', 'order_id')
-            ->withPivot([
-                'estatus_pago',
-                'monto_por_cobrar',
-                'numero_pedido_ruta',
-                'cliente_codigo',
-                'cliente_nombre',
-                'partial_folio',
-                'smaterial_folio',
-            ]);
+    public function pedidosGenerales(){
+        return $this->hasMany(RutaPedido::class, 'ruta_id')
+            ->where('tipo_subproceso', 'pedido');
     }
 }

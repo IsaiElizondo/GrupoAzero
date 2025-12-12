@@ -637,7 +637,7 @@ $pedidoStatusId = $pedido->status_id;
                             <td>{{ $ruta->unidad ?? 'Sin unidad' }}</td>
                             <td>{{ $ruta->chofer ?? 'Sin chofer' }}</td>
                             <td>
-                                {{ $ruta->created_at ? \Carbon\Carbon::parse($ruta->created_at)->format('d/m/Y H:i'): '-' }}</td>
+                                {{ $ruta->rp_created_at ? \Carbon\Carbon::parse($ruta->rp_created_at)->format('d/m/Y H:i') : '-' }}
                             </td>
                         </tr>
                     @endforeach

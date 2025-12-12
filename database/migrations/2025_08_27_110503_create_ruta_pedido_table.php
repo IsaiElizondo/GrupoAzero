@@ -21,9 +21,16 @@ return new class extends Migration
             $table->string('cliente_codigo', 20);
             $table->string('cliente_nombre', 100)->nullable();
             $table->enum('estatus_pago', ['pagado', 'por_cobrar', 'credito'])->default('pagado');
+            $table->enum('estatus_entrega', ['enrutado', 'entregado', 'entrega_no_exitosa'])->default('enrutado');
             $table->decimal('monto_por_cobrar', 10, 2)->default(0);
+            $table->text('motivo')->nullable();
+            $table->enum('tipo_subproceso', ['pedido', 'sp', 'sm'])->default('pedido');
+            $table->unsignedBigInteger('subproceso_id')->nullable();
+            $table->index(['tipo_subproceso', 'subproceso_id']);
             $table->timestamps();
-            $table->unique(['ruta_id', 'order_id']);
+            $table->unsignedBigInteger('partial_id')->nullable();
+            $table->unsignedBigInteger('smaterial_id')->nullable();
+            $table->unique(['ruta_id', 'order_id', 'partial_id', 'smaterial_id']);
         });
 
     }

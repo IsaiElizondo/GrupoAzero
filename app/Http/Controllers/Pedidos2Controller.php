@@ -25,6 +25,7 @@ use App\Stockreq;
 use App\User;
 use App\DevolucionParcial;
 use App\DevolucionParcialArchivos;
+use App\Models\RutaPedido;
 use App\Models\Cliente;
 use App\Models\DireccionCliente;
 use Illuminate\Support\Facades\Session;
@@ -253,36 +254,33 @@ class Pedidos2Controller extends Controller
             ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
             ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
             ->select(
-                'rutas.id as ruta_id',
+                'ruta_pedido.id',
+                'ruta_pedido.ruta_id',
+                'ruta_pedido.order_id',
+                'ruta_pedido.partial_folio',
+                'ruta_pedido.smaterial_folio',
+                'ruta_pedido.estatus_pago',
+                'ruta_pedido.estatus_entrega',
+                'ruta_pedido.monto_por_cobrar',
+                'ruta_pedido.cliente_codigo',
+                'ruta_pedido.cliente_nombre',
+                'ruta_pedido.tipo_subproceso',
+                'ruta_pedido.created_at as rp_created_at',
+
                 'rutas.numero_ruta',
                 'unidades.nombre_unidad as unidad',
                 'users.name as chofer',
-                'rutas.created_at',
-                'rutas.estatus_entrega',
 
-                //TABLA ORDERS
-                DB::raw('MAX(orders.nombre_recibe) as nombre_recibe'),
-                DB::raw('MAX(orders.telefono) as telefono'),
-                DB::raw('MAX(orders.celular) as celular'),
-                DB::raw('MAX(orders.direccion) as direccion'),
-                DB::raw('MAX(orders.url_mapa) as url_mapa'),
-
-                //TABLA RUTA_PEDIDO
-                DB::raw('SUM(ruta_pedido.monto_por_cobrar) as monto_total'),
-                DB::raw('MAX(ruta_pedido.cliente_codigo) as cliente_codigo'),
-                DB::raw('MAX(ruta_pedido.cliente_nombre) as cliente_nombre'),
-                DB::raw('MAX(ruta_pedido.estatus_pago) as estatus_pago'),
+                'orders.nombre_recibe',
+                'orders.telefono',
+                'orders.celular',
+                'orders.direccion',
+                'orders.url_mapa'
             )
             ->where('ruta_pedido.order_id', $id)
-            ->groupBy(
-                'rutas.id',
-                'rutas.numero_ruta',
-                'unidades.nombre_unidad',
-                'users.name',
-                'rutas.created_at',
-                'rutas.estatus_entrega'
-            )
+            ->orderBy('ruta_pedido.id')
             ->get();
+
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
@@ -1481,6 +1479,19 @@ public function guardarEntregaProgramada(Request $request, $id){
         }
 
         $partial = Partial::where(["id" => $id])->first(); 
+        if ($status_id == 6) { 
+            RutaPedido::where("partial_id", $id)->update([
+                "estatus_entrega" => "entregado",
+                "updated_at" => now(),
+            ]);
+        }
+        elseif ($status_id == 7) {
+            RutaPedido::where("partial_id", $id)->update([
+                "estatus_entrega" => "entrega_no_exitosa",
+                "updated_at" => now(),
+            ]);
+        }
+
 
         Pedidos2::Log($id,"Parcial Update", " Cambio en datos de parcial #{$partial->invoice}", $status_id, $user);
 
@@ -1573,7 +1584,22 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         Smaterial::where("id", $id)->update($updateData); 
 
-        $ob = Smaterial::where(["id" => $id])->first(); 
+        $ob = Smaterial::where("id", $id)->first();
+        if ($status_id == 6) { 
+            RutaPedido::where("smaterial_id", $id)
+                ->update([
+                    "estatus_entrega" => "entregado",
+                    "updated_at" => now(),
+                ]);
+        }
+        elseif ($status_id == 7) {
+            RutaPedido::where("smaterial_id", $id)
+                ->update([
+                    "estatus_entrega" => "entrega_no_exitosa",
+                    "updated_at" => now(),
+                ]);
+        }
+
 
         //$order = Order::where("id",$ob->order_id)->first();
         $estatuses = [4=>"Elaborada",5=>"En Puerta", 6=>"Entregado", 7=>"Cancelado"];
@@ -1628,7 +1654,12 @@ public function guardarEntregaProgramada(Request $request, $id){
             Picture::where(["smaterial_id"=>$ob->id,"event"=>"6"])->delete();
         }
 
-        Smaterial::where("id", $id)->update($updateData); 
+        Smaterial::where("id", $id)->update($updateData);
+        RutaPedido::where("order_id", $ob->order_id)
+            ->update([
+                "estatus_entrega" => "enrutado",
+                "updated_at" => now(),
+            ]);
         
         Pedidos2::Log($ob->order_id,"Deshacer estatus salida material", "Deshacer estatus de Salida de Materiales ".$estatuses[$status_id], $status_id, $user);
         Feedback::j(1);
@@ -1677,6 +1708,12 @@ public function guardarEntregaProgramada(Request $request, $id){
         }
 
         Partial::where("id", $id)->update($updateData); 
+
+        RutaPedido::where("order_id", $ob->order_id)
+            ->update([
+                "estatus_entrega" => "enrutado",
+                "updated_at" => now(),
+            ]);
 
 
         

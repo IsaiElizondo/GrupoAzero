@@ -68,7 +68,7 @@ class RutasController extends Controller
 
 
     public function index(){
-        $rutas = Ruta::with(['cliente', 'unidad', 'chofer', 'orders'])->get();
+        $rutas = Ruta::with(['unidad', 'chofer'])->get();
         return view('rutas.index', compact('rutas'));
     }
 
@@ -105,8 +105,6 @@ class RutasController extends Controller
             $ruta->fecha_hora = $validated['fecha_hora'] ?? now();
             $ruta->unidad_id = $validated['unidad_id'] ?? null;
             $ruta->chofer_id = $validated['chofer_id'];
-            $ruta->estatus_entrega = $validated['estatus_entrega'] ?? 'enrutado';
-            $ruta->motivo = $validated['motivo'] ?? null;
             $ruta->save();
 
             $this->registrarUnidadChofer($ruta->unidad_id, $ruta->chofer_id);
@@ -121,12 +119,17 @@ class RutasController extends Controller
                     'ruta_id' => $ruta->id,
                     'order_id' => $orderId,
                     'estatus_pago' => $validated['estatus_pago'][$i],
+                    'estatus_entrega' => 'enrutado',
                     'monto_por_cobrar' => $validated['monto_por_cobrar'][$i],
                     'numero_pedido_ruta' => $this->correlativoPedidoRuta($ruta->id),
                     'cliente_codigo' => $clienteCodigo,
                     'cliente_nombre' => $clienteNombre,
-                    'partial_folio' => $request->partial_folio[$i] ?? null,
-                    'smaterial_folio' => $request->smaterial_folio[$i] ?? null,
+                    'partial_folio' => $request->partial_folio[$i],
+                    'smaterial_folio' => $request->smaterial_folio[$i],
+                    'partial_id' => $request->partial_id[$i] ?: null,
+                    'smaterial_id' => $request->smaterial_id[$i] ?: null,
+                    'tipo_subproceso' => $request->partial_id[$i] ? 'sp' : ($request->smaterial_id[$i] ? 'sm' : 'pedido'),
+                    'subproceso_id' => $request->partial_id[$i] ?: ($request->smaterial_id[$i] ?: null),
                 ]);
             }
 
@@ -144,14 +147,15 @@ class RutasController extends Controller
 
 
     public function show($id){
-        $ruta = Ruta::with(['unidad','chofer','orders'])->findOrFail($id);
+        $ruta = Ruta::with(['unidad','chofer'])->findOrFail($id);
         return view('rutas.show', compact('ruta'));
     }
 
 
 
+
     public function edit($id){
-        $ruta = Ruta::with(['orders'])->findOrFail($id);
+        $ruta = Ruta::with(['pedidos.order'])->findOrFail($id);
         $unidades = Unidad::all();
         $choferes = User::where('department_id', 6)->get();
 
@@ -182,8 +186,6 @@ class RutasController extends Controller
             $ruta->fecha_hora = $validated['fecha_hora'] ?? $ruta->fecha_hora;
             $ruta->unidad_id = $validated['unidad_id'] ?? null;
             $ruta->chofer_id = $validated['chofer_id'];
-            $ruta->estatus_entrega = $validated['estatus_entrega'] ?? 'enrutado';
-            $ruta->motivo = $validated['motivo'] ?? null;
             $ruta->save();
 
             //Recordar combinación unidad–chofer
@@ -204,13 +206,19 @@ class RutasController extends Controller
                     'ruta_id' => $ruta->id,
                     'order_id' => $orderId,
                     'estatus_pago' => $validated['estatus_pago'][$i],
+                    'estatus_entrega' => 'enrutado',
                     'monto_por_cobrar' => $validated['monto_por_cobrar'][$i],
                     'numero_pedido_ruta' => $this->correlativoPedidoRuta($ruta->id),
                     'cliente_codigo' => $clienteCodigo,
                     'cliente_nombre' => $clienteNombre,
-                    'partial_folio' => $request->partial_folio[$i] ?? null,
-                    'smaterial_folio' => $request->smaterial_folio[$i] ?? null,
+                    'partial_folio' => $request->partial_folio[$i],
+                    'smaterial_folio' => $request->smaterial_folio[$i],
+                    'partial_id' => $request->partial_id[$i] ?: null,
+                    'smaterial_id' => $request->smaterial_id[$i] ?: null,
+                    'tipo_subproceso' => $request->partial_id[$i] ? 'sp' : ($request->smaterial_id[$i] ? 'sm' : 'pedido'),
+                    'subproceso_id' => $request->partial_id[$i] ?: ($request->smaterial_id[$i] ?: null),
                 ]);
+
 
             }
 
@@ -284,6 +292,7 @@ class RutasController extends Controller
         (
             SELECT
                 o.id AS order_id,
+                o.id AS id_real,
                 CAST(o.invoice_number AS CHAR) AS folio,
                 CAST(o.client AS CHAR) AS client,
                 CAST(o.origin AS CHAR) AS origin,
@@ -295,15 +304,17 @@ class RutasController extends Controller
             WHERE o.status_id NOT IN (6,7,8,9,10)
             AND (
                     o.invoice_number LIKE '%{$term}%'
-                OR o.invoice LIKE '%{$term}%'
-                OR o.client LIKE '%{$term}%'
+                OR  o.invoice LIKE '%{$term}%'
+                OR  o.client LIKE '%{$term}%'
             )
         )
 
         UNION ALL
+
         (
             SELECT
                 p.order_id AS order_id,
+                p.id AS id_real,
                 CAST(p.invoice AS CHAR) AS folio,
                 NULL AS client,
                 'P' AS origin,
@@ -317,9 +328,11 @@ class RutasController extends Controller
         )
 
         UNION ALL
+
         (
             SELECT
                 s.order_id AS order_id,
+                s.id AS id_real,
                 CAST(s.code AS CHAR) AS folio,
                 NULL AS client,
                 'SM' AS origin,
@@ -364,7 +377,8 @@ class RutasController extends Controller
 
                     'ruta_id' => $ruta->id,
                     'order_id' => (int) $order_id,
-                    'estatus_pago' => 'pendiente',
+                    'estatus_pago' => 'pagado',
+                    'estatus_entrega' => 'enrutado',
                     'monto_por_cobrar' => 0,
                     'partial_folio' => $request->partial_folio[$k] ?? null,
                     'smaterial_folio' => $request->smaterial_folio[$k] ?? null,

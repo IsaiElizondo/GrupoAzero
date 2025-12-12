@@ -18,8 +18,6 @@ return new class extends Migration
             $table->dateTime('fecha_hora')->nullable();
             $table->foreignId('unidad_id')->nullable()->constrained('unidades')->nullOnDelete();
             $table->foreignId('chofer_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('estatus_entrega', ['enrutado', 'entregado', 'entrega_no_exitosa'])->default('enrutado');
-            $table->text('motivo')->nullable();
             $table->timestamps();
         });
     }

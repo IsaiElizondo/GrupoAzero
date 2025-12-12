@@ -130,16 +130,30 @@
                 var pedidoId = $(this).val();
                 var folio = $(this).data('folio');
                 var origin = $(this).data('origin');
+                var partialId = $(this).data('partial-id');
+                var smId = $(this).data('smaterial-id');
 
-                if($(this).is(':checked')){
-                    var fila = `
-                        <tr id="pedido_${pedidoId}">
+                if ($(this).is(':checked')) {
+                    let tipo = $(this).data('tipo');
+                    let folio = $(this).data('folio');
+                    let idReal = $(this).data('id-real');
+                    let orderId = $(this).val();
+                    let partialF = tipo === 'partial' ? folio : '';
+                    let smF = tipo === 'material' ? folio : '';
+                    let partialId = tipo === 'partial' ? idReal : '';
+                    let smId = tipo === 'material' ? idReal : '';
+
+                    let fila = `
+                        <tr id="pedido_${orderId}">
                             <td>
                                 ${folio}
-                                <input type="hidden" name="pedidos[]" value="${pedidoId}">
-                                <input type="hidden" name="partial_folio[]" value="${origin == 'P' ? folio : '' }">
-                                <input type="hidden" name="sm_folio[]" value="${origin == 'SM' ? folio : '' }">
+                                <input type="hidden" name="pedidos[]" value="${orderId}">
+                                <input type="hidden" name="partial_folio[]" value="${partialF}">
+                                <input type="hidden" name="smaterial_folio[]" value="${smF}">
+                                <input type="hidden" name="partial_id[]" value="${partialId}">
+                                <input type="hidden" name="smaterial_id[]" value="${smId}">
                             </td>
+
                             <td>
                                 <select name="estatus_pago[]" class="form-control form-control-sm">
                                     <option value="pagado">Pagado</option>
@@ -147,16 +161,19 @@
                                     <option value="credito">Crédito</option>
                                 </select>
                             </td>
+
                             <td>
                                 <input type="number" step="0.01" name="monto_por_cobrar[]" class="form-control form-control-sm" value="0.00">
                             </td>
+
                             <td class="text-center">
-                                <button type="button" class="btn btn-danger btn-sm quitarPedido" data-id="${pedidoId}">
+                                <button type="button" class="btn btn-danger btn-sm quitarPedido" data-id="${orderId}">
                                     <span class="material-icons" style="font-size:18px;">remove_circle</span>
                                 </button>
                             </td>
                         </tr>
                     `;
+
                     $('#tablaSeleccionados tbody').append(fila);
                 }else{
                     $('#pedido_'+pedidoId).remove();
