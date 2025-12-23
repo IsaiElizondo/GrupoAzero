@@ -126,8 +126,11 @@ Route::middleware('auth')->group(function () {
 	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_editar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_editar']);
 	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_actualizar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_actualizar']);
 	Route::post('pedidos2/devolucion_parcial_cancelar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_cancelar']);
-	Route::post('pedidos2/devolucion_parcial_evidencia_eliminar/{id}',[Pedidos2Controller::class, 'devolucion_parcial_evidencia_eliminar']
-);
+	Route::post('pedidos2/devolucion_parcial_evidencia_eliminar/{id}',[Pedidos2Controller::class, 'devolucion_parcial_evidencia_eliminar']);
+
+	//MODIFICAR DIRECCION DEL PEDIDO
+	Route::post('pedidos2/{id}/direccion', [Pedidos2Controller::class, 'guardarDireccion'])->name('guardarDireccion');
+	Route::get('pedidos2/direccion-cliente/{id}', [Pedidos2Controller::class, 'getDireccionCliente'])->name('getDireccionCliente');
 
 
 });

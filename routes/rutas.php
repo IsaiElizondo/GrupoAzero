@@ -24,5 +24,6 @@ Route::middleware(['auth', 'bloquear_rol_departamento'])->group(function(){
     Route::get('rutas/multie', [RutasController::class, 'multie'])->name('rutas.multie');
     Route::post('rutas/multie/lista', [RutasController::class, 'multie_lista'])->name('rutas.multie_lista');
     Route::post('rutas/multie/set', [RutasController::class, 'set_multiruta'])->name('rutas.set_multiruta');
+    Route::post('rutas/pedido/pago', [RutasController::class, 'updatePago'])->name('rutas.pedido.pago');
 
-});
+});             

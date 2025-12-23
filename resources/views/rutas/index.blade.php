@@ -50,6 +50,7 @@
                                         <th width="50px"></th>
                                         <th width="50px"></th>
                                         <th width="50px"></th>
+                                        <th width="50px"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -61,10 +62,12 @@
 
                                                 $telefonos = [];
                                                 if ($pedido->order->celular){
-                                                    $telefonos[] = '<a href="tel:'.$pedido->order->celular.'">'.$pedido->order->celular.'</a>';
+                                                    $celular = preg_replace('/[^0-9]/', '', $pedido->order->celular);
+                                                    $telefonos[] = '<a href="https://wa.me/52'.$celular.'" target="_blank">'.$pedido->order->celular.'</a>';
                                                 }
                                                 if ($pedido->order->telefono){
-                                                    $telefonos[] = '<a href="tel:'.$pedido->order->telefono.'">'.$pedido->order->telefono.'</a>';
+                                                    $telefono = preg_replace('/[^0-9]/', '', $pedido->order->telefono);
+                                                    $telefonos[] = '<a href="https://wa.me/52'.$telefono.'" target="_blank">'.$pedido->order->telefono.'</a>';
                                                 }
                                             @endphp
                                             <tr>
@@ -103,8 +106,21 @@
                                                         Sin cliente
                                                     @endif
                                                 </td>
-                                                <td>{{ ucfirst($pedido->estatus_pago ?? 'Pagado') }}</td>
-                                                <td>{{ number_format($pedido->monto_por_cobrar ?? 0, 2) }}</td>
+                                                <td>
+                                                    <select class="form-control form-control-sm estatus-pago"
+                                                            data-id="{{ $pedido->id }}">
+                                                        <option value="pagado" {{ $pedido->estatus_pago == 'pagado' ? 'selected' : '' }}>Pagado</option>
+                                                        <option value="por_cobrar" {{ $pedido->estatus_pago == 'por_cobrar' ? 'selected' : '' }}>Por cobrar</option>
+                                                        <option value="credito" {{ $pedido->estatus_pago == 'credito' ? 'selected' : '' }}>Crédito</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number"
+                                                        step="0.01"
+                                                        class="form-control form-control-sm monto-por-cobrar"
+                                                        data-id="{{ $pedido->id }}"
+                                                        value="{{ $pedido->monto_por_cobrar }}">
+                                                </td>
                                                 <td>{{ $pedido->order->nombre_recibe ?? '-' }}</td>
                                                 <td>{!! count($telefonos) ? implode(' / ', $telefonos) : '-' !!}</td>
                                                 <td>{{ $pedido->order->direccion ?? '-' }}</td>
@@ -129,6 +145,12 @@
                                                     <a href="{{ route('rutas.edit', $ruta->id) }}" class="btn btn-sm btn-warning" title="Editar">
                                                         <span class="material-icons">edit</span>
                                                     </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-success guardar-pago"
+                                                            data-id="{{ $pedido->id }}">
+                                                        <span class="material-icons">save</span>
+                                                    </button>
                                                 </td>
                                                 <td class="text-center">
                                                     <form action="{{ route('rutas.destroy', $ruta->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta ruta?');">
@@ -175,6 +197,32 @@
                         previous: "Anterior"
                     }
                 }
+            });
+        });
+
+        document.querySelectorAll('.guardar-pago').forEach(btn => {
+            btn.addEventListener('click', function (){
+                const id = this.dataset.id;
+                const row = this.closest('tr');
+
+                const estatus = row.querySelector('.estatus-pago').value;
+                const monto = row.querySelector('.monto-por-cobrar').value;
+
+                fetch('{{ route("rutas.pedido.pago") }}', {
+                    method: 'POST',
+                    headers:{
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        ruta_pedido_id: id,
+                        estatus_pago: estatus,
+                        monto_por_cobrar: monto
+                    })
+                })
+                .then(r => r.json())
+                .then(() => alert('Actualizado correctamente'))
+                .catch(() => alert('Error al guardar'));
             });
         });
     </script>

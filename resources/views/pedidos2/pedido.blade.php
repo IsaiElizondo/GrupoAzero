@@ -56,205 +56,343 @@ var_dump($pedido);
         <div>&nbsp;</div>
 
     <form action="{{ url('pedidos2/guardar/'.$pedido->id) }}" method="post" enctype="multipart/form-data">
-    @csrf
+        @csrf
 
-        <fieldset class='MainInfo'>
-        @if ($pedido->origin != "R" && ($user->role->id == 1 || in_array($user->department->id, [2,3,4,7,9]) ) )
+            <fieldset class='MainInfo'>
+                @if ($pedido->origin != "R" && ($user->role->id == 1 || in_array($user->department->id, [2,3,4,7,9]) ) )
 
-            
-        <div class='FormRow'>
-            <label>Folio Cotización</label>
-            @if (empty($pedido->invoice) || $user->role->id == 1)
-                <input type="text" class="form-control" name="invoice" value="{{$pedido->invoice}}" />
-            @else
-                <span title="Sólo un administrador puede cambiar este dato">{{$pedido->invoice}}</span>
-            @endif
-        </div>
-            
-
-        <div class='FormRow'>
-            <label>Archivo Cotización</label>
-            <div class="flex-start">
-                @if (empty($quote->document) || $user->role->id == 1)
-                <input type="file" class="form-control" name="cotizacion"  />  
-                @endif
-                
-                @if (!empty($quote->document))
-                <span> &nbsp; &nbsp; Actual: 
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$quote->document) }}"></a>
-                </span>
-                @endif 
-                
-            </div>
-        </div>
-
-
-        <div class='FormRow'>
-            <label># Factura</label>
-            @if (empty($pedido->invoice_number) || $user->role->id == 1)
-            <input type="text" class="form-control" name="invoice_number" value="{{$pedido->invoice_number}}" />
-            @else 
-            <span title="Sólo un administrador puede cambiar este dato">{{$pedido->invoice_number}}</span>
-            @endif
-        </div>
-
-        <div class='FormRow'>
-            <label>Archivo Factura</label>
-            
-                <div class="flex-start">
-                @if (empty($pedido->invoice_document)|| $user->role_id == 1 )
-                <input type="file" class="form-control" name="factura" />
-                @endif
-
-
-                @if (!empty($purchaseOrder) && !empty($purchaseOrder->document) )
-                <span>  &nbsp; &nbsp; Actual: 
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$purchaseOrder->document) }}"></a>
-                </span> 
-                @elseif (!empty($pedido->invoice_document))
-                <span>  &nbsp; &nbsp; Actual: 
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$pedido->invoice_document) }}"></a>
-                </span>              
-                @endif
-                
+                    
+                <div class='FormRow'>
+                    <label>Folio Cotización</label>
+                    @if (empty($pedido->invoice) || $user->role->id == 1)
+                        <input type="text" class="form-control" name="invoice" value="{{$pedido->invoice}}" />
+                    @else
+                        <span title="Sólo un administrador puede cambiar este dato">{{$pedido->invoice}}</span>
+                    @endif
                 </div>
-        </div>
-        @endif 
+                    
+
+                <div class='FormRow'>
+                    <label>Archivo Cotización</label>
+                    <div class="flex-start">
+                        @if (empty($quote->document) || $user->role->id == 1)
+                        <input type="file" class="form-control" name="cotizacion"  />  
+                        @endif
+                        
+                        @if (!empty($quote->document))
+                        <span> &nbsp; &nbsp; Actual: 
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$quote->document) }}"></a>
+                        </span>
+                        @endif 
+                        
+                    </div>
+                </div>
+
+
+                <div class='FormRow'>
+                    <label># Factura</label>
+                    @if (empty($pedido->invoice_number) || $user->role->id == 1)
+                    <input type="text" class="form-control" name="invoice_number" value="{{$pedido->invoice_number}}" />
+                    @else 
+                    <span title="Sólo un administrador puede cambiar este dato">{{$pedido->invoice_number}}</span>
+                    @endif
+                </div>
+
+                <div class='FormRow'>
+                    <label>Archivo Factura</label>
+                    
+                        <div class="flex-start">
+                        @if (empty($pedido->invoice_document)|| $user->role_id == 1 )
+                        <input type="file" class="form-control" name="factura" />
+                        @endif
+
+
+                        @if (!empty($purchaseOrder) && !empty($purchaseOrder->document) )
+                        <span>  &nbsp; &nbsp; Actual: 
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$purchaseOrder->document) }}"></a>
+                        </span> 
+                        @elseif (!empty($pedido->invoice_document))
+                        <span>  &nbsp; &nbsp; Actual: 
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$pedido->invoice_document) }}"></a>
+                        </span>              
+                        @endif
+                        
+                        </div>
+                </div>
+                @endif 
 
 
 
-        
-        <div class='FormRow'>
-            <label>Cliente</label>
-        @if ($pedido->origin != "R" && !in_array($user->department_id,[4]) 
-        && (empty($pedido->invoice_number) || empty($pedido->invoice_document))
-        || $user->role_id == 1
-        )
-            <input type="text" class="form-control" name="client" value="{{$pedido->client}}" />
-        @else
-            <span>{{$pedido->client}}</span>
-        @endif
-        </div>
-        
-        
-        
-        @if ($pedido->origin == "R")
-        <div class='FormRow'>
-            <label>&nbsp;</label>
-            <span>Los pedidos con origen Requisición Stock no tienen información principal que cambiar.</span>
-        </div>
-        @endif
-
-
-
-        <div class='FormRow'>
-            <label></label>
-            <span>
-                @if ($pedido->origin != "R")
-                <input type="submit" name="sb" class="form-control" value="Guardar" /> 
+                
+                <div class='FroRow'>
+                    <label> Cliente </label>
+                    <span style="padding-left:100px;">{{$pedido->client}}</span>
+                </div>
+                
+                
+                @if ($pedido->origin == "R")
+                <div class='FormRow'>
+                    <label>&nbsp;</label>
+                    <span>Los pedidos con origen Requisición Stock no tienen información principal que cambiar.</span>
+                </div>
                 @endif
 
-                <input type="button" name="cn" class="form-control" value="Cancelar" onclick="EsconderMainInfo()" />
-            </span>
-        </div>
 
 
-        </fieldset>
+                <div class='FormRow'>
+                    <label></label>
+                    <span>
+                        @if ($pedido->origin != "R")
+                        <input type="submit" name="sb" class="form-control" value="Guardar" /> 
+                        @endif
 
-        
+                        <input type="button" name="cn" class="form-control" value="Cancelar" onclick="EsconderMainInfo()" />
+                    </span>
+                </div>
 
-        <fieldset class='MiniInfo'>
 
-        @if ($pedido->origin != "R")
-            <div>
-                <label># Factura</label><span>{{$pedido->invoice_number}}
-                <?php 
-                //var_dump($purchaseOrder) 
-                ?>
-                @if (!empty($purchaseOrder->document))
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$purchaseOrder->document) }}"></a>
-                @elseif (!empty($pedido->invoice_document))
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$pedido->invoice_document) }}"></a>
-                @endif 
+            </fieldset>
 
-            </span>
-            </div>
+            {{--/////////////////////////////--}}
+            {{--// MODIFICACION DE DIRECCION --}} 
+            {{--/////////////////////////////--}}
 
-            <div>
-                <label>Folio Cotización</label>
-                <span>{{$pedido->invoice}} 
-                 @if (!empty($quote->document))
-                &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$quote->document) }}"></a>
-                @endif 
-                </span>
-            </div>
-     
+            <fieldset class="DireccionInfo" style="display:none;">
+                <legend> Direccion del pedido </legend>
+                    <div id="formDireccionPedido" data-url="{{ route('guardarDireccion', $pedido->id) }}">
+                        <div class="FormRow">
+                            <label> Tipo de entrega</label>
+                            <select name="estado_direccion" id="estado_direccion" class="form-control">
+                                <option value="pendiente" {{ $pedido->estado_direccion == 'pendiente' ? 'selected' : ''}}>Direccion Pendiente </option>
+                                <option value="completa" {{ $pedido->estado_direccion == 'completa' ? 'selected' : ''}}> Direccion Completa </option>
+                                <option value="recoge" {{ $pedido->estado_direccion == 'recoge' ? 'selected' : ''}}> Cliente Recoge </option>
+                            </select>
+                        </div>
 
-            <div><label>Cliente</label><span>{{$pedido->client}}</span></div>
-            @if($pedido->nombre_cliente)
-                <div><label>Nombre Cliente</label><span>{{$pedido->nombre_cliente}}</span></div>
-            @endif
+                        @if(!empty($pedido->cliente_id))
+                            <div class="FormRow">
+                                <label> Direccion del cliente </label>
+                                <select name="modo_direccion" id="modo_direccion" class="form-control">
+                                    <option value="">-- Selecciona una opcion --</option>
+                                    <option value="existente"> Usar una direccion existente </option>
+                                    <option value="nueva"> Agregar nueva direccion nueva </option>
+                                </select>
+                            </div>
 
-            @if($pedido->nombre_direccion)
-                <div><label>Nombre Dirección</label><span>{{$pedido->nombre_direccion}}</span></div>
-            @endif
+                            <div id="bloqueDireccionExistente" style="display:none;">
+                                <div class="FormRow">
+                                    <label> Direcciones registradas </label>
+                                    <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
+                                        <option value="">-- Seleccione una direccion --</option>
+                                        @foreach($direccionesCliente as $dir)
+                                            <option value="{{ $dir->id }}"> 
+                                                {{ $dir->direccion }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
 
-            <div>
-                <label>Dirección</label>
-                <span>
-                    {{$pedido->direccion}}
-                    @if($pedido->ciudad), {{$pedido->ciudad}} @endif
-                    @if($pedido->estado), {{$pedido->estado}} @endif
-                    @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
-                </span>
-            </div>
+                        <div id="bloqueDireccionCompleta" style="display:none;">
+                            <div class="FormRow">
+                                <label> Nombre de la direccion </label>
+                                <input type="text" name="nombre_direccion" class="form-control" value="{{ $pedido->nombre_direccion }}">
+                            </div>
+                            
+                            <div class="FormRow">
+                                <label> Direccion </label>
+                                <input type="text" name="direccion" class="form-control" value="{{ $pedido->direccion }}">
+                            </div>
 
-            @if($pedido->celular)
-                <div><label>Celular</label><span>{{$pedido->celular}}</span></div>
-            @endif
+                            <div class="FormRow">
+                                <label> Colonia </label>
+                                <input type="text" name="colonia" class="form-control" value="{{ $pedido->colonia }}">
+                            </div>
+                            
+                            <div class="FormRow">
+                                <label> Ciudad </label>
+                                <input type="text" name="ciudad" class="form-control" value="{{ $pedido->ciudad }}">
+                            </div>
 
-            @if($pedido->telefono)
-                <div><label>Telefono</label><span>{{$pedido->telefono}}</span></div>
+                            <div class="FormRow">
+                                <label> Estado </label>
+                                <input type="text" name="estado" class="form-control" value="{{ $pedido->estado }}">
+                            </div>
+
+                            <div class="FormRow">
+                                <label> Codigo Postal </label>
+                                <input type="text" name="codigo_postal" class="form-control" value="{{ $pedido->codigo_postal }}">
+                            </div>
+
+                            <div class="FormRow">
+                                <label> Celular </label>
+                                <input type="text" name="celular" class="form-control" value="{{ $pedido->celular }}">
+                            </div>
+
+                            <div class="FormRow">
+                                <label> Telefono </label>
+                                <input type="text" name="telefono" class="form-control" value="{{ $pedido->telefono }}">
+                            </div>
+
+                            <div class="FormRow">
+                                <label>¿Quién recibe?</label>
+                                <input type="text" name="nombre_recibe" class="form-control" value="{{ $pedido->nombre_recibe }}">
+                            </div>
+                            
+                            <div class="FormRow">
+                                <label> URL Mapa</label>
+                                <input type="text" name="url_mapa" class="form-control" value="{{ $pedido->url_mapa }}"> 
+                            </div>
+
+                            <div class="FormRow">
+                                <label> Instrucciones </label>
+                                <textarea name="instrucciones" class="form-control">{{ $pedido->instrucciones }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="btnGuardarDireccion" class="form-control">
+                            Guardar direccion
+                        </button>
+                        <div class="block">
+                            <input type="button" class="form-control" value="Cancelar" onclick="EsconderDireccion()"/>
+                        </div>
+                    </div>
+            </fieldset>
+            
+            
+            {{--///////////////////////////////////--}}
+            {{--//FIN DE MODIFICACION DE DIRECCION --}}
+            {{--///////////////////////////////////--}}
+
+
+            <fieldset class='MiniInfo'>
+
+                @if ($pedido->origin != "R")
+                    <div>
+                        <label># Factura</label><span>{{$pedido->invoice_number}}
+                        <?php 
+                        //var_dump($purchaseOrder) 
+                        ?>
+                        @if (!empty($purchaseOrder->document))
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$purchaseOrder->document) }}"></a>
+                        @elseif (!empty($pedido->invoice_document))
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$pedido->invoice_document) }}"></a>
+                        @endif 
+
+                    </span>
+                    </div>
+
+                    <div>
+                        <label>Folio Cotización</label>
+                        <span>{{$pedido->invoice}} 
+                        @if (!empty($quote->document))
+                        &nbsp; <a class="pdf" target="_blank" href="{{ asset('storage/'.$quote->document) }}"></a>
+                        @endif 
+                        </span>
+                    </div>
+            
+
+                    <div><label>Cliente</label><span>{{$pedido->client}}</span></div>
+                    @if($pedido->nombre_cliente)
+                        <div><label>Nombre Cliente</label><span>{{$pedido->nombre_cliente}}</span></div>
+                    @endif
+
+                    @if($pedido->nombre_direccion)
+                        <div><label>Nombre Dirección</label><span>{{$pedido->nombre_direccion}}</span></div>
+                    @endif
+
+                    <div>
+                        <label>Dirección</label>
+                        <span>
+                            {{$pedido->direccion}}
+                            @if($pedido->ciudad), {{$pedido->ciudad}} @endif
+                            @if($pedido->estado), {{$pedido->estado}} @endif
+                            @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
+                        </span>
+                    </div>
+
+                    @if($pedido->celular)
+                        @php
+                            $celular = preg_replace('/[^0-9]/', '', $pedido->celular);
+                        @endphp
+                        <div>
+                            <label>Celular</label>
+                            <span>
+                                <a href="https://wa.me/52{{$celular}}" target="_blank">
+                                    {{$pedido->celular}}
+                                </a>
+                            </span>
+                        </div>
+                    @endif
+
+                    @if($pedido->telefono)
+                        @php
+                            $telefono = preg_replace('/[^0-9]/', '', $pedido->telefono);
+                        @endphp
+                        <div>
+                            <label>Telefono</label>
+                            <span>
+                                <a href="https://wa.me/52{{$telefono}}" target="_blank">
+                                    {{$pedido->telefono}}
+                                </a>
+                            </span>
+                        </div>
+                    @endif
+
+                    
+                    @if($pedido->nombre_recibe)
+                        <div><label>Persona que recibe</label><span>{{$pedido->nombre_recibe}}</span></div>
+                    @endif
+                    
+                    @if($pedido->url_mapa)
+                        <div>
+                            <label>URL</label>
+                            <span>
+                                <a href="{{$pedido->url_mapa}}" target="_blank" rel="noopener noreferrer">
+                                    {{$pedido->url_mapa}}
+                                </a>
+                            </span>
+                        </div>
+                    @endif  
+                    
+                    @if($pedido->instrucciones)
+                        <div><label>Instrucciones</label><span>{{$pedido->instrucciones}}</span></div>
+                    @endif
+                    
+                    <div>
+                        <label>Estado Dirección</label>
+                        <span>{{ucfirst($pedido->estado_direccion)}}</span>
+                    </div>
+
+                @endif
+
+            </fieldset>
+
+        <div class="padded flex-float">
+            <a class="powerLink modalShow" href="{{  url('pedidos2/historial/'.$pedido->id) }}">Historial</a>  
+
+
+            @if ($user->role->id == 1  || in_array($user->department->id, [2,3,4,7]) )    
+                <div class="block"><a class="powerLink" onclick="MostrarMainInfo()">Cambiar datos principales</a></div>
             @endif
             
-            @if($pedido->nombre_recibe)
-                <div><label>Persona que recibe</label><span>{{$pedido->nombre_recibe}}</span></div>
+            @if($user->role->id == 1 || in_array($user->department->id, [2,3,4,7]) && $pedido->origin != "R")
+                <div class="block">
+                    <a class="powerLink" onclick="MostrarDireccion()"> Modificar direccion </a>
+                </div>
             @endif
-            
-            @if($pedido->url_mapa)
-                <div><label>URl</label><span>{{$pedido->url_mapa}}</span></div>
-            @endif
-            
-            @if($pedido->instrucciones)
-                <div><label>Instrucciones</label><span>{{$pedido->instrucciones}}</span></div>
-            @endif
-            
-            <div>
-                <label>Estado Dirección</label>
-                <span>{{ucfirst($pedido->estado_direccion)}}</span>
-            </div>
-
-           @endif
-
-        </fieldset>
-
-    <div class="padded flex-float">
-        <a class="powerLink modalShow" href="{{  url('pedidos2/historial/'.$pedido->id) }}">Historial</a>  
 
 
-        @if ($user->role->id == 1  || in_array($user->department->id, [2,3,4,7]) )    
-            <div class="block"><a class="powerLink" onclick="MostrarMainInfo()">Cambiar datos principales</a></div>
-        @endif      
-
-        @if ($follow == null)
+            @if ($follow == null)
+                <a href="{{  url('pedidos2/set_followno/'.$pedido->id.'/'.$user->id) }}" 
+                hrefno="{{  url('pedidos2/set_follow/'.$pedido->id.'/'.$user->id) }}" class="followBtn no"> A mis pedidos</a>
+            @else
             <a href="{{  url('pedidos2/set_followno/'.$pedido->id.'/'.$user->id) }}" 
-            hrefno="{{  url('pedidos2/set_follow/'.$pedido->id.'/'.$user->id) }}" class="followBtn no"> A mis pedidos</a>
-        @else
-        <a href="{{  url('pedidos2/set_followno/'.$pedido->id.'/'.$user->id) }}" 
-            hrefno="{{  url('pedidos2/set_follow/'.$pedido->id.'/'.$user->id) }}" class="followBtn"> Dejar de seguir</a>
-        @endif
+                hrefno="{{  url('pedidos2/set_follow/'.$pedido->id.'/'.$user->id) }}" class="followBtn"> Dejar de seguir</a>
+            @endif
 
-    </div>
+        </div>
         
     </form> 
     
@@ -862,293 +1000,444 @@ $pedidoStatusId = $pedido->status_id;
 <script type="text/javascript" src="{{asset('js/etiquetas/etiquetas.js?x='.rand(0,999))}}"></script>
 <script>
 $(document).ready(function(){
-    
+        
 
-    timeoutAccion=null;
+        timeoutAccion=null;
 
-    ACCIONHTML="";
-/*
-    let isMobile = isMobileOrTablet();
-if(isMobile){
-   // SetEleccionAccionListenerMobile();
-}else{
-   // SetEleccionAccionListener();
-}
-*/
-
-
-$(".Eleccion .Accion.generico").click(function(e){
-    e.preventDefault();
-    $(".Eleccion .Accion").removeClass("activo");
-    $(this).addClass("activo");
-    AccionPresionado(this);
-});
-
-
-$(".Eleccion .Accion.enpuerta").click(function(e){
-    e.preventDefault();
-    $(".Eleccion .Accion").removeClass("activo");
-    $(this).addClass("activo");
-    AccionPresionadoEnPuerta(this);
-});
-
-$(".Eleccion .Accion.entregado").click(function(e){
-    e.preventDefault();
-    $(".Eleccion .Accion").removeClass("activo");
-    $(this).addClass("activo");
-    AccionPresionadoEntregado(this);
-});
-
-$(".Eleccion .Accion.audita").click(function(e){
-    e.preventDefault();
-    $(".Eleccion .Accion").removeClass("activo");
-    $(this).addClass("activo");
-    AccionPresionadoAudita(this);
-});
-
-
-
-$(".attachList").each(function(){
-    console.log($(this).attr("rel"));
-    AttachList($(this).attr("rel"));
-});
-
-
-$("a.cancelar").click(function(e){
-    e.preventDefault();
-
-    let tit = $(this).attr("title");
-    if(!confirm(tit)){return false;}
-
-    let href=$(this).attr("href");
-    window.location.href=href;
-});
-
-
-$("body").on("click", ".modalShow", function(e){
-    e.preventDefault();
-    let href =$(this).attr("href");
-    $.ajax({
-        url:href,
-        success:function(h){
-            MiModal.exitButton=true;
-            MiModal.content(h);
-            MiModal.show();
-        }
-    });
-});
-
-
-
-$(".NParcial").click(function(e){
-e.preventDefault();
-let href = $(this).attr("href");
-AjaxGet(href,FormaNuevoParcial);
-});
-
-
-$("body").on("click",".editarparcial",function(e){
-e.preventDefault();
-AjaxGet($(this).attr("href"),FormaEditarParcial);
-});
-
-$("body").on("click",".editarsm",function(e){
-e.preventDefault();
-AjaxGet($(this).attr("href"),FormaEditarSmaterial);
-});
-
-$("body").on("click",".editof",function(e){
-e.preventDefault();
-AjaxGet($(this).attr("href"),FormaEditarOrdenf);
-});
-
-$("body").on("click",".editarrequisicion",function(e){
-e.preventDefault();
-AjaxGet($(this).attr("href"),FormaEditarRequisicion);
-});
-
-$("body").on("click",".desauditoria",function(e){
-e.preventDefault();
-//let tit = $(this).attr("title");
-let href = $(this).attr("href");
-   // if(!confirm(tit)){return false;}
-    AjaxGet(href,FormaDesauditoria);
-//AjaxGetJson(href,()=>{window.location.reload();});
-
-});
-
-
-
-$("body").on("uploaded",".attachList[rel='entregar']",function(e){
-let href = $("[name='urlConfirmaEntregado']").val();
-AjaxGetJson(href,RespuestaConfirmaEntregado);    
-$("#filaTerminarEntrega").show();
-});
-
-$("body").on("click",".editref",function(e){
-e.preventDefault();
-AjaxGet($(this).attr("href"),FormaEditarRefacturacion);
-});
-
-
-$("body").on("click",".deshacerEntregado",function(e){
-    e.preventDefault();
-    let href = $(this).attr("href");
-    let tit = $(this).attr("title");
-    if(!confirm(tit)){return false;}
-    AjaxGetJson(href,RespuestaDeshacerEntregado);
-});
-
-$("body").on("click",".rehacerEntregado",function(e){
-    e.preventDefault();
-    let href = $(this).attr("href");
-    let tit = $(this).attr("title");
-    if(!confirm(tit)){return false;}
-    AjaxGetJson(href,RespuestaDeshacerEntregado);
-});
-
-
-$("body").on("click",".editapg",function(e){
-e.preventDefault();
-let spc = $(this).closest(".SubProcesoContainer");
-    if(spc.length > 0){
-        $(spc).addClass("recargame");
-    }
-AjaxGet($(this).attr("href"),FormaEditarProcesoGeneral);
-});
-
-
-
-$("body").on("click",".followBtn", function(e){
-    e.preventDefault();
-    let hrefyes = $(this).attr("href");
-    let hrefno = $(this).attr("hrefno");
-    let isno = $(this).hasClass("no");
-
-    if(isno){
-        AjaxGetJson(hrefno,FollowNoRespuesta);
+        ACCIONHTML="";
+    /*
+        let isMobile = isMobileOrTablet();
+    if(isMobile){
+    // SetEleccionAccionListenerMobile();
     }else{
-        AjaxGetJson(hrefyes,FollowRespuesta);
+    // SetEleccionAccionListener();
     }
-    
-});
+    */
 
 
-
-$("body").on("click",".deshacersub",function(e){
-e.preventDefault();
-let href = $(this).attr("href");
-let tit = $(this).attr("title");
-let rel = $(this).attr("rel");
-
-    if(!confirm(tit)){
-        return false;
-    }
-
-    if(rel=="smaterial"){
-        AjaxGetJson(href,RespuestaDeshacerEntregadoSM);
-    }
-    else if(rel=="ordenf"){
-        AjaxGetJson(href,RespuestaDeshacerEntregadoOf);
-    }
-    else{
-        AjaxGetJson(href,RespuestaDeshacerEntregadoParcial);
-    }
-
-});
-
-
-
-
-
-$(".Alerta").tooltip();
-
-/*
-$('.Alerta').on({
-  "click": function() {
-    $(this).tooltip({ items: ".Alerta", content: "Displaying on click"});
-    $(this).tooltip("open");
-  },
-  "mouseout": function() {      
-     $(this).tooltip("disable");   
-  }
-});
-*/
-
-
-
-$(".Candidato").click(function(e){
-e.preventDefault();
-let href = $(this).attr("href");
-let rel = $(this).attr("rel");
-    if(rel == "smaterial"){
-        AjaxGet(href,FormaNuevoSmaterial);
-    }
-    else if(rel == "requisicion"){
-        AjaxGet(href,FormaNuevoRequisicion);     
-    }
-    else if(rel == "ordenf"){
-        AjaxGet(href,FormaNuevoOrdenf);        
-    }
-    else if(rel == "devolucion"){
-        AjaxGet(href,FormaNuevoDevolucion);        
-    }
-    else if(rel == "refacturacion"){
-        AjaxGet(href,FormaNuevoRefacturacion);        
-    }
-    else if(rel == "devolucion_parcial"){
-        AjaxGet(href,FormaNuevoDevolucionParcial);
-    }
-
-});
-
-
-$(".Eleccion .Accion.alerta").click(function(e){
-
-    e.preventDefault();
-    $(".Eleccion .Accion").removeClass("activo");
-    $(this).addClass("activo");
-    AccionPresionadoNoExitosa(this);
-
-});
-
-//DEVOLUCIONES PARCIALES
-$("body").on("click", ".editapg", function(e){
-    e.preventDefault();
-    AjaxGet($(this).attr("href"), FormaEditarDevolucionParcial);
-});
-
-$("body").on("submit", ".formCancelarDevolucion", function(e){
-
-    e.preventDefault();
-
-    if(!confirm("¿Estás seguro de cancelar esta devolución?")){
-        return;
-    }
-
-    let form =$(this);
-    let url = form.attr("action");
-
-    $.post(url, form.serialize(), function(json){
-        if(json.status == 1){
-            CargarDevolucionesParciales();
-        }else{
-            alert("No se pudo cancelar");
-        }
+    $(".Eleccion .Accion.generico").click(function(e){
+        e.preventDefault();
+        $(".Eleccion .Accion").removeClass("activo");
+        $(this).addClass("activo");
+        AccionPresionado(this);
     });
 
-});
 
-//FIN DE DEVOLUCIONES PARCIALES
+    $(".Eleccion .Accion.enpuerta").click(function(e){
+        e.preventDefault();
+        $(".Eleccion .Accion").removeClass("activo");
+        $(this).addClass("activo");
+        AccionPresionadoEnPuerta(this);
+    });
+
+    $(".Eleccion .Accion.entregado").click(function(e){
+        e.preventDefault();
+        $(".Eleccion .Accion").removeClass("activo");
+        $(this).addClass("activo");
+        AccionPresionadoEntregado(this);
+    });
+
+    $(".Eleccion .Accion.audita").click(function(e){
+        e.preventDefault();
+        $(".Eleccion .Accion").removeClass("activo");
+        $(this).addClass("activo");
+        AccionPresionadoAudita(this);
+    });
 
 
-CargarParciales();
-CargarSmateriales();
-CargarOrdenf();
-CargarRequisiciones();
-CargarDevoluciones();
-CargarDevolucionesParciales();
-//$("#CuerpoActualizar").hide();
+
+    $(".attachList").each(function(){
+        console.log($(this).attr("rel"));
+        AttachList($(this).attr("rel"));
+    });
+
+
+    $("a.cancelar").click(function(e){
+        e.preventDefault();
+
+        let tit = $(this).attr("title");
+        if(!confirm(tit)){return false;}
+
+        let href=$(this).attr("href");
+        window.location.href=href;
+    });
+
+
+    $("body").on("click", ".modalShow", function(e){
+        e.preventDefault();
+        let href =$(this).attr("href");
+        $.ajax({
+            url:href,
+            success:function(h){
+                MiModal.exitButton=true;
+                MiModal.content(h);
+                MiModal.show();
+            }
+        });
+    });
+
+
+
+    $(".NParcial").click(function(e){
+    e.preventDefault();
+    let href = $(this).attr("href");
+    AjaxGet(href,FormaNuevoParcial);
+    });
+
+
+    $("body").on("click",".editarparcial",function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"),FormaEditarParcial);
+    });
+
+    $("body").on("click",".editarsm",function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"),FormaEditarSmaterial);
+    });
+
+    $("body").on("click",".editof",function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"),FormaEditarOrdenf);
+    });
+
+    $("body").on("click",".editarrequisicion",function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"),FormaEditarRequisicion);
+    });
+
+    $("body").on("click",".desauditoria",function(e){
+    e.preventDefault();
+    //let tit = $(this).attr("title");
+    let href = $(this).attr("href");
+    // if(!confirm(tit)){return false;}
+        AjaxGet(href,FormaDesauditoria);
+    //AjaxGetJson(href,()=>{window.location.reload();});
+
+    });
+
+
+
+    $("body").on("uploaded",".attachList[rel='entregar']",function(e){
+    let href = $("[name='urlConfirmaEntregado']").val();
+    AjaxGetJson(href,RespuestaConfirmaEntregado);    
+    $("#filaTerminarEntrega").show();
+    });
+
+    $("body").on("click",".editref",function(e){
+    e.preventDefault();
+    AjaxGet($(this).attr("href"),FormaEditarRefacturacion);
+    });
+
+
+    $("body").on("click",".deshacerEntregado",function(e){
+        e.preventDefault();
+        let href = $(this).attr("href");
+        let tit = $(this).attr("title");
+        if(!confirm(tit)){return false;}
+        AjaxGetJson(href,RespuestaDeshacerEntregado);
+    });
+
+    $("body").on("click",".rehacerEntregado",function(e){
+        e.preventDefault();
+        let href = $(this).attr("href");
+        let tit = $(this).attr("title");
+        if(!confirm(tit)){return false;}
+        AjaxGetJson(href,RespuestaDeshacerEntregado);
+    });
+
+
+    $("body").on("click",".editapg",function(e){
+    e.preventDefault();
+    let spc = $(this).closest(".SubProcesoContainer");
+        if(spc.length > 0){
+            $(spc).addClass("recargame");
+        }
+    AjaxGet($(this).attr("href"),FormaEditarProcesoGeneral);
+    });
+
+
+
+    $("body").on("click",".followBtn", function(e){
+        e.preventDefault();
+        let hrefyes = $(this).attr("href");
+        let hrefno = $(this).attr("hrefno");
+        let isno = $(this).hasClass("no");
+
+        if(isno){
+            AjaxGetJson(hrefno,FollowNoRespuesta);
+        }else{
+            AjaxGetJson(hrefyes,FollowRespuesta);
+        }
+        
+    });
+
+
+
+    $("body").on("click",".deshacersub",function(e){
+    e.preventDefault();
+    let href = $(this).attr("href");
+    let tit = $(this).attr("title");
+    let rel = $(this).attr("rel");
+
+        if(!confirm(tit)){
+            return false;
+        }
+
+        if(rel=="smaterial"){
+            AjaxGetJson(href,RespuestaDeshacerEntregadoSM);
+        }
+        else if(rel=="ordenf"){
+            AjaxGetJson(href,RespuestaDeshacerEntregadoOf);
+        }
+        else{
+            AjaxGetJson(href,RespuestaDeshacerEntregadoParcial);
+        }
+
+    });
+
+
+
+
+
+    $(".Alerta").tooltip();
+
+    /*
+    $('.Alerta').on({
+    "click": function() {
+        $(this).tooltip({ items: ".Alerta", content: "Displaying on click"});
+        $(this).tooltip("open");
+    },
+    "mouseout": function() {      
+        $(this).tooltip("disable");   
+    }
+    });
+    */
+
+
+
+    $(".Candidato").click(function(e){
+    e.preventDefault();
+    let href = $(this).attr("href");
+    let rel = $(this).attr("rel");
+        if(rel == "smaterial"){
+            AjaxGet(href,FormaNuevoSmaterial);
+        }
+        else if(rel == "requisicion"){
+            AjaxGet(href,FormaNuevoRequisicion);     
+        }
+        else if(rel == "ordenf"){
+            AjaxGet(href,FormaNuevoOrdenf);        
+        }
+        else if(rel == "devolucion"){
+            AjaxGet(href,FormaNuevoDevolucion);        
+        }
+        else if(rel == "refacturacion"){
+            AjaxGet(href,FormaNuevoRefacturacion);        
+        }
+        else if(rel == "devolucion_parcial"){
+            AjaxGet(href,FormaNuevoDevolucionParcial);
+        }
+
+    });
+
+
+    $(".Eleccion .Accion.alerta").click(function(e){
+
+        e.preventDefault();
+        $(".Eleccion .Accion").removeClass("activo");
+        $(this).addClass("activo");
+        AccionPresionadoNoExitosa(this);
+
+    });
+
+    ////////////////////////
+    //DEVOLUCIONES PARCIALES
+    ///////////////////////
+
+    $("body").on("click", ".editapg", function(e){
+        e.preventDefault();
+        AjaxGet($(this).attr("href"), FormaEditarDevolucionParcial);
+    });
+
+    $("body").on("submit", ".formCancelarDevolucion", function(e){
+
+        e.preventDefault();
+
+        if(!confirm("¿Estás seguro de cancelar esta devolución?")){
+            return;
+        }
+
+        let form =$(this);
+        let url = form.attr("action");
+
+        $.post(url, form.serialize(), function(json){
+            if(json.status == 1){
+                CargarDevolucionesParciales();
+            }else{
+                alert("No se pudo cancelar");
+            }
+        });
+
+    });
+    ////////////////////////////////
+    //FIN DE DEVOLUCIONES PARCIALES
+    ///////////////////////////////
+
+    ////////////////////////////////
+    //SECCION MODIFICACION DIRECCION
+    ////////////////////////////////
+
+    function toggleDireccion(){
+        let estado = $("#estado_direccion").val();
+
+        $("#bloqueDireccionExistente").hide();
+        $("#bloqueDireccionCompleta").hide();
+
+        if(estado === 'completa'){
+            if($("#modo_direccion").length){
+                toggleModoDireccion();
+            }else{
+                $("#bloqueDireccionCompleta").slideDown();
+            }
+        }
+    }
+
+    function toggleModoDireccion(){
+        let modo = $("#modo_direccion").val();
+
+        $("#bloqueDireccionExistente").hide();
+        $("#bloqueDireccionCompleta").hide();
+
+        if(modo === 'existente'){
+            $("#bloqueDireccionExistente").slideDown();
+        }else if(modo === 'nueva'){
+            $("#bloqueDireccionCompleta").slideDown();
+        }
+    }
+
+    function cargarDireccionCliente(id){
+        if(!id){
+            return;
+        }
+
+        $.get("{{ url('pedidos2/direccion-cliente') }}/" + id, function(resp){
+            if(resp.status !== 1){
+                alert("No se pudo cargar la direccion");
+                return;
+            }
+
+            let d = resp.data;
+
+            $("input[name='nombre_direccion']").val(d.nombre_direccion);
+            $("input[name='direccion']").val(d.direccion);
+            $("input[name='colonia']").val(d.colonia);
+            $("input[name='ciudad']").val(d.ciudad);
+            $("input[name='estado']").val(d.estado);
+            $("input[name='codigo_postal']").val(d.codigo_postal);
+            $("input[name='celular']").val(d.celular);
+            $("input[name='telefono']").val(d.telefono);
+            $("input[name='nombre_recibe']").val(d.nombre_recibe);
+            $("input[name='url_mapa']").val(d.url_mapa);
+            $("textarea[name='instrucciones']").val(d.instrucciones);
+        });
+    }
+
+    function initDireccion(){
+        let estado = $("#estado_direccion").val();
+        let clienteDireccionId = $("#cliente_direccion_id").val();
+
+        $("#bloqueDireccionExistente").hide();
+        $("#bloqueDireccionCompleta").hide();
+
+        if(estado === 'completa'){
+            if($("#modo_direccion").length){
+                if(clienteDireccionId){
+                    $("#modo_direccion").val("existente");
+                    $("#bloqueDireccionExistente").show();
+                    cargarDireccionCliente(clienteDireccionId);
+                }else{
+                    $("#modo_direccion").val("nueva");
+                    $("#bloqueDireccionCompleta").show();
+                }
+            }else{
+                $("#bloqueDireccionCompleta").show();
+            }
+        }
+    }
+
+    $("#estado_direccion").on("change", function(){
+        toggleDireccion();
+    });
+
+    $("#modo_direccion").on("change", function(){
+        toggleModoDireccion();
+    });
+
+    $("#cliente_direccion_id").on("change", function(){
+        cargarDireccionCliente($(this).val());
+    });
+
+    $("#btnGuardarDireccion").on("click", function(){
+
+        if(typeof validarDireccionVisual === "function"){
+            if(!validarDireccionVisual()){
+                return;
+            }
+        }
+
+        let cont = $("#formDireccionPedido");
+        let url = cont.data("url");
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: cont.find("input, select, textarea").serialize(),
+            headers: {
+                'X-CSRF-TOKEN': document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute('content')
+            },
+            success: function(resp){
+
+                let json = resp;
+
+                if(typeof resp === "string"){
+                    try{
+                        json = JSON.parse(resp);
+                    }catch(e){
+                        alert("Respuesta invalida del servidor");
+                        return;
+                    }
+                }
+                if(json.status == 1){
+                    alert(json.messages || "Direccion guardada correctamente");
+                    location.reload();
+                }else{
+                    alert(json.messages || "No se pudo guardar la direccion");
+                }
+            },error: function(){
+                alert("Error de comunicacion con el servidor");
+            }
+        });
+
+    });
+
+    
+
+    ////////////////////////////
+    //FIN MODIFICACION DIRECCION
+    ////////////////////////////
+
+
+    CargarParciales();
+    CargarSmateriales();
+    CargarOrdenf();
+    CargarRequisiciones();
+    CargarDevoluciones();
+    CargarDevolucionesParciales();
+    toggleDireccion();
+    initDireccion();
+    //$("#CuerpoActualizar").hide();
 
 
 });
@@ -1780,15 +2069,27 @@ function FormaEditarDevolucionParcial(h){
 
 
 
- function MostrarMainInfo(){
+function MostrarMainInfo(){
     $(".MainInfo").slideDown();
     $(".MiniInfo").hide();
- }
- function EsconderMainInfo(){
+}
+function EsconderMainInfo(){
     $(".MainInfo").slideUp();
     $(".MiniInfo").show();
- }
+}
 
+function MostrarDireccion(){
+    $(".MainInfo").hide();
+    $(".MiniInfo").hide();
+    $(".DireccionInfo").slideDown();
+    initDireccion();
+}
+
+function EsconderDireccion(){
+    $(".DireccionInfo").slideUp();
+    $(".MainInfo").show();
+    $(".MiniInfo").show();
+}
 
  function AccionPresionado(ob){
    let href = $(ob).attr("href");

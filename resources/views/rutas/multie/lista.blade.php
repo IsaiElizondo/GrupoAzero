@@ -20,12 +20,13 @@
                     
                     $telefonos = [];
                     if($order->telefono){
-                        $telefonos[] = $order->telefono;
+                        $telefono = preg_replace('/[^0-9]/', '', $order->telefono);
+                        $telefonos[] = '<a href="https://wa.me/52'.$telefono.'" target="_blank">'.$order->telefono.'</a>';
                     }
                     if($order->celular){
-                        $telefonos[] = $order->celular;
+                        $celular = preg_replace('/[^0-9]/', '', $order->celular);
+                        $telefonos[] = '<a href="https://wa.me/52'.$celular.'" target="_blank">'.$order->celular.'</a>';
                     }
-
                     $estatus = $order ? (\App\Status::find($order->status_id)->name ?? '-') : '-';
                 @endphp
                 <tr>
@@ -57,7 +58,7 @@
                             -
                         @endif
                     </td>
-                    <td>{{ count($telefonos) ? implode ('/', $telefonos) : '-'}}</td>
+                    <td>{!! count($telefonos) ? implode(' / ', $telefonos) : '-' !!}</td>
                     <td>{{ $order->office ?? '-' }}</td>
                     <td>{{ $pedido->created_at }}</td>
                     <td>{{ $estatus }}</td>

@@ -3999,6 +3999,265 @@ public function guardarEntregaProgramada(Request $request, $id){
 
 
 
+    //----------------------------------------------------------------//
+    //-------------------ACTUALIZAR DIRECCION-------------------------//
+    //----------------------------------------------------------------//
+
+    public function guardarDireccion(Request $request, $id){
+        /*LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
+            'pedido_id' => $id,
+            'request' => $request->all()
+        ]);
+        */
+        $user = auth()->user();
+        $now = now();
+
+        $pedido = Order::find($id);
+
+        if(!$pedido){
+            Feedback::error("Pedido no valido");
+            Feedback::j(0);
+            return;
+        }
+
+        /*
+        LaravelLog::info('PASO 2: pedido encontrado', [
+            'pedido_id' => $pedido->id,
+            'cliente_id' => $pedido->cliente_id,
+            'origin' => $pedido->origin,
+        ]);
+        */
+
+        if($pedido->origin === "R"){
+            Feedback::error("Este pedido no permite direccion");
+            Feedback::j(0);
+            return;
+        }
+
+        //LaravelLog::info('PASO 3: origin valido');
+
+        DB::beginTransaction();
+
+        try{
+            $estado_direccion = $request->estado_direccion;
+            /*
+            LaravelLog::info('PASO 4: estado_direccion recibido', [
+                'estado_direccion' => $estado_direccion
+            ]);
+            */
+            if($estado_direccion === 'recoge'){
+                $pedido->update([
+                    'estado_direccion' => 'recoge',
+                    'cliente_direccion_id' => null,
+                    'nombre_direccion' => null,
+                    'direccion' => null,
+                    'colonia' => null,
+                    'ciudad' => null,
+                    'estado' => null,
+                    'codigo_postal' => null,
+                    'celular' => null,
+                    'telefono' => null,
+                    'nombre_recibe' => null,
+                    'url_mapa' => null,
+                    'instrucciones' => null,
+                ]);
+
+                DB::commit();
+                Feedback::message("Pedido marcado como cliente recoge");
+                Feedback::j(1);
+                return;
+            }
+
+            //LaravelLog::info('PASO 5: no es recoge');
+
+            if($estado_direccion !== 'completa'){
+                Feedback::error("Estado de direccion no valido");
+                Feedback::j(0);
+                return;
+            }
+
+            //LaravelLog::info('PASO 6: estado_direccion es completa');
+
+            if(empty($pedido->cliente_id)){
+
+                //LaravelLog::info('PASO 7: flujo SIN cliente');
+
+                if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                    Feedback::error("Faltan datos obligatorios de la direccion");
+                    Feedback::j(0);
+                    return;
+                }
+
+                //LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+
+                $pedido->update([
+                    'estado_direccion' => 'completa',
+                    'cliente_direccion_id' => null,
+                    'nombre_direccion' => $request->nombre_direccion,
+                    'direccion' => $request->direccion,
+                    'colonia' => $request->colonia,
+                    'ciudad' => $request->ciudad,
+                    'estado' => $request->estado,
+                    'codigo_postal' => $request->codigo_postal,
+                    'celular' => $request->celular,
+                    'telefono' => $request->telefono,
+                    'nombre_recibe' => $request->nombre_recibe,
+                    'url_mapa' => $request->url_mapa,
+                    'instrucciones' => $request->instrucciones,
+                ]);
+
+                //LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+
+                DB::commit();
+                Feedback::message("Direccion guardada correctamente");
+                Feedback::j(1);
+                return;
+            }
+
+            /*
+            LaravelLog::info('PASO 10: flujo CON cliente', [
+                'cliente_id' => $pedido->cliente_id
+            ]);
+            */
+
+            $modo = $request->modo_direccion ?? 'nueva';
+            $direccionCliente = null;
+
+            LaravelLog::info('PASO 11: modo direccion',[
+                'modo' => $modo
+            ]);
+
+            if($modo === 'existente'){
+
+                if(empty($request->cliente_direccion_id)){
+                    Feedback::error("Debe seleccionar una direccion existente");
+                    Feedback::j(0);
+                    return;
+                }
+
+                $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+                if(!$direccionCliente){
+                    Feedback::error("Direccion no valida");
+                    Feedback::j(0);
+                    return;
+                }
+
+                LaravelLog::info('PASO 12: direccion cliente existente cargada', [
+                    'direccion_cliente_id' => $direccionCliente->id
+                ]);
+
+            }else{
+                if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                    Feedback::error("Faltan datos obligatorios de la direccion");
+                    Feedback::j(0);
+                    return;
+                }
+
+                if(!empty($pedido->cliente_direccion_id)){
+                    $direccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
+                }
+
+                if(!$direccionCliente){
+                    $direccionCliente = new DireccionCliente();
+                    $direccionCliente->cliente_id = $pedido->cliente_id;
+                }
+
+                $direccionCliente->nombre_direccion = $request->nombre_direccion;
+                $direccionCliente->direccion = $request->direccion;
+                $direccionCliente->colonia = $request->colonia;
+                $direccionCliente->ciudad = $request->ciudad;
+                $direccionCliente->estado = $request->estado;
+                $direccionCliente->codigo_postal = $request->codigo_postal;
+                $direccionCliente->celular = $request->celular;
+                $direccionCliente->telefono = $request->telefono;
+                $direccionCliente->nombre_recibe = $request->nombre_recibe;
+                $direccionCliente->url_mapa = $request->url_mapa;
+                $direccionCliente->instrucciones = $request->instrucciones;
+                $direccionCliente->estado_direccion = 'completa';
+                $direccionCliente->save();
+                
+                /*
+                LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
+                    'direccion_cliente_id' => $direccionCliente->id
+                ]);
+                */
+            }
+
+            if(!$direccionCliente){
+                Feedback::error("No se pudo determinar la direccion del cliente");
+                Feedback::j(0);
+                return;
+            }
+
+            $pedido->update([
+                'estado_direccion' => 'completa',
+                'cliente_direccion_id' => $direccionCliente->id,
+                'nombre_direccion' => $direccionCliente->nombre_direccion,
+                'direccion' => $direccionCliente->direccion,
+                'colonia' => $direccionCliente->colonia,
+                'ciudad' => $direccionCliente->ciudad,
+                'estado' => $direccionCliente->estado,
+                'codigo_postal' => $direccionCliente->codigo_postal,
+                'celular' => $direccionCliente->celular,
+                'telefono' => $direccionCliente->telefono,
+                'nombre_recibe' => $direccionCliente->nombre_recibe,
+                'url_mapa' => $direccionCliente->url_mapa,
+                'instrucciones' => $direccionCliente->instrucciones,
+            ]);
+
+            //LaravelLog::info('PASO 14: pedido actualizado CON cliente');
+
+            DB::commit();
+            Feedback::message("Direccion guardada correctamente");
+            Feedback::j(1);
+
+        }catch(\Exception $e){
+
+            DB::rollBack();
+
+            /*
+            LaravelLog::error('ERROR guardarDireccion', [
+                'msg' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+            */
+
+            Feedback::error("Error al guardar la direccion");
+            Feedback::j(0);
+            return;
+        }
+    }
+
+            
+
+
+    public function getDireccionCliente($id){
+        $direccion = DireccionCliente::find($id);
+
+        if(!$direccion){
+            return response()->json(['status' => 0]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => [
+                'nombre_direccion' => $direccion->nombre_direccion,
+                'direccion' => $direccion->direccion,
+                'colonia' => $direccion->colonia,
+                'ciudad' => $direccion->ciudad,
+                'estado' => $direccion->estado,
+                'codigo_postal' => $direccion->codigo_postal,
+                'celular' => $direccion->celular,
+                'telefono' => $direccion->telefono,
+                'nombre_recibe' => $direccion->nombre_recibe,
+                'url_mapa' => $direccion->url_mapa,
+                'instrucciones' => $direccion->instrucciones,
+            ]
+        ]);
+    }
+
     public function add_nota($id, Request $request){
         $id = Tools::_int($id);       
         $user = auth()->user();

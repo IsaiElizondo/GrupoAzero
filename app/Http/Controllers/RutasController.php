@@ -211,12 +211,12 @@ class RutasController extends Controller
                     'numero_pedido_ruta' => $this->correlativoPedidoRuta($ruta->id),
                     'cliente_codigo' => $clienteCodigo,
                     'cliente_nombre' => $clienteNombre,
-                    'partial_folio' => $request->partial_folio[$i],
-                    'smaterial_folio' => $request->smaterial_folio[$i],
-                    'partial_id' => $request->partial_id[$i] ?: null,
-                    'smaterial_id' => $request->smaterial_id[$i] ?: null,
-                    'tipo_subproceso' => $request->partial_id[$i] ? 'sp' : ($request->smaterial_id[$i] ? 'sm' : 'pedido'),
-                    'subproceso_id' => $request->partial_id[$i] ?: ($request->smaterial_id[$i] ?: null),
+                    'partial_folio' => $request->partial_folio[$i] ?? null,
+                    'smaterial_folio' => $request->smaterial_folio[$i] ?? null,
+                    'partial_id' => $request->partial_id[$i] ?? null,
+                    'smaterial_id' => $request->smaterial_id[$i] ?? null,
+                    'tipo_subproceso' => !empty($request->partial_id[$i]) ? 'sp' : (!empty($request->smaterial_id[$i]) ? 'sm' : 'pedido'),
+                    'subproceso_id' => $request->partial_id[$i] ?? ($request->smaterial_id[$i] ?? null),
                 ]);
 
 
@@ -302,6 +302,7 @@ class RutasController extends Controller
                 'order' AS tipo
             FROM orders o
             WHERE o.status_id NOT IN (6,7,8,9,10)
+            AND o.estado_direccion = 'completa'
             AND (
                     o.invoice_number LIKE '%{$term}%'
                 OR  o.invoice LIKE '%{$term}%'
@@ -323,7 +324,10 @@ class RutasController extends Controller
                 p.status_id,
                 'partial' AS tipo
             FROM partials p
+            INNER JOIN orders o ON o.id = p.order_id
             WHERE (p.status_4 = 1 OR p.status_5 = 1)
+            AND o.status_id NOT IN (6,7,8,9,10)
+            AND o.estado_direccion = 'completa'
             AND p.invoice LIKE '%{$term}%'
         )
 
@@ -341,7 +345,10 @@ class RutasController extends Controller
                 s.status_id,
                 'material' AS tipo
             FROM smaterial s
+            INNER JOIN orders o ON o.id = s.order_id
             WHERE (s.status_4 = 1 OR s.status_5 = 1)
+            AND o.status_id NOT IN (6,7,8,9,10)
+            AND o.estado_direccion = 'completa'
             AND s.code LIKE '%{$term}%'
         )
 
@@ -400,4 +407,20 @@ class RutasController extends Controller
         }
 
     }
+
+    public function updatePago(Request $request){
+        $validated = $request->validate([
+            'ruta_pedido_id' => ['required','exists:ruta_pedido,id'],
+            'estatus_pago' => ['required', Rule::in(['pagado','por_cobrar','credito'])],
+            'monto_por_cobrar' => ['required','numeric','between:0,99999999999.99'],
+        ]);
+
+        RutaPedido::where('id', $validated['ruta_pedido_id'])->update([
+            'estatus_pago' => $validated['estatus_pago'],
+            'monto_por_cobrar' => $validated['monto_por_cobrar'],
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
 }
