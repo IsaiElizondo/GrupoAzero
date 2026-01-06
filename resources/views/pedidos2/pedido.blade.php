@@ -157,108 +157,107 @@ var_dump($pedido);
             {{--// MODIFICACION DE DIRECCION --}} 
             {{--/////////////////////////////--}}
 
-            <fieldset class="DireccionInfo" style="display:none;">
-                <legend> Direccion del pedido </legend>
-                    <div id="formDireccionPedido" data-url="{{ route('guardarDireccion', $pedido->id) }}">
-                        <div class="FormRow">
-                            <label> Tipo de entrega</label>
-                            <select name="estado_direccion" id="estado_direccion" class="form-control">
-                                <option value="pendiente" {{ $pedido->estado_direccion == 'pendiente' ? 'selected' : ''}}>Direccion Pendiente </option>
-                                <option value="completa" {{ $pedido->estado_direccion == 'completa' ? 'selected' : ''}}> Direccion Completa </option>
-                                <option value="recoge" {{ $pedido->estado_direccion == 'recoge' ? 'selected' : ''}}> Cliente Recoge </option>
-                            </select>
-                        </div>
-
-                        @if(!empty($pedido->cliente_id))
+                <fieldset class="DireccionInfo" style="display:none;">
+                    <legend> Direccion del pedido </legend>
+                        <div id="formDireccionPedido" data-url="{{ route('guardar_direccion', $pedido->id) }}">
                             <div class="FormRow">
-                                <label> Direccion del cliente </label>
-                                <select name="modo_direccion" id="modo_direccion" class="form-control">
-                                    <option value="">-- Selecciona una opcion --</option>
-                                    <option value="existente"> Usar una direccion existente </option>
-                                    <option value="nueva"> Agregar nueva direccion nueva </option>
+                                <label> Tipo de entrega</label>
+                                <select name="estado_direccion" id="estado_direccion" class="form-control">
+                                    <option value="pendiente" {{ $pedido->estado_direccion == 'pendiente' ? 'selected' : ''}}>Direccion Pendiente </option>
+                                    <option value="completa" {{ $pedido->estado_direccion == 'completa' ? 'selected' : ''}}> Direccion Completa </option>
+                                    <option value="recoge" {{ $pedido->estado_direccion == 'recoge' ? 'selected' : ''}}> Cliente Recoge </option>
                                 </select>
                             </div>
 
-                            <div id="bloqueDireccionExistente" style="display:none;">
+                            @if(!empty($pedido->cliente_id))
                                 <div class="FormRow">
-                                    <label> Direcciones registradas </label>
-                                    <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
-                                        <option value="">-- Seleccione una direccion --</option>
-                                        @foreach($direccionesCliente as $dir)
-                                            <option value="{{ $dir->id }}"> 
-                                                {{ $dir->direccion }}
-                                            </option>
-                                        @endforeach
+                                    <label> Direccion del cliente </label>
+                                    <select name="modo_direccion" id="modo_direccion" class="form-control">
+                                        <option value="">-- Selecciona una opcion --</option>
+                                        <option value="existente"> Usar una direccion existente </option>
+                                        <option value="nueva"> Agregar nueva direccion nueva </option>
                                     </select>
                                 </div>
-                            </div>
-                        @endif
 
-                        <div id="bloqueDireccionCompleta" style="display:none;">
-                            <div class="FormRow">
-                                <label> Nombre de la direccion </label>
-                                <input type="text" name="nombre_direccion" class="form-control" value="{{ $pedido->nombre_direccion }}">
+                                <div id="bloqueDireccionExistente" style="display:none;">
+                                    <div class="FormRow">
+                                        <label> Direcciones registradas </label>
+                                        <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
+                                            <option value="">-- Seleccione una direccion --</option>
+                                            @foreach($direccionesCliente as $dir)
+                                                <option value="{{ $dir->id }}"> 
+                                                    {{ $dir->direccion }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div id="bloqueDireccionCompleta" style="display:none;">
+                                <div class="FormRow">
+                                    <label> Nombre de la direccion </label>
+                                    <input type="text" name="nombre_direccion" class="form-control" value="{{ $pedido->nombre_direccion }}">
+                                </div>
+                                
+                                <div class="FormRow">
+                                    <label> Direccion </label>
+                                    <input type="text" name="direccion" class="form-control" value="{{ $pedido->direccion }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Colonia </label>
+                                    <input type="text" name="colonia" class="form-control" value="{{ $pedido->colonia }}">
+                                </div>
+                                
+                                <div class="FormRow">
+                                    <label> Ciudad </label>
+                                    <input type="text" name="ciudad" class="form-control" value="{{ $pedido->ciudad }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Estado </label>
+                                    <input type="text" name="estado" class="form-control" value="{{ $pedido->estado }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Codigo Postal </label>
+                                    <input type="text" name="codigo_postal" class="form-control" value="{{ $pedido->codigo_postal }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Celular </label>
+                                    <input type="text" name="celular" class="form-control" value="{{ $pedido->celular }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Telefono </label>
+                                    <input type="text" name="telefono" class="form-control" value="{{ $pedido->telefono }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label>¿Quién recibe?</label>
+                                    <input type="text" name="nombre_recibe" class="form-control" value="{{ $pedido->nombre_recibe }}">
+                                </div>
+                                
+                                <div class="FormRow">
+                                    <label> URL Mapa</label>
+                                    <input type="text" name="url_mapa" class="form-control" value="{{ $pedido->url_mapa }}"> 
+                                </div>
+                                <div class="FormRow">
+                                    <label> Instrucciones </label>
+                                    <textarea name="instrucciones" class="form-control">{{ $pedido->instrucciones }}</textarea>
+                                </div>
                             </div>
                             
-                            <div class="FormRow">
-                                <label> Direccion </label>
-                                <input type="text" name="direccion" class="form-control" value="{{ $pedido->direccion }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Colonia </label>
-                                <input type="text" name="colonia" class="form-control" value="{{ $pedido->colonia }}">
-                            </div>
-                            
-                            <div class="FormRow">
-                                <label> Ciudad </label>
-                                <input type="text" name="ciudad" class="form-control" value="{{ $pedido->ciudad }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Estado </label>
-                                <input type="text" name="estado" class="form-control" value="{{ $pedido->estado }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Codigo Postal </label>
-                                <input type="text" name="codigo_postal" class="form-control" value="{{ $pedido->codigo_postal }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Celular </label>
-                                <input type="text" name="celular" class="form-control" value="{{ $pedido->celular }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Telefono </label>
-                                <input type="text" name="telefono" class="form-control" value="{{ $pedido->telefono }}">
-                            </div>
-
-                            <div class="FormRow">
-                                <label>¿Quién recibe?</label>
-                                <input type="text" name="nombre_recibe" class="form-control" value="{{ $pedido->nombre_recibe }}">
-                            </div>
-                            
-                            <div class="FormRow">
-                                <label> URL Mapa</label>
-                                <input type="text" name="url_mapa" class="form-control" value="{{ $pedido->url_mapa }}"> 
-                            </div>
-
-                            <div class="FormRow">
-                                <label> Instrucciones </label>
-                                <textarea name="instrucciones" class="form-control">{{ $pedido->instrucciones }}</textarea>
+                            <button type="button" id="btnGuardarDireccion" class="form-control">
+                                Guardar direccion
+                            </button>
+                            <div class="block">
+                                <input type="button" class="form-control" value="Cancelar" onclick="EsconderDireccion()"/>
                             </div>
                         </div>
-                        
-                        <button type="button" id="btnGuardarDireccion" class="form-control">
-                            Guardar direccion
-                        </button>
-                        <div class="block">
-                            <input type="button" class="form-control" value="Cancelar" onclick="EsconderDireccion()"/>
-                        </div>
-                    </div>
-            </fieldset>
+                </fieldset>
             
             
             {{--///////////////////////////////////--}}

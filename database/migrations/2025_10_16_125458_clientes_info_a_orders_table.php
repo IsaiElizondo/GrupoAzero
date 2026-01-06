@@ -17,6 +17,7 @@ return new class extends Migration
 
             $table->enum('estado_direccion', ['completa', 'pendiente', 'recoge'])->default('pendiente');
             $table->string('nombre_direccion', 50)->nullable();
+            $table->enum('tipo_residencia', ['industria', 'taller', 'residencial', 'obra'])->nullable();
             $table->string('nombre_cliente')->nullable();
             $table->string('direccion')->nullable();
             $table->string('ciudad', 100)->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->string('telefono', 20)->nullable();
             $table->string('nombre_recibe',100)->nullable();
             $table->string('url_mapa')->nullable();
+            $table->text('requerimientos_especiales')->nullable();
             $table->string('instrucciones')->nullable();
         });
     }

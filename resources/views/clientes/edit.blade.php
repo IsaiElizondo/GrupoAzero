@@ -72,6 +72,7 @@
                                                 return [
                                                     'id' => $d->id,
                                                     'nombre_direccion' => $d->nombre_direccion,
+                                                    'tipo_residencia' => $d->tipo_residencia,
                                                     'direccion' => $d->direccion,
                                                     'colonia' => $d->colonia,
                                                     'ciudad' => $d->ciudad,
@@ -103,6 +104,34 @@
                                                 <label class="col-sm-2 col-form-label">Nombre de la dirección</label>
                                                 <div class="col-sm-7">
                                                     <input class="form-control" name="direcciones[{{ $i }}][nombre_direccion]" type="text" placeholder="Nombre de la dirección" value="{{ $d['nombre_direccion'] ?? '' }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-2">
+                                                <label class="col-sm-2 col-form-label">Tipo de residencia</label>
+                                                <div class="col-sm-3">
+                                                    <select class="form-control"
+                                                            name="direcciones[{{ $i }}][tipo_residencia]"
+                                                            required>
+                                                        <option value="">Seleccione</option>
+
+                                                        <option value="residencia"
+                                                            {{ old("direcciones.$i.tipo_residencia", $d['tipo_residencia'] ?? '') == 'residencia' ? 'selected' : '' }}>
+                                                            Residencia
+                                                        </option>
+                                                        <option value="obra"
+                                                            {{ old("direcciones.$i.tipo_residencia", $d['tipo_residencia'] ?? '') == 'obra' ? 'selected' : '' }}>
+                                                            Obra
+                                                        </option>
+                                                        <option value="taller"
+                                                            {{ old("direcciones.$i.tipo_residencia", $d['tipo_residencia'] ?? '') == 'taller' ? 'selected' : '' }}>
+                                                            Taller
+                                                        </option>
+                                                        <option value="industria"
+                                                            {{ old("direcciones.$i.tipo_residencia", $d['tipo_residencia'] ?? '') == 'industria' ? 'selected' : '' }}>
+                                                            Industria
+                                                        </option>
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -140,14 +169,14 @@
 
                                                 <label class="col-sm-1 col-form-label text-right">Celular</label>
                                                 <div class="col-sm-3">
-                                                    <input class="form-control" name="direcciones[{{ $i }}][celular]" type="text" placeholder="Celular" value="{{ $d['celular'] ?? '' }}">
+                                                    <input type="text" maxlength="10" class="form-control" name="direcciones[{{ $i }}][celular]" value="{{ $d['celular'] ?? '' }}">
                                                 </div>
                                             </div>
 
                                             <div class="row mt-2">
                                                 <label class="col-sm-2 col-form-label">Teléfono</label>
                                                 <div class="col-sm-3">
-                                                    <input class="form-control" name="direcciones[{{ $i }}][telefono]" type="text" placeholder="Teléfono" value="{{ $d['telefono'] ?? '' }}">
+                                                    <input type="text" maxlength="10" class="form-control" name="direcciones[{{ $i }}][telefono]" value="{{ $d['telefono'] ?? '' }}">
                                                 </div>
                                                 <label class="col-sm-1 col-form-label text-right">¿Quién recibe?</label>
                                                 <div class="col-sm-3">
@@ -163,12 +192,26 @@
                                             </div>
 
                                             <div class="row mt-2">
+                                                <label class="col-sm-2 col-form-label">Requerimientos especiales</label>
+                                                <div class="col-sm-7">
+                                                    @foreach($requerimientos as $Req)
+                                                        <div class="form-check">
+                                                            <label class="form-check-label">
+                                                                <input class="form-check-input" type="checkbox" name="direcciones[{{ $i }}][requerimientos][]" value="{{ $Req->id }}" {{ !empty($d['id']) && in_array($Req->id, $requerimientosPorDireccion[$d['id']] ?? []) ? 'checked' : '' }}>
+                                                                {{ $Req->nombre }}
+                                                                <span class="form-check-sign"><span class="check"></span></span>
+                                                            </label>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-2">
                                                 <label class="col-sm-2 col-form-label">Instrucciones</label>
                                                 <div class="col-sm-7">
                                                     <textarea class="form-control" name="direcciones[{{ $i }}][instrucciones]" rows="2" placeholder="Referencias, horarios de entrega, etc...">{{ $d['instrucciones'] ?? '' }}</textarea>
                                                 </div>
                                             </div>
-
                                         </div>
                                     @endforeach
                                 </div>
@@ -191,6 +234,17 @@
                                                 <input class="form-control" name="direcciones[__INDEX__][nombre_direccion]" type="text" placeholder="Nombre de la dirección">
                                             </div>
                                         </div>
+
+                                        <select class="form-control"
+                                                name="direcciones[__INDEX__][tipo_residencia]"
+                                                required>
+                                            <option value="">Seleccione</option>
+                                            <option value="residencia">Residencia</option>
+                                            <option value="obra">Obra</option>
+                                            <option value="taller">Taller</option>
+                                            <option value="industria">Industria</option>
+                                        </select>
+
 
                                         <div class="row mt-2">
                                             <label class="col-sm-2 col-form-label">Dirección</label>
@@ -226,14 +280,15 @@
 
                                             <label class="col-sm-1 col-form-label text-right">Celular</label>
                                             <div class="col-sm-3">
-                                                <input class="form-control" name="direcciones[__INDEX__][celular]" type="text" placeholder="Celular">
+                                                <input type="text" maxlength="10" class="form-control" name="direcciones[__INDEX__][celular]">
                                             </div>
                                         </div>
 
                                         <div class="row mt-2">
                                             <label class="col-sm-2 col-form-label">Teléfono</label>
                                             <div class="col-sm-3">
-                                                <input class="form-control" name="direcciones[__INDEX__][telefono]" type="text" placeholder="Teléfono">
+                                                <input type="text" maxlength="10" class="form-control" name="direcciones[__INDEX__][telefono]">
+
                                             </div>
 
                                             <label class="col-sm-1 col-form-label text-right">¿Quién recibe?</label>
@@ -246,6 +301,21 @@
                                             <label class="col-sm-2 col-form-label">Mapa (URL)</label>
                                             <div class="col-sm-7">
                                                 <input class="form-control" name="direcciones[__INDEX__][url_mapa]" type="text" placeholder="https://maps...">
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-2">
+                                            <label class="col-sm-2 col-form-label">Requerimientos especiales</label>
+                                            <div class="col-sm-7">
+                                                @foreach($requerimientos as $req)
+                                                    <div class="form-check">
+                                                        <label class="form-check-label">
+                                                            <input class="form-check-input" type="checkbox" name="direcciones[__INDEX__][requerimientos][]" value="{{ $req->id }}">
+                                                            {{ $req->nombre }}
+                                                            <span class="form-check-sign"><span class="check"></span></span>
+                                                        </label>
+                                                    </div>
+                                                @endforeach
                                             </div>
                                         </div>
 
@@ -275,44 +345,44 @@
 @endsection
 
 @push('js')
-<script>
-(function() {
-    const wrapper = document.getElementById('direcciones-wrapper');
-    const btnAdd = document.getElementById('btn-add-direccion');
-    const tpl = document.getElementById('direccion-template')?.innerHTML || '';
+    <script>
+    (function(){
+        const wrapper = document.getElementById('direcciones-wrapper');
+        const btnAdd = document.getElementById('btn-add-direccion');
+        const tpl = document.getElementById('direccion-template')?.innerHTML || '';
 
-    function nextIndex() {
-        const items = wrapper.querySelectorAll('.direccion-item');
-        let max = -1;
-        items.forEach(el => {
-            const idx = parseInt(el.getAttribute('data-index'), 10);
-            if (!isNaN(idx) && idx > max) max = idx;
-        });
-        return max + 1;
-    }
-
-    function addDireccion() {
-        if (!tpl) return;
-        const idx = nextIndex();
-        const html = tpl.replaceAll('__INDEX__', idx).replaceAll('__HUMAN_INDEX__', idx + 1);
-        const temp = document.createElement('div');
-        temp.innerHTML = html.trim();
-        const node = temp.firstChild;
-        wrapper.appendChild(node);
-        bindRemove(node);
-    }
-
-    function bindRemove(scope) {
-        (scope || document).querySelectorAll('.btn-remove-direccion').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const card = this.closest('.direccion-item');
-                if (card) card.remove();
+        function nextIndex(){
+            const items = wrapper.querySelectorAll('.direccion-item');
+            let max = -1;
+            items.forEach(el =>{
+                const idx = parseInt(el.getAttribute('data-index'), 10);
+                if (!isNaN(idx) && idx > max) max = idx;
             });
-        });
-    }
+            return max + 1;
+        }
 
-    if (btnAdd) btnAdd.addEventListener('click', addDireccion);
-    bindRemove(document);
-})();
-</script>
+        function addDireccion(){
+            if (!tpl) return;
+            const idx = nextIndex();
+            const html = tpl.replaceAll('__INDEX__', idx).replaceAll('__HUMAN_INDEX__', idx + 1);
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const node = temp.firstChild;
+            wrapper.appendChild(node);
+            bindRemove(node);
+        }
+
+        function bindRemove(scope) {
+            (scope || document).querySelectorAll('.btn-remove-direccion').forEach(btn =>{
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.direccion-item');
+                    if (card) card.remove();
+                });
+            });
+        }
+
+        if(btnAdd) btnAdd.addEventListener('click', addDireccion);
+        bindRemove(document);
+    })();
+    </script>
 @endpush

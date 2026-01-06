@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('index', function (Blueprint $table) {
+        Schema::create('requerimientos_especiales', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre', 100);
+            $table->string('slug', 100)->unique();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('index');
+        Schema::dropIfExists('requerimientos_especiales');
     }
 };

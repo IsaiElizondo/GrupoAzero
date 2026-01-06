@@ -288,253 +288,7 @@ class Pedidos2Controller extends Controller
     }
 
 
-    //----------------------------------------------------------------------------------------------------------//
-    //------------------------------- GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA----------------------------------//
-    //---------------------------------------------------------------------------------------------------------//
-
-
-    public function guardarEtiquetas(Request $request, $id){
     
-        $user = auth()->user();
-
-        $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
-
-        //Obtener etiquetas ya activas
-        $etiquetasAsignadas = DB::table('etiqueta_pedido')
-            ->where('pedido_id', $id)
-            ->pluck('etiqueta_id');
-
-        //Obtener las etiquetas nuevas de fabricación
-        $etiquetasPermitidas = DB::table('etiquetas')
-            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
-            ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
-            ->pluck('id');
-
-        //Etiquetas que no puede modificar
-        $etiquetasNoModificables = $etiquetasAsignadas->diff($etiquetasPermitidas);
-
-        //Etiquetas que si puede modificar
-        $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
-
-        $eliminadas = $etiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
-        $nuevas = $etiquetasFiltradas->diff($etiquetasAsignadas);
-
-        //Eliminar solo las etiquetas Permitidas
-        DB::table('etiqueta_pedido')
-            ->where('pedido_id', $id)
-            ->whereIN('etiqueta_id', $etiquetasPermitidas)
-            ->delete();
-
-        //Volver a poner las nuevas etiquetas permitidas
-        foreach($etiquetasFiltradas as $etiqueta_id){
-
-            DB::table('etiqueta_pedido')->insert([
-
-                'pedido_id' => $id,
-                'etiqueta_id' => $etiqueta_id,
-                'created_at' => now(),
-                'updated_at' => now(),
-
-            ]);
-
-        }
-
-        //Volver a poner las etiquetas no permitidas
-        foreach($etiquetasNoModificables as $etiqueta_id){
-
-            DB::table('etiqueta_pedido')->insert([
-
-                'pedido_id' => $id,
-                'etiqueta_id' => $etiqueta_id,
-                'created_at' => now(),
-                'updated_at' => now(),
-                
-            ]);
-
-        }
-
-        //Registrar en el historial
-        foreach($nuevas as $nueva){
-
-            $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
-
-            DB::table('logs')->insert([
-
-                'order_id' => $id,
-                'user_id' =>$user->id,
-                'action' => "Añadió etiqueta",
-                'status' => 'Etiqueta añadida: ' .$nombreEtiqueta,
-                'created_at' => now(),
-                'updated_at' => now(),
-
-
-            ]);
-
-        }
-
-        foreach($eliminadas as $eliminada){
-
-            $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
-
-            DB::table('logs')->insert([
-
-                'order_id' => $id,
-                'user_id' =>$user->id,
-                'action' => "Eliminó etiqueta",
-                'status' => 'Etiqueta eliminada: ' .$nombreEtiqueta,
-                'created_at' => now(),
-                'updated_at' => now(),
-
-            ]);
-
-        }
-
-        return redirect()->back()->with('success', 'Etiquetas actualizadas correctamente.');
-
-    }
-
-
-    //----------------------------------------------------------------------------------------------------------//
-    //-------------------------------FIN GUARDAR ETIQUETAS EN LA TABLA INTERMEDIA------------------------------//
-    //---------------------------------------------------------------------------------------------------------//
-
-
-
-
-
-    //----------------------------------------------------------------------------------------------------------//
-    //----------------------CRUD de etiquetas (respetando roles, vistas y retorno limpio)----------------------//
-    //----------------------------------------------------------------------------------------------------------//
-
-public function indexEtiquetas()
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    $etiquetas = DB::table('etiquetas')->get();
-    $activePage = 'etiquetas';
-    $titlePage = 'Gestión de Etiquetas';
-
-    return view('pedidos2.etiquetas.index', compact('etiquetas', 'activePage', 'titlePage'));
-}
-
-
-
-
-public function createEtiqueta()
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-    
-    
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    $activePage = 'etiquetas';
-    $titlePage = 'Nueva Etiqueta';
-    return view('pedidos2.etiquetas.create', compact('activePage', 'titlePage'));
-}
-
-
-
-
-public function storeEtiqueta(Request $request)
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    $request->validate([
-        'nombre' => 'required|unique:etiquetas|max:255',
-        'descripcion' => 'nullable|max:255',
-    ]);
-
-    $color = $request->color ?: sprintf('#%06X', mt_rand(0, 0xFFFFFF));
-
-    DB::table('etiquetas')->insert([
-        'nombre' => $request->nombre,
-        'descripcion' => $request->descripcion,
-        'color' => $color,
-        'created_at' => now(),
-        'updated_at' => now()
-    ]);
-
-    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta creada correctamente.');
-}
-
-
-
-
-public function editEtiqueta($id)
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    $etiqueta = DB::table('etiquetas')->where('id', $id)->first();
-    $activePage = 'etiquetas';
-    $titlePage = 'Editar Etiqueta';
-
-    return view('pedidos2.etiquetas.edit', compact('etiqueta', 'activePage', 'titlePage'));
-}
-
-
-
-
-public function updateEtiqueta(Request $request, $id)
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    $request->validate([
-        'nombre' => 'required|max:255|unique:etiquetas,nombre,' . $id,
-        'descripcion' => 'nullable|max:255',
-    ]);
-
-    DB::table('etiquetas')->where('id', $id)->update([
-        'nombre' => $request->nombre,
-        'descripcion' => $request->descripcion,
-        'color' => $request->color,
-        'updated_at' => now()
-    ]);
-
-    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta actualizada correctamente.');
-}
-
-
-
-
-public function deleteEtiqueta($id)
-{
-    $user = auth()->user();
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
-        return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
-
-    DB::table('etiquetas')->where('id', $id)->delete();
-    return redirect()->route('etiquetas.index')->with('success', 'Etiqueta eliminada correctamente.');
-}
-//-----------------------------------------------------------------------------------------------------------//
-//------------------------------ FIN DEL CRUD DE ETIQUETAS---------------------------------------------------//
-//-----------------------------------------------------------------------------------------------------------//
 
 
 
@@ -1192,91 +946,777 @@ public function guardarEntregaProgramada(Request $request, $id){
         return view('pedidos2.masinfo', compact('id','pedido',"logs"));      
     }
 
+    //======================================================//
+    //======== FLUJO DE ETIQUETAS | CATALOGO | CRUD ========//
+    //======================================================//
 
-    public function accion($id, Request $request){ 
+        //--------------------------------------------------//
+        //-------- GUARDADO CONTROLADO DE ETIQUETAS --------//
+        //--------------------------------------------------//
 
-        $user = User::find(auth()->user()->id);
+            public function guardarEtiquetas(Request $request, $id){
+            
+                $user = auth()->user();
 
-        $id = Tools::_string($id,16);
-        
-       // $user = User::find(auth()->user()->id);
-        $userOffice = !empty($user->office) ? $user->office : "San Pablo";
+                $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
-        $accion = isset($request->a) ? $request->a : "";
-        $paso = isset($request->paso) ?Tools::_int( $request->paso) : 1;
+                //Obtener etiquetas ya activas
+                $etiquetasAsignadas = DB::table('etiqueta_pedido')
+                    ->where('pedido_id', $id)
+                    ->pluck('etiqueta_id');
 
-        $order = Order::find($id);
-        //$order = !empty($order) ? $order[0] : [];
+                //Obtener las etiquetas nuevas de fabricación
+                $etiquetasPermitidas = DB::table('etiquetas')
+                    ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                    ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
+                    ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
+                    ->pluck('id');
 
-        if($accion == "recibido"){
+                //Etiquetas que no puede modificar
+                $etiquetasNoModificables = $etiquetasAsignadas->diff($etiquetasPermitidas);
 
-            if($order && !$order->recibido_embarques_at){
+                //Etiquetas que si puede modificar
+                $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
 
-                $order->recibido_embarques_at = now();
-                $order->status_id = 2;
-                $order->save();
-                
+                $eliminadas = $etiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
+                $nuevas = $etiquetasFiltradas->diff($etiquetasAsignadas);
+
+                //Eliminar solo las etiquetas Permitidas
+                DB::table('etiqueta_pedido')
+                    ->where('pedido_id', $id)
+                    ->whereIN('etiqueta_id', $etiquetasPermitidas)
+                    ->delete();
+
+                //Volver a poner las nuevas etiquetas permitidas
+                foreach($etiquetasFiltradas as $etiqueta_id){
+
+                    DB::table('etiqueta_pedido')->insert([
+                        'pedido_id' => $id,
+                        'etiqueta_id' => $etiqueta_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                }
+
+                //Volver a poner las etiquetas no permitidas
+                foreach($etiquetasNoModificables as $etiqueta_id){
+
+                    DB::table('etiqueta_pedido')->insert([
+                        'pedido_id' => $id,
+                        'etiqueta_id' => $etiqueta_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                }
+
+                //Registrar en el historial
+                foreach($nuevas as $nueva){
+
+                    $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
+
+                    DB::table('logs')->insert([
+                        'order_id' => $id,
+                        'user_id' =>$user->id,
+                        'action' => "Añadió etiqueta",
+                        'status' => 'Etiqueta añadida: ' .$nombreEtiqueta,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                }
+
+                foreach($eliminadas as $eliminada){
+
+                    $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
+
+                    DB::table('logs')->insert([
+                        'order_id' => $id,
+                        'user_id' =>$user->id,
+                        'action' => "Eliminó etiqueta",
+                        'status' => 'Etiqueta eliminada: ' .$nombreEtiqueta,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                }
+
+                return redirect()->back()->with('success', 'Etiquetas actualizadas correctamente.');
+
             }
 
-            return view("pedidos2/accion/recibido",compact("id"));
+        //-----------------------------------------------------//
+        //-------- FIN DE GUARDADO SEGURO DE ETIQUETAS --------//
+        //----------------------------------------------------//
+
+
+
+        //-------------------------------------------------------------------------------//
+        //-------- CRUD de etiquetas (respetando roles, vistas y retorno limpio) --------//
+        //-------------------------------------------------------------------------------//
+
+            public function index_etiquetas(){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+
+                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                $etiquetas = DB::table('etiquetas')->get();
+                $activePage = 'etiquetas';
+                $titlePage = 'Gestión de Etiquetas';
+
+                return view('pedidos2.etiquetas.index', compact('etiquetas', 'activePage', 'titlePage'));
+            }
+
+
+
+
+            public function crear_etiqueta(){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+                
+                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                $activePage = 'etiquetas';
+                $titlePage = 'Nueva Etiqueta';
+                return view('pedidos2.etiquetas.create', compact('activePage', 'titlePage'));
+            }
+
+
+            public function guardar_etiqueta(Request $request){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+
+                if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                $request->validate([
+                    'nombre' => 'required|unique:etiquetas|max:255',
+                    'descripcion' => 'nullable|max:255',
+                ]);
+
+                $color = $request->color ?: sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+
+                DB::table('etiquetas')->insert([
+                    'nombre' => $request->nombre,
+                    'descripcion' => $request->descripcion,
+                    'color' => $color,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                return redirect()->route('etiquetas.index')->with('success', 'Etiqueta creada correctamente.');
+            }
+
+
+            public function editar_etiqueta($id){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+
+                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                $etiqueta = DB::table('etiquetas')->where('id', $id)->first();
+                $activePage = 'etiquetas';
+                $titlePage = 'Editar Etiqueta';
+
+                return view('pedidos2.etiquetas.edit', compact('etiqueta', 'activePage', 'titlePage'));
+            }
+
+
+            public function actualizar_etiqueta(Request $request, $id){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+
+                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                $request->validate([
+                    'nombre' => 'required|max:255|unique:etiquetas,nombre,' . $id,
+                    'descripcion' => 'nullable|max:255',
+                ]);
+
+                DB::table('etiquetas')->where('id', $id)->update([
+                    'nombre' => $request->nombre,
+                    'descripcion' => $request->descripcion,
+                    'color' => $request->color,
+                    'updated_at' => now()
+                ]);
+
+                return redirect()->route('etiquetas.index')->with('success', 'Etiqueta actualizada correctamente.');
+            }
+
+
+            public function borrar_etiqueta($id){
+                $user = auth()->user();
+                $rolesPermitidos = [1, 4];
+
+                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                    return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
+                }
+
+                DB::table('etiquetas')->where('id', $id)->delete();
+                return redirect()->route('etiquetas.index')->with('success', 'Etiqueta eliminada correctamente.');
+            }
+        //--------------------------------------------//
+        //-------- FIN DEL CRUD DE ETIQUETAS --------//
+        //------------------------------------------//
+    
+    //============================================//
+    //======== FIN DEL FLUJO DE ETIQUETAS ========//
+    //============================================//
+
+
+    //==================================================//
+    //====== FLUJO DE CAMBIO DE ESTATUS(ORDENADO) ======//
+    //==================================================//
+
+        public function accion($id, Request $request){ 
+
+            $user = User::find(auth()->user()->id);
+
+            $id = Tools::_string($id,16);
+            
+        // $user = User::find(auth()->user()->id);
+            $userOffice = !empty($user->office) ? $user->office : "San Pablo";
+
+            $accion = isset($request->a) ? $request->a : "";
+            $paso = isset($request->paso) ?Tools::_int( $request->paso) : 1;
+
+            $order = Order::find($id);
+            //$order = !empty($order) ? $order[0] : [];
+
+            if($accion == "recibido"){
+
+                if($order && !$order->recibido_embarques_at){
+
+                    $order->recibido_embarques_at = now();
+                    $order->status_id = 2;
+                    $order->save();
+                    
+                }
+
+                return view("pedidos2/accion/recibido",compact("id"));
+
+            }
+            if($accion == "fabricado"){
+
+                return view("pedidos2/accion/fabricado",compact("id"));
+            }
+            if($accion == "enpuerta"){
+                $shipment = Shipment::where(["order_id"=>$id])->first();
+                return view("pedidos2/accion/enpuerta",compact("id","order","paso","shipment"));
+            }
+            if($accion == "noexitosa"){
+
+                return view("pedidos2/accion/noexitosa", compact("id", "order", "paso"));
+            }
+            if($accion == "entregar"){
+            // $this->set_accion_entregar($request, $id);
+                return view("pedidos2/accion/entregar",compact("id","order","paso"));
+            }
+
+            if($accion == "surters"){
+                $stockreq = Stockreq::where(["order_id"=>$id])->first();
+                return view("pedidos2/accion/surters",compact("id","order","paso","stockreq"));
+            }
+
+            if($accion == "desauditoria"){
+
+                return view("pedidos2/accion/desauditoria",compact("id","order","paso"));  
+            }
+
+            if($accion == "audita"){
+
+                return view("pedidos2/accion/audita",compact("id","order","paso"));  
+            }
+
+            /*
+            if($accion == "refacturar"){
+
+                return view("pedidos2/accion/refacturar",compact("id","order","paso"));
+            }
+
+            if($accion == "devolucion"){
+
+                return view("pedidos2/accion/devolucion",compact("id","order","paso"));
+            }
+            */
+
+            /*
+            if($accion == "parcial"){
+
+                return view("pedidos2/accion/parcial",compact("id","order","paso"));
+            }
+            */
+
+            var_dump($id);
+            var_dump($request->a);
+        }
+
+
+
+        //-------------------------------------------//
+        //-------- EN PUERTA | MARCAR PEDIDO --------//
+        //-------------------------------------------//
+
+            function set_accion_enpuerta(Request $request, int $id){
+                $paso = isset($request->paso) ? intval($request->paso) : 1; 
+                $user = auth()->user();
+                
+                $type= isset($request->type) ? (int)($request->type) : 1;
+        
+                $entregas = [1=>"Entrega chofer interno",2=>"Cliente recoge"];
+        
+                Order::where(["id"=>$id])->update( ["status_id" => 5,"status_5" => 1, "updated_at"=>date("Y-m-d H:i:s") ] );
+
+                Shipment::create([
+                    'file' => '',
+                    "order_id" => intval($id),
+                    "type" => $type,
+                    "created_at" => date("Y-m-d H:i:s"),
+                    "updated_at" => date("Y-m-d H:i:s")
+                ]);
+
+                Pedidos2::Log($id,"En Puerta", "El pedido pasó por puerta. ".$entregas[$type], 5, $user);  
+
+                Feedback::custom("url", url("pedidos2/accion/$id?a=enpuerta&paso=2"));
+                Feedback::j(2);
+                return;
+            }
+        //-------------------------------------------//
+        //-------- FIN DEL ESTATUS EN PUERTA --------//
+        //-------------------------------------------//
+
+
+
+        //------------------------------------------------------------------------------//
+        //-------- QUITAR ESTATUS EN PUERTA | REGRESAR A RECIBIDO POR EMBARQUES --------//
+        //------------------------------------------------------------------------------//
+
+            public function set_accion_noexitosa($id, Request $request){
+
+                $id = Tools::_int($id);
+                $user = auth()->user();
+
+                $order = Order::where("id", $id)->first();
+
+                if(!$order || $order->status_id != 5){
+                    abort(403, "Pedido iválido o sin estatus 'En Puerta'");
+                }
+
+                $motivo = !empty($request->motivo) ? Tools::_string($request->motivo, 100):"";
+                $observaciones = !empty($request->observaciones) ? Tools::_string($request->observaciones, 200) : "";
+
+                if(empty($motivo)){
+                    return back()->with("error", "Debes seleccionar un motivo.");
+                }
+
+                $nuevoStatus = 2;
+                Order::where("id", $id)->update([
+                    "status_id" => $nuevoStatus,
+                    "status_5" => 0,
+                    "status_6" => 0,
+                    "updated_at" => now()
+                ]);
+
+                Pedidos2::Log(
+                    $id,
+                    "Entrega no exitosa",
+                    "Se marcó como entrega no exitosa el pedido'". Pedidos2::CodigoDe($order) . "'. Motivo: " . $motivo,
+                    $nuevoStatus,
+                    $user
+                );
+
+                if(!empty($observaciones)){
+                    Pedidos2::Log(
+                        $id,
+                        "Observaciones entrega no exitosa",
+                        "Comentario:" . $observaciones,
+                        $nuevoStatus,
+                        $user
+                    );
+                }
+
+                return redirect("pedidos2/pedido/" . $order->id)->with("succes", "Entrega no exitosa registrada correctamente.");
+
+            }
+
+        //-----------------------------------------//
+        //-------- FIN DE QUITAR EN PUERTA --------//
+        //-----------------------------------------//
+
+
+        
+        //------------------------------------------//
+        //-------- ENTREGAR | MARCAR PEDIDO --------//
+        //------------------------------------------//
+
+            function set_accion_entregar(int $id,Request $request){
+                $user = auth()->user();
+                
+                Order::where(["id"=>$id])->update( ["status_id" => 6, "status_6"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
+
+                $order = Order::where("id",$id)->first();
+                $codigo = Pedidos2::CodigoDe($order);
+
+                Pedidos2::Log($id,"Entregado", "El pedido '$codigo' fue entregado", 6, $user);
+                
+                Feedback::json_service(1);
+            }
+        
+        //---------------------------------//
+        //-------- FIN DE ENTREGAR --------//
+        //---------------------------------//
+
+
+        //-----------------------------------------------------------------//
+        //-------- RECIBIDO X AUDITORIA | MARCAR PEDIDO | QUITARLO --------//
+        //-----------------------------------------------------------------//
+            function set_accion_audita(int $id,Request $request){
+                $user = auth()->user();
+                
+                Order::where(["id"=>$id])->update( ["status_id" => 10, "status_10"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
+
+                $order = Order::where("id",$id)->first();
+                $codigo = Pedidos2::CodigoDe($order);
+
+                Pedidos2::Log($id,"Recibido x auditoria", "El pedido '$codigo' fue recibido por auditoria", 10, $user);
+                
+                Feedback::json_service(1);
+            }
+
+            public function set_accion_desauditoria($id, Request $request){
+                $id = Tools::_int($id);       
+                $user = auth()->user();
+
+                $order = Order::where("id",$id)->first();
+
+                $comentario = !empty($request->comentario) ? Tools::_string($request->comentario,162) : "";
+
+                    $maxStatus=3;
+                    for($i=$maxStatus; $i < 9 ; $i++){
+                        if(isset($order->{"status_".$i}) && $order->{"status_".$i}==1){
+                            $maxStatus=$i;
+                        }
+                    }
+
+                $estatusesor = Status::all();
+                $estatuses = Tools::catalogo($estatusesor,"id","name");
+                
+                Order::where("id",$id)->update(["status_id"=>$maxStatus,"status_10"=>0]);
+
+                Pedidos2::Log($id,"Deshacer Auditoria", "Se revirtió '".Pedidos2::CodigoDe($order). "' desde auditoria. Nuevo estatus: ".( isset($estatuses[$maxStatus])?$estatuses[$maxStatus]:"?" ), $maxStatus,$user);
+                Pedidos2::Log($id,"Deshacer Auditoria","Comentario: ".$comentario,$maxStatus,$user);
+                
+                return redirect("pedidos2/pedido/".$order->id);
+            }
+
+        //---------------------------------------//
+        //-------- FIN ESTATUS AUDITORIA --------//
+        //---------------------------------------//
+
+
+
+        //-----------------------------------------------//
+        //-------- CANCELAR PEDIDO | DESCANCELAR --------//
+        //-----------------------------------------------//
+            public function cancelar($id, Request $request){
+                $user = auth()->user();
+            // $hashGet = isset($request->hash) ? $request->hash : "";
+                $orders = Order::where(["id"=>$id])->get()->toArray();
+                $order = !empty($orders) ? $orders[0] : [] ;
+
+                if(!empty($order)){
+                    Order::where(["id"=>$id])->update(["status_id" => 7, "status_7"=>1 ,
+                    "updated_at"=>date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s")]);
+                    Pedidos2::Log($id,"Cancelar","El pedido fue cancelado",7,$user);
+                }
+                return redirect("pedidos2/pedido/$id");
+            }
+
+            public function descancelar($id, Request $request){
+                // $hashGet = isset($request->hash) ? $request->hash : "";
+                $orders = Order::where(["id"=>$id])->get()->toArray();
+                $order = !empty($orders) ? $orders[0] : [] ;
+
+                $user = auth()->user();
+
+                if(!empty($order)){
+                    $logs = Log::where(["order_id"=>$id])->orderBy("created_at", "DESC")->limit(1)->get();
+                    $log = !empty($logs) ? $logs[0] : [] ;
+                    $sid = (!empty($log) && !empty($log["status_id"]) && $log["status_id"] != 7) ? $log["status_id"] : 1;
+            
+                    Order::where(["id"=>$id])->update(["status_id" => $sid, "status_7"=>0, "updated_at"=>date("Y-m-d H:i:s")]);
+
+                    Pedidos2::Log($id,"Descancelar","El pedido estaba cancelado pero fue recuperado",$sid,$user);
+                }
+                return redirect("pedidos2/pedido/$id");
+            }
+        
+        //---------------------------------//
+        //-------- FIN DE CANCELAR --------//
+        //---------------------------------//
+
+    //==========================================//
+    //======== FIN DEL FLUJO DE ESTATUS ========//
+    //==========================================//
+    
+    
+
+    //=================================================================================//
+    //======== DEVULUCIONES PARCIALES(NUEVO) | MARCAR ESTATUS | QUITAR ESTATUS ========//
+    //=================================================================================//
+
+
+        public function devolucion_parcial_nueva($order_id){
+
+            $order = Order::findOrfail($order_id);
+            $user = auth()->user();
+
+            return view('pedidos2.devoluciones_parciales.nuevo', compact('order', 'user'));
 
         }
-        if($accion == "fabricado"){
 
-            return view("pedidos2/accion/fabricado",compact("id"));
+
+
+        public function devolucion_parcial_guardar(Request $request, $order_id){
+
+            $request->validate([
+
+                'folio' => 'required|string|max:100',
+                'motivo' => 'required|in:Error del Cliente,Error Interno',
+                'descripcion' => 'nullable|string|max:300',
+                'tipo' => 'required|in:total,parcial',
+                'archivos' => 'required|array|min:1|max:10',
+                'archivos.*' => 'file|mimes:pdf,jpg,jpeg,png|max:15360',
+            
+            ]);
+
+            $devolucion = DevolucionParcial::create([
+
+                'order_id'   => $order_id,
+                'folio'      => $request->folio,
+                'motivo'     => $request->motivo,
+                'descripcion'=> $request->descripcion,
+                'tipo'       => $request->tipo,
+                'file'       => '',
+                'created_by' => auth()->id(),
+            
+            ]);
+
+            if ($request->hasFile('archivos')){
+
+                foreach ($request->file('archivos') as $archivo){
+                    if (!Storage::exists('public/DevolucionesParciales')) {
+                        Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
+                    }
+
+                    $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
+                    $stored   = $archivo->storeAs('public/DevolucionesParciales', $fileName);
+                    $filePath = str_replace('public/', '', $stored);
+
+                    DevolucionParcialArchivos::create([
+                        'devolucion_parcial_id' => $devolucion->id,
+                        'file' => $filePath,
+                    ]);
+                }
+
+            }
+
+            if ($request->tipo == 'total'){
+                Order::where('id', $order_id)->update([
+                    'status_id'=>9,
+                    'updated_at' => now()
+                ]);
+
+                Pedidos2::Log($order_id, "Devolucion Total", "Se registró una devolución Total", 9, auth()->user());
+
+            }else{
+                Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
+            }
+
+            return response()->json(['status' => 1]);
+            
         }
-        if($accion == "enpuerta"){
-            $shipment = Shipment::where(["order_id"=>$id])->first();
-            return view("pedidos2/accion/enpuerta",compact("id","order","paso","shipment"));
-        }
-        if($accion == "noexitosa"){
 
-            return view("pedidos2/accion/noexitosa", compact("id", "order", "paso"));
-        }
-        if($accion == "entregar"){
-           // $this->set_accion_entregar($request, $id);
-            return view("pedidos2/accion/entregar",compact("id","order","paso"));
-        }
 
-        if($accion == "surters"){
-            $stockreq = Stockreq::where(["order_id"=>$id])->first();
-            return view("pedidos2/accion/surters",compact("id","order","paso","stockreq"));
+
+
+        public function devoluciones_parciales_lista($order_id){
+
+            $lista = DevolucionParcial::where('order_id', $order_id)->orderBy('id', 'desc')->get();
+            $user = auth()->user();
+
+            return view('pedidos2.devoluciones_parciales.lista', compact('lista', 'user'));
+
         }
 
-        if($accion == "desauditoria"){
 
-            return view("pedidos2/accion/desauditoria",compact("id","order","paso"));  
+
+        public function devolucion_parcial_editar($id){
+
+            $user = auth()->user();
+
+            if(!in_array($user->role->name, ["Administrador", "Empleado"]) && !in_array($user->department->name, ["Administrador", "Embarques"])){
+                abort(403, 'No autorizado');            
+            }
+
+            $dev = DevolucionParcial::findOrFail($id);
+
+            return view('pedidos2.devoluciones_parciales.edit', compact('dev'));
+
         }
 
-        if($accion == "audita"){
 
-            return view("pedidos2/accion/audita",compact("id","order","paso"));  
+
+        public function devolucion_parcial_actualizar(Request $request, $id){
+
+            $user = auth()->user();
+
+            if (
+                !in_array($user->role->name, ["Administrador", "Empleado"]) &&
+                !in_array($user->department->name, ["Administrador", "Embarques"])
+            ) {
+                abort(403, 'No autorizado');
+            }
+
+            $request->validate([
+                
+                'motivo' => 'required|in:Error del Cliente,Error Interno',
+                'descripcion' => 'nullable|string|max:300',
+                'tipo' => 'required|in:total,parcial',
+                'archivos' => 'nullable|array|max:10',
+                'archivos.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360', 
+            
+            ]);
+
+            $dev = DevolucionParcial::findOrFail($id);
+            $order_id = $dev->order_id;
+
+            $totalActual = $dev->evidencias()->count();
+            $totalNuevos = $request->hasFile('archivos') ? count($request->file('archivos')) : 0;
+
+            if ($totalActual + $totalNuevos > 10) {
+                return response()->json([
+                    'status' => 0,
+                    'error' => 'No puedes tener más de 10 evidencias en total'
+                ]);
+            }
+
+            if ($request->tipo == 'total') {
+                Order::where('id', $order_id)->update([
+                    'status_id' => 9,
+                    'updated_at' => now()
+                ]);
+
+                Pedidos2::Log(
+                    $order_id,
+                    "Devolución Total",
+                    "Se registró una devolución Total",
+                    9,
+                    $user
+                );
+            }else{
+                Pedidos2::Log(
+                    $order_id,
+                    "Devolución Parcial",
+                    "Folio: {$dev->folio}",
+                    0,
+                    $user
+                );
+            }
+
+            $dev->update([
+                'motivo' => $request->motivo,
+                'descripcion' => $request->descripcion,
+                'tipo' => $request->tipo,
+            ]);
+
+            if ($request->hasFile('archivos')){
+                foreach ($request->file('archivos') as $archivo){
+                    if (!Storage::exists('public/DevolucionesParciales')) {
+                        Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
+                    }
+
+                    $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
+                    $stored = $archivo->storeAs('public/DevolucionesParciales', $fileName);
+                    $filePath = str_replace('public/', '', $stored);
+
+                    DevolucionParcialArchivos::create([
+                        'devolucion_parcial_id' => $dev->id,
+                        'file' => $filePath,
+                    ]);
+                }
+            }
+
+            Pedidos2::Log($dev->order_id, "Devolución Parcial", "Actualizada por: " . $user->name, 0, $user);
+
+            return response()->json(['status' => 1]);
+
         }
 
-        /*
-        if($accion == "refacturar"){
 
-            return view("pedidos2/accion/refacturar",compact("id","order","paso"));
+
+        public function devolucion_parcial_cancelar($id){
+
+            $user = auth()->user();
+
+            if($user->role->name !== 'Administrador'){
+                abort(403, 'No autorizado');
+            }
+
+            $dev= DevolucionParcial::findOrFail($id);
+            $dev->cancelado = true;
+            $dev->updated_at = now();
+            $dev->save();
+
+            Pedidos2::Log($dev->order_id, "Devolución Parcial", "Cancelada por admin", 0, $user);
+
+            return response()->json(['status' => 1]);
+
         }
 
-        if($accion == "devolucion"){
 
-            return view("pedidos2/accion/devolucion",compact("id","order","paso"));
+        
+        public function devolucion_parcial_evidencia_eliminar($id){
+
+            $user = auth()->user();
+
+            $evidencia = DevolucionParcialArchivos::findOrFail($id);
+
+            
+            if (Storage::exists('public/'.$evidencia->file)) {
+                Storage::delete('public/'.$evidencia->file);
+            }
+
+            
+            $evidencia->delete();
+
+            
+            Pedidos2::Log(
+                $evidencia->devolucionp->order_id,
+                "Devolución Parcial",
+                "Evidencia eliminada por: ".$user->name,
+                0,
+                $user
+            );
+
+            return response()->json(['status' => 1]);
+
         }
-        */
 
-        /*
-        if($accion == "parcial"){
-
-            return view("pedidos2/accion/parcial",compact("id","order","paso"));
-        }
-        */
-
-        var_dump($id);
-        var_dump($request->a);
-    }
-
-
+    //=============================================//
+    //======== DEVULUCIONES PARCIALES(FIN) ========//
+    //=============================================//
 
     public function subproceso_nuevo($order_id, Request $request){ 
 
@@ -2136,44 +2576,9 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
+    
 
 
-    function set_accion_fabricado(Request $request, int $id, object $user){
-        $data=[
-            "status_id"=>4,
-            "status_4"=>1,
-            "updated_at"=>date("Y-m-d H:i:s")
-        ];
-        Order::where(["id"=>$id])->update($data);
-        Pedidos2::Log($id,"Fabricado", "El pedido fue fabricado", 4,$user);
-    }
-
-
-
-    function set_accion_enpuerta(Request $request, int $id){
-        $paso = isset($request->paso) ? intval($request->paso) : 1; 
-        $user = auth()->user();
-        
-        $type= isset($request->type) ? (int)($request->type) : 1;
-   
-        $entregas = [1=>"Entrega chofer interno",2=>"Cliente recoge"];
-  
-        Order::where(["id"=>$id])->update( ["status_id" => 5,"status_5" => 1, "updated_at"=>date("Y-m-d H:i:s") ] );
-
-        Shipment::create([
-              'file' => '',
-              "order_id" => intval($id),
-              "type" => $type,
-              "created_at" => date("Y-m-d H:i:s"),
-              "updated_at" => date("Y-m-d H:i:s")
-          ]);
-
-        Pedidos2::Log($id,"En Puerta", "El pedido pasó por puerta. ".$entregas[$type], 5, $user);  
-
-        Feedback::custom("url", url("pedidos2/accion/$id?a=enpuerta&paso=2"));
-        Feedback::j(2);
-        return;
-    }
 
 
     function set_accion_ordenf(Request $request, int $id){
@@ -2225,18 +2630,7 @@ public function guardarEntregaProgramada(Request $request, $id){
 
 
     
-    function set_accion_entregar(int $id,Request $request){
-        $user = auth()->user();
-        
-        Order::where(["id"=>$id])->update( ["status_id" => 6, "status_6"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
-
-        $order = Order::where("id",$id)->first();
-        $codigo = Pedidos2::CodigoDe($order);
-
-        Pedidos2::Log($id,"Entregado", "El pedido '$codigo' fue entregado", 6, $user);
-        
-        Feedback::json_service(1);
-    }
+    
 
 
 
@@ -2298,81 +2692,6 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         Pedidos2::Log($id,"Devolución", "Devolución '$number' registrada", 9, $user);
     }
-
-
-
-    function set_accion_refacturar(Request $request, int $id){
-        $user = auth()->user();
-
-        $number = Tools::_string( $request->number,90);
-        $archivo = $request->file("archivo");
-        //var_dump($archivo);die();
-        $mimeType= $archivo->getClientMimeType();
-
-        $razon = $request->razon;
-        
-        $filePath = "";
-
-        $rebId = Rebilling::create([
-            "order_id"=>$id,
-            "reason_id"=>$razon,
-            "created_at"=>date("Y-m-d H:i:s"),
-            "updated_at"=>date("Y-m-d H:i:s")
-        ]);
-
-        $mimeExt = Pedidos2::mimeExtensions();
-            if(in_array($mimeType, array_keys($mimeExt))){                
-                $ext= $mimeExt[$mimeType];
-                $fileName = $id . "." . $ext;
-                $archivo->storeAs("public/Fabricaciones", $fileName);
-                $filePath="Fabricaciones/".$fileName;     
-                
-                
-                Evidence::create([
-                    "file"=>"",
-                   // "order_id"=>$id,
-                   "rebilling_id"=>$rebId,
-                    "required"=>1,
-                    "number"=>$number,
-                    "file"=>$filePath,
-                    "created_at"=>date("Y-m-d H:i:s"),
-                    "updated_at"=>date("Y-m-d H:i:s")
-                ],["rebilling_id"],["required","number","document","updated_at"]);
-
-            }
-        
-        $data=[
-            "status_id"=>8,
-            "updated_at"=>date("Y-m-d H:i:s"),
-            "end_at" => date("Y-m-d H:i:s")
-        ];
-
-        Order::where(["id"=>$id])->update($data);
-
-        Pedidos2::Log($id,"Refacturación", "El pedido fue refacturado con el número '$number'", 8, $user);
-
-    }
-
-
-
-    function set_accion_audita(int $id,Request $request){
-        $user = auth()->user();
-        
-        Order::where(["id"=>$id])->update( ["status_id" => 10, "status_10"=>1, "updated_at" => date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s") ] );
-
-        $order = Order::where("id",$id)->first();
-        $codigo = Pedidos2::CodigoDe($order);
-
-        Pedidos2::Log($id,"Recibido x auditoria", "El pedido '$codigo' fue recibido por auditoria", 10, $user);
-        
-        Feedback::json_service(1);
-    }
-
-
-
-
-
-
 
 
 
@@ -2803,43 +3122,7 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
-    public function cancelar($id, Request $request){
-
-        $user = auth()->user();
-       // $hashGet = isset($request->hash) ? $request->hash : "";
-        $orders = Order::where(["id"=>$id])->get()->toArray();
-        $order = !empty($orders) ? $orders[0] : [] ;
-
-        if(!empty($order)){
-            Order::where(["id"=>$id])->update(["status_id" => 7, "status_7"=>1 ,
-            "updated_at"=>date("Y-m-d H:i:s"), "end_at" => date("Y-m-d H:i:s")]);
-            Pedidos2::Log($id,"Cancelar","El pedido fue cancelado",7,$user);
-        }
-        return redirect("pedidos2/pedido/$id");
-    }
-
-    public function descancelar($id, Request $request){
-        // $hashGet = isset($request->hash) ? $request->hash : "";
-         $orders = Order::where(["id"=>$id])->get()->toArray();
-         $order = !empty($orders) ? $orders[0] : [] ;
-
-         $user = auth()->user();
-
-         if(!empty($order)){
-            $logs = Log::where(["order_id"=>$id])->orderBy("created_at", "DESC")->limit(1)->get();
-            $log = !empty($logs) ? $logs[0] : [] ;
-            $sid = (!empty($log) && !empty($log["status_id"]) && $log["status_id"] != 7) ? $log["status_id"] : 1;
-    
-            Order::where(["id"=>$id])->update(["status_id" => $sid, "status_7"=>0, "updated_at"=>date("Y-m-d H:i:s")]);
-
-            Pedidos2::Log($id,"Descancelar","El pedido estaba cancelado pero fue recuperado",$sid,$user);
-         }
-         return redirect("pedidos2/pedido/$id");
-     }
-
-
-
-     public function historial($order_id){
+    public function historial($order_id){
 
         //echo "historial $id";
         $lista = Log::where(["order_id" => $order_id])       
@@ -2853,97 +3136,6 @@ public function guardarEntregaProgramada(Request $request, $id){
         $order = Order::where("id",$order_id)->first();
 
         return view("pedidos2/pedido/historial",compact("order_id","lista","order"));
-     }
-
-
-
-
-
-     public function devolucion_crear($order_id,Request $request){
-        $user = auth()->user();
-
-        $number = Tools::_string( $request->number,90);  
-        $razon = $request->razon;
-        
-        $deb = Debolution::create([
-            "order_id"=>$order_id,
-            "reason_id"=>$razon,
-            "created_at"=>date("Y-m-d H:i:s"),
-            "updated_at"=>date("Y-m-d H:i:s")
-        ]);
-        
-
-        if($request->hasFile("archivo")){
-            $archivo = $request->file("archivo");
-            $mimeType= $archivo->getClientMimeType();
-
-            $mimeExt = Pedidos2::mimeExtensions();
-
-            if(in_array($mimeType,array_keys($mimeExt))){
-                $ext= $mimeExt[$mimeType];
-                $fileName = $order_id . "." . $ext;
-                $archivo->storeAs("public/Devoluciones", $fileName);
-                $filePath="Devoluciones/".$fileName;     
-                
-                Evidence::create([
-                    "file" => $filePath,    
-                    "debolution_id" => $deb->id,
-                    "required"=>1,
-                    "number"=>$number,
-                    "file"=>$filePath,
-                    "created_at"=>date("Y-m-d H:i:s"),
-                    "updated_at"=>date("Y-m-d H:i:s")
-                ],["debolution_id"],["required","number","document","updated_at"]);
-
-            }
-        }
-        
-        $data=[
-            "status_id"=>9,
-            "updated_at"=>date("Y-m-d H:i:s")
-        ];
-        Order::where(["id"=>$order_id])->update($data);
-
-        Pedidos2::Log($order_id,"Devolución", "Devolucion '$number' fue registrada", 9, $user);
-
-        return view("pedidos2/devolucion/nuevo2",["ob"=>$deb]);
-      //  Feedback::custom("url",url());
-        //Feedback::j(1);
-    }
-
-
-
-     public function devolucion_edit($id,Request $request){
-        $user = User::find(auth()->user()->id);
-
-        $id = Tools::_int($id);   
-        
-        $ob = Debolution::where(["id"=>$id])->first();
-        $reasons = Reason::get();
-
-        return view("pedidos2/devolucion/edit",compact("id","ob","reasons"));
-    }
-
-    public function devolucion_update($id,Request $request){
-        $id = Tools::_int($id);       
-        $user = auth()->user();
-
-        $reason_id = Tools::_int($request->reason_id);    
-
-        $debo = Debolution::where("id", $id)->first(); 
-
-            $data = [
-                "reason_id" => $reason_id,
-                "updated_at"=>date("Y-m-d H:i:s")
-            ];
-
-        Debolution::where("id", $id)->update($data); 
-
-        $reason = Reason::where("id",$reason_id)->first();
-
-        Pedidos2::Log($debo->order_id,"Devolucion", "Cambio en devolución '$reason->reason' ", 0, $user);
-        Feedback::j(1);
-        return;
     }
 
 
@@ -3025,254 +3217,57 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
-    //---------------------------------------------------------------------//
-    //-----------------------DEVULUCIONES PARCIALES(NUEVO)-----------------//
-    //---------------------------------------------------------------------//
-
-
-    public function devolucion_parcial_nueva($order_id){
-
-        $order = Order::findOrfail($order_id);
+    function set_accion_refacturar(Request $request, int $id){
         $user = auth()->user();
 
-        return view('pedidos2.devoluciones_parciales.nuevo', compact('order', 'user'));
+        $number = Tools::_string( $request->number,90);
+        $archivo = $request->file("archivo");
+        //var_dump($archivo);die();
+        $mimeType= $archivo->getClientMimeType();
 
-    }
-
-
-
-    public function devolucion_parcial_guardar(Request $request, $order_id){
-
-        $request->validate([
-
-            'folio' => 'required|string|max:100',
-            'motivo' => 'required|in:Error del Cliente,Error Interno',
-            'descripcion' => 'nullable|string|max:300',
-            'tipo' => 'required|in:total,parcial',
-            'archivos' => 'required|array|min:1|max:10',
-            'archivos.*' => 'file|mimes:pdf,jpg,jpeg,png|max:15360',
+        $razon = $request->razon;
         
+        $filePath = "";
+
+        $rebId = Rebilling::create([
+            "order_id"=>$id,
+            "reason_id"=>$razon,
+            "created_at"=>date("Y-m-d H:i:s"),
+            "updated_at"=>date("Y-m-d H:i:s")
         ]);
 
-        $devolucion = DevolucionParcial::create([
+        $mimeExt = Pedidos2::mimeExtensions();
+            if(in_array($mimeType, array_keys($mimeExt))){                
+                $ext= $mimeExt[$mimeType];
+                $fileName = $id . "." . $ext;
+                $archivo->storeAs("public/Fabricaciones", $fileName);
+                $filePath="Fabricaciones/".$fileName;     
+                
+                
+                Evidence::create([
+                    "file"=>"",
+                   // "order_id"=>$id,
+                   "rebilling_id"=>$rebId,
+                    "required"=>1,
+                    "number"=>$number,
+                    "file"=>$filePath,
+                    "created_at"=>date("Y-m-d H:i:s"),
+                    "updated_at"=>date("Y-m-d H:i:s")
+                ],["rebilling_id"],["required","number","document","updated_at"]);
 
-            'order_id'   => $order_id,
-            'folio'      => $request->folio,
-            'motivo'     => $request->motivo,
-            'descripcion'=> $request->descripcion,
-            'tipo'       => $request->tipo,
-            'file'       => '',
-            'created_by' => auth()->id(),
-        
-        ]);
-
-        if ($request->hasFile('archivos')) {
-
-            foreach ($request->file('archivos') as $archivo) {
-                if (!Storage::exists('public/DevolucionesParciales')) {
-                    Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
-                }
-
-                $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
-                $stored   = $archivo->storeAs('public/DevolucionesParciales', $fileName);
-                $filePath = str_replace('public/', '', $stored);
-
-                DevolucionParcialArchivos::create([
-                    'devolucion_parcial_id' => $devolucion->id,
-                    'file' => $filePath,
-                ]);
             }
-
-        }
-
-        if ($request->tipo == 'total') {
-
-            Order::where('id', $order_id)->update([
-                'status_id'=>9,
-                'updated_at' => now()
-            ]);
-
-            Pedidos2::Log($order_id, "Devolucion Total", "Se registró una devolución Total", 9, auth()->user());
-
-        } else {
-            Pedidos2::Log($order_id, "Devolución Parcial", "Folio: {$request->folio}", 0, auth()->user());
-        }
-
-        return response()->json(['status' => 1]);
         
-    }
+        $data=[
+            "status_id"=>8,
+            "updated_at"=>date("Y-m-d H:i:s"),
+            "end_at" => date("Y-m-d H:i:s")
+        ];
 
+        Order::where(["id"=>$id])->update($data);
 
-
-
-    public function devoluciones_parciales_lista($order_id){
-
-        $lista = DevolucionParcial::where('order_id', $order_id)->orderBy('id', 'desc')->get();
-        $user = auth()->user();
-
-        return view('pedidos2.devoluciones_parciales.lista', compact('lista', 'user'));
+        Pedidos2::Log($id,"Refacturación", "El pedido fue refacturado con el número '$number'", 8, $user);
 
     }
-
-
-
-    public function devolucion_parcial_editar($id){
-
-        $user = auth()->user();
-
-        if(!in_array($user->role->name, ["Administrador", "Empleado"]) && !in_array($user->department->name, ["Administrador", "Embarques"])){
-            abort(403, 'No autorizado');            
-        }
-
-        $dev = DevolucionParcial::findOrFail($id);
-
-        return view('pedidos2.devoluciones_parciales.edit', compact('dev'));
-
-    }
-
-
-
-    public function devolucion_parcial_actualizar(Request $request, $id){
-
-        $user = auth()->user();
-
-        if (
-            !in_array($user->role->name, ["Administrador", "Empleado"]) &&
-            !in_array($user->department->name, ["Administrador", "Embarques"])
-        ) {
-            abort(403, 'No autorizado');
-        }
-
-        $request->validate([
-            
-            'motivo' => 'required|in:Error del Cliente,Error Interno',
-            'descripcion' => 'nullable|string|max:300',
-            'tipo' => 'required|in:total,parcial',
-            'archivos' => 'nullable|array|max:10',
-            'archivos.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360', 
-        
-        ]);
-
-        $dev = DevolucionParcial::findOrFail($id);
-        $order_id = $dev->order_id;
-
-        $totalActual = $dev->evidencias()->count();
-        $totalNuevos = $request->hasFile('archivos') ? count($request->file('archivos')) : 0;
-
-        if ($totalActual + $totalNuevos > 10) {
-            return response()->json([
-                'status' => 0,
-                'error' => 'No puedes tener más de 10 evidencias en total'
-            ]);
-        }
-
-        if ($request->tipo == 'total') {
-            Order::where('id', $order_id)->update([
-                'status_id' => 9,
-                'updated_at' => now()
-            ]);
-
-            Pedidos2::Log(
-                $order_id,
-                "Devolución Total",
-                "Se registró una devolución Total",
-                9,
-                $user
-            );
-        } else {
-            Pedidos2::Log(
-                $order_id,
-                "Devolución Parcial",
-                "Folio: {$dev->folio}",
-                0,
-                $user
-            );
-        }
-
-        $dev->update([
-            'motivo' => $request->motivo,
-            'descripcion' => $request->descripcion,
-            'tipo' => $request->tipo,
-        ]);
-
-        if ($request->hasFile('archivos')) {
-            foreach ($request->file('archivos') as $archivo) {
-                if (!Storage::exists('public/DevolucionesParciales')) {
-                    Storage::makeDirectory('public/DevolucionesParciales', 0755, true);
-                }
-
-                $fileName = 'dp-' . $order_id . '-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
-                $stored = $archivo->storeAs('public/DevolucionesParciales', $fileName);
-                $filePath = str_replace('public/', '', $stored);
-
-                DevolucionParcialArchivos::create([
-                    'devolucion_parcial_id' => $dev->id,
-                    'file' => $filePath,
-                ]);
-            }
-        }
-
-        Pedidos2::Log($dev->order_id, "Devolución Parcial", "Actualizada por: " . $user->name, 0, $user);
-
-        return response()->json(['status' => 1]);
-
-    }
-
-
-
-    public function devolucion_parcial_cancelar($id){
-
-        $user = auth()->user();
-
-        if($user->role->name !== 'Administrador'){
-            abort(403, 'No autorizado');
-        }
-
-        $dev= DevolucionParcial::findOrFail($id);
-        $dev->cancelado = true;
-        $dev->updated_at = now();
-        $dev->save();
-
-        Pedidos2::Log($dev->order_id, "Devolución Parcial", "Cancelada por admin", 0, $user);
-
-        return response()->json(['status' => 1]);
-
-    }
-
-
-    
-    public function devolucion_parcial_evidencia_eliminar($id){
-
-        $user = auth()->user();
-
-        $evidencia = DevolucionParcialArchivos::findOrFail($id);
-
-        
-        if (Storage::exists('public/'.$evidencia->file)) {
-            Storage::delete('public/'.$evidencia->file);
-        }
-
-        
-        $evidencia->delete();
-
-        
-        Pedidos2::Log(
-            $evidencia->devolucionp->order_id,
-            "Devolución Parcial",
-            "Evidencia eliminada por: ".$user->name,
-            0,
-            $user
-        );
-
-        return response()->json(['status' => 1]);
-
-    }
-
-
-    //---------------------------------------------------------------------//
-    //-----------------------DEVULUCIONES PARCIALES(FIN)-----------------//
-    //---------------------------------------------------------------------//
-
 
 
     public function refacturacion_crear($order_id, Request $request){
@@ -3557,706 +3552,615 @@ public function guardarEntregaProgramada(Request $request, $id){
     }
 
 
-
-
-
-    public function multie(Request $request){
+    //====================================================================//
+    //======== FLUJO MULTIE | AGREGAR ETIQUETAS | CAMBIAR ESTATUS ========//
+    //====================================================================//
         
-        $user = auth()->user();
-        $role = $user->role;
-
-        $estatus = $request->get("estatus");
-        $modo = $request->get("modo", "estatus");
-        $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
-
-        $estatus = intval($estatus);
-        $validos =[2,3,4,10];
-        $estatus = in_array($estatus,$validos) ? $estatus : 0;       
-
-        return view('pedidos2.multie.index', compact('user','role','estatus', 'modo', 'etiquetas'));
-    }
-
-
-  public function multie_lista(Request $request){
-
-    $user = auth()->user();
-    $role = $user->role;
-
-    $modo = $request->get("modo", "estatus");
-    $term = Tools::_string($request->get("term"), 16);
-
-    $wseg = "";
-    $wsegmo = "";
-    if (strlen($term) > 1) {
-        $wseg   = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
-        $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
-    }
-
-    $statusesq = Status::all();
-    $statuses = [];
-    foreach ($statusesq as $st) {
-        $statuses[$st->id] = $st->name;
-    }
-
-    if ($modo == "etiquetas") {
-
-        $estatus_ocultos = implode(',', [6,7,8,9,10]);
-        $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
-              FROM orders 
-              WHERE status_id NOT IN ($estatus_ocultos) $wseg
-              LIMIT 50";
-        $shipments = DB::select($q);
-
-        $pedido_ids = array_column($shipments, 'id');
-
-        $etiquetas_por_pedido = DB::table('etiqueta_pedido')
-            ->whereIn('pedido_id', $pedido_ids)
-            ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-            ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
-            ->get()
-            ->groupBy('pedido_id');
-
-        return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
-
-    }
-
-    if ($modo == "combo" || $modo == "estatus") {
-
-        $estatus = Tools::_int($request->get("estatus"));
-
-        $qOrders = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
-        $qMO     = "SELECT mo.*, o.invoice_number, o.invoice 
-                    FROM manufacturing_orders mo 
-                    JOIN orders o ON o.id = mo.order_id 
-                    WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
-
-        if ($estatus == 2 || $estatus == 10) {
-
-            $shipments = DB::select($qOrders);
-
-            $etiquetas_por_pedido = collect();
-            if ($modo == "combo" && !empty($shipments)) {
-                $pedido_ids = array_column($shipments, 'id');
-                $etiquetas_por_pedido = DB::table('etiqueta_pedido')
-                    ->whereIn('pedido_id', $pedido_ids)
-                    ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-                    ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
-                    ->get()
-                    ->groupBy('pedido_id');
-            }
-
-            return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
-
-        } else {
-
-            $lista = DB::select($qMO);
-            return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
-
-        }
-    }
-
-    return view("pedidos2.multie.lista", ['user'=>$user, 'shipments'=>[], 'statuses'=>$statuses]);
-
-}
-
-
-
-
-    public function set_status($id, Request $request){
-        $id = Tools::_int($id);       
-        $user = auth()->user();
-
-        $estatuses = [2=>"Entregado", 3 => "En Fabricaicón", 4=>"Fabricado"];
-
-        $status_id = Tools::_int($request->ids);    
-            if(!isset($estatuses[$status_id])){
-                Feedback::error("Status off range");
-                Feedback::j(0);
-            }
-
-        $data = [
-                "status_id"=>$status_id,
-                "updated_at"=>date("Y-m-d H:i:s")
-            ];
-
-            if($status_id > 2){
-                $data["status_".$status_id] = 1;
-                $data["embarques_by"]= $user->id;
-            }
-
-        Order::where("id", $id)->update($data);
-        $order = Order::find($id);
-
-        if($status_id == 2 && $order->recibido_embarques_at == null){
-
-            $order->recibido_embarques_at = now();
-            $order->save();
-        }
-
-        $idLog = Pedidos2::CodigoDe($order);
-        Pedidos::Log($id, "Order", "Cambio de status " . $estatuses[$status_id] . " en el pedido #{$idLog}", $status_id, $user);
-
-        Feedback::j(1);
-        return;
-        
-    }
-
-
-
-  public function set_multistatus(Request $request) {
-    $user   = auth()->user();
-    $modo   = $request->get('modo', 'estatus');
-    $quitar = (int)$request->get('quitar_etiquetas', 0);
-
-    $estatuses = [
-        2  => "Recibido por embarques",
-        3  => "En Fabricación",
-        4  => "Fabricado",
-        10 => "Recibido por Auditoría",
-    ];
-
-    
-
-    $listaor = $request->lista ?? [];
-    $lista   = [];
-    foreach ($listaor as $li) { $lista[] = (int)$li; }
-
-    $n = 0;
-    $d = date("Y-m-d H:i:s");
-
-    if ($modo == 'etiquetas') {
-        $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
-
-        if (empty($request->lista) || empty($request->etiquetas)) {
-
-            return response()->json(['status' => 0, 'errors' => 'Faltan pedidos o etiquetas']);
-
-        }
-
-        foreach ($request->lista as $pedido_id) {
-
-            $pedido = Order::find($pedido_id);
-            $idLog  = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id;
-
-            if ($quitar) {
-                DB::table('etiqueta_pedido')
-                    ->where('pedido_id', $pedido_id)
-                    ->whereIn('etiqueta_id', $request->etiquetas)
-                    ->delete();
-
-                foreach ($request->etiquetas as $etiqueta_id) {
-                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                   
-                    Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-                }
-            } else {
-                $etiquetas_actuales = DB::table('etiqueta_pedido')
-                    ->where('pedido_id', $pedido_id)
-                    ->pluck('etiqueta_id')->toArray();
-
-                foreach ($request->etiquetas as $etiqueta_id) {
-                    if (!in_array($etiqueta_id, $etiquetas_actuales)) {
-
-                        DB::table('etiqueta_pedido')->insert([
-                            'pedido_id'   => $pedido_id,
-                            'etiqueta_id' => $etiqueta_id,
-                        ]);
-                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                       // LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
-                        Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-
-                    } else {
-                        LaravelLog::info('Etiqueta ya existente — NO insertada', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
-                    }
-                }
-            }
-
-            $n++;
-
-        }
-
-        return response()->json(['status' => 1, 'value' => $n]);
-    }
-
-    if ($modo == 'combo') {
-        $status_id = Tools::_int($request->status_id);
-        $catalogo  = $request->get('catalogo', '');
-
-        if (!in_array($status_id, array_keys($estatuses))) {
-            return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
-        }
-        if (empty($request->etiquetas) || empty($lista)) {
-            return response()->json(['status' => 0, 'errors' => "Faltan etiquetas o lista de pedidos"]);
-        }
-
-        $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
-
-        foreach ($lista as $li) {
-
-            DB::transaction(function () use ($li, $status_id, $catalogo, $d, $user, $estatuses, $request, $quitar, $mapa_etiquetas) {
-                $data = ["status_id" => $status_id, "updated_at" => $d];
-
-                if ($status_id == 2) {
-
-                    $pedido = Order::find($li);
-                    if ($pedido && !$pedido->recibido_embarques_at) {
-                        $data["recibido_embarques_at"] = now();
-                        $idLogReg = Pedidos2::CodigoDe($pedido);
-                        Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLogReg}", $status_id, $user);
-                    }
-
-                }
-
-                if ($catalogo == "order") {
-
-                    if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-                    Order::where("id", $li)->update($data);
-                    $order = Order::find($li);
-                    $idLog = Pedidos2::CodigoDe($order);
-                    Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
-
-                } elseif ($catalogo == "morder") {
-
-                    if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-                    ManufacturingOrder::where("id", $li)->update($data);
-                    $morder = ManufacturingOrder::find($li);
-                    Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+        //------------------------------------//
+        //-------- LISTAS DE BUSQUEDA --------//
+        //------------------------------------//
+            public function multie(Request $request){
                 
+                $user = auth()->user();
+                $role = $user->role;
+
+                $estatus = $request->get("estatus");
+                $modo = $request->get("modo", "estatus");
+                $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
+
+                $estatus = intval($estatus);
+                $validos =[2,3,4,10];
+                $estatus = in_array($estatus,$validos) ? $estatus : 0;       
+
+                return view('pedidos2.multie.index', compact('user','role','estatus', 'modo', 'etiquetas'));
+            }
+
+
+            public function multie_lista(Request $request){
+                $user = auth()->user();
+                $role = $user->role;
+
+                $modo = $request->get("modo", "estatus");
+                $term = Tools::_string($request->get("term"), 16);
+
+                $wseg = "";
+                $wsegmo = "";
+                if (strlen($term) > 1) {
+                    $wseg   = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
+                    $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
                 }
 
-                $pedidoReal = Order::find($catalogo == 'order' ? $li : optional(ManufacturingOrder::find($li))->order_id);
-                $pedido_id  = optional($pedidoReal)->id ?: $li;
-                $idLog2     = $pedidoReal ? Pedidos2::CodigoDe($pedidoReal) : $pedido_id;
+                $statusesq = Status::all();
+                $statuses = [];
+                foreach ($statusesq as $st) {
+                    $statuses[$st->id] = $st->name;
+                }
 
-                if ($quitar) {
+                if($modo == "etiquetas"){
+                    $estatus_ocultos = implode(',', [6,7,8,9,10]);
+                    $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
+                        FROM orders 
+                        WHERE status_id NOT IN ($estatus_ocultos) $wseg
+                        LIMIT 50";
+                    $shipments = DB::select($q);
 
-                    DB::table('etiqueta_pedido')
-                        ->where('pedido_id', $pedido_id)
-                        ->whereIn('etiqueta_id', $request->etiquetas)
-                        ->delete();
+                    $pedido_ids = array_column($shipments, 'id');
 
-                    foreach ($request->etiquetas as $etiqueta_id) {
-                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                        Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
-                    }
+                    $etiquetas_por_pedido = DB::table('etiqueta_pedido')
+                        ->whereIn('pedido_id', $pedido_ids)
+                        ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                        ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
+                        ->get()
+                        ->groupBy('pedido_id');
 
-                } else {
+                    return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+                }
 
-                    $etiquetas_actuales = DB::table('etiqueta_pedido')
-                        ->where('pedido_id', $pedido_id)
-                        ->pluck('etiqueta_id')
-                        ->toArray();
+                if($modo == "combo" || $modo == "estatus"){
+                    $estatus = Tools::_int($request->get("estatus"));
 
-                    foreach ($request->etiquetas as $etiqueta_id) {
+                    $qOrders = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
+                    $qMO     = "SELECT mo.*, o.invoice_number, o.invoice 
+                                FROM manufacturing_orders mo 
+                                JOIN orders o ON o.id = mo.order_id 
+                                WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
 
-                        if (!in_array($etiqueta_id, $etiquetas_actuales)) {
-                            DB::table('etiqueta_pedido')->insert([
-                                'pedido_id'   => $pedido_id,
-                                'etiqueta_id' => $etiqueta_id,
-                            ]);
-                            $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                            Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                    if($estatus == 2 || $estatus == 10){
+
+                        $shipments = DB::select($qOrders);
+
+                        $etiquetas_por_pedido = collect();
+                        if ($modo == "combo" && !empty($shipments)) {
+                            $pedido_ids = array_column($shipments, 'id');
+                            $etiquetas_por_pedido = DB::table('etiqueta_pedido')
+                                ->whereIn('pedido_id', $pedido_ids)
+                                ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                                ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
+                                ->get()
+                                ->groupBy('pedido_id');
                         }
 
+                        return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+                    }else{
+                        $lista = DB::select($qMO);
+                        return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
+                    }
+                }
+                return view("pedidos2.multie.lista", ['user'=>$user, 'shipments'=>[], 'statuses'=>$statuses]);
+            }
+
+        //-------------------------------//
+        //-------- FIN DE LISTAS --------//
+        //-------------------------------//
+
+        
+        //----------------------------------//
+        //--------- CAMBIAR ESTATUS --------//
+        //----------------------------------//
+
+            public function set_status($id, Request $request){
+                $id = Tools::_int($id);       
+                $user = auth()->user();
+
+                $estatuses = [2=>"Entregado", 3 => "En Fabricaicón", 4=>"Fabricado"];
+
+                $status_id = Tools::_int($request->ids);    
+                    if(!isset($estatuses[$status_id])){
+                        Feedback::error("Status off range");
+                        Feedback::j(0);
                     }
 
+                $data = [
+                        "status_id"=>$status_id,
+                        "updated_at"=>date("Y-m-d H:i:s")
+                    ];
+
+                    if($status_id > 2){
+                        $data["status_".$status_id] = 1;
+                        $data["embarques_by"]= $user->id;
+                    }
+
+                Order::where("id", $id)->update($data);
+                $order = Order::find($id);
+
+                if($status_id == 2 && $order->recibido_embarques_at == null){
+
+                    $order->recibido_embarques_at = now();
+                    $order->save();
                 }
-            });
 
-            $n++;
+                $idLog = Pedidos2::CodigoDe($order);
+                Pedidos::Log($id, "Order", "Cambio de status " . $estatuses[$status_id] . " en el pedido #{$idLog}", $status_id, $user);
 
-        }
-
-        return response()->json(['status' => 1, 'value' => $n]);
-
-    }
-
-    $status_id = Tools::_int($request->status_id);
-    $catalogo  = $request->get('catalogo', '');
-
-    if (!in_array($status_id, array_keys($estatuses))) {
-        return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
-    }
-
-    foreach ($lista as $li) {
-
-        $data = ["status_id" => $status_id, "updated_at" => $d];
-
-        if ($status_id == 2) {
-            $pedido = Order::find($li);
-            if ($pedido && !$pedido->recibido_embarques_at) {
-                $data["recibido_embarques_at"] = now();
-                $idLog = Pedidos2::CodigoDe($pedido);
-                Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLog}", $status_id, $user);
-            }
-        }
-
-        if ($catalogo == "order") {
-            if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-            Order::where("id", $li)->update($data);
-            $order = Order::find($li);
-            $idLog = Pedidos2::CodigoDe($order);
-            Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
-            $n++;
-        } elseif ($catalogo == "morder") {
-            if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-            ManufacturingOrder::where("id", $li)->update($data);
-            $morder = ManufacturingOrder::find($li);
-            Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
-            $n++;
-        }
-
-    }
-
-    return response()->json(['status' => 1, 'value' => $n]);
-
-}
-
-
-
-
-
-    public function set_accion_desauditoria($id, Request $request){
-    $id = Tools::_int($id);       
-    $user = auth()->user();
-
-    $order = Order::where("id",$id)->first();
-
-    $comentario = !empty($request->comentario) ? Tools::_string($request->comentario,162) : "";
-
-        $maxStatus=3;
-        for($i=$maxStatus; $i < 9 ; $i++){
-            if(isset($order->{"status_".$i}) && $order->{"status_".$i}==1){
-                $maxStatus=$i;
-            }
-        }
-
-    $estatusesor = Status::all();
-    $estatuses = Tools::catalogo($estatusesor,"id","name");
-    
-    Order::where("id",$id)->update(["status_id"=>$maxStatus,"status_10"=>0]);
-
-    Pedidos2::Log($id,"Deshacer Auditoria", "Se revirtió '".Pedidos2::CodigoDe($order). "' desde auditoria. Nuevo estatus: ".( isset($estatuses[$maxStatus])?$estatuses[$maxStatus]:"?" ), $maxStatus,$user);
-    Pedidos2::Log($id,"Deshacer Auditoria","Comentario: ".$comentario,$maxStatus,$user);
-    
-    return redirect("pedidos2/pedido/".$order->id);
-    }
-
-    //------------------------------------------------------------------//
-    //----------------------QUITAR EN PUERTA---------------------------//
-    //-----------------------------------------------------------------//
-
-    public function set_accion_noexitosa($id, Request $request){
-
-        $id = Tools::_int($id);
-        $user = auth()->user();
-
-        $order = Order::where("id", $id)->first();
-
-        if(!$order || $order->status_id != 5){
-            abort(403, "Pedido iválido o sin estatus 'En Puerta'");
-        }
-
-        $motivo = !empty($request->motivo) ? Tools::_string($request->motivo, 100):"";
-        $observaciones = !empty($request->observaciones) ? Tools::_string($request->observaciones, 200) : "";
-
-        if(empty($motivo)){
-            return back()->with("error", "Debes seleccionar un motivo.");
-        }
-
-        $nuevoStatus = 2;
-        Order::where("id", $id)->update([
-            "status_id" => $nuevoStatus,
-            "status_5" => 0,
-            "status_6" => 0,
-            "updated_at" => now()
-        ]);
-
-        Pedidos2::Log(
-            $id,
-            "Entrega no exitosa",
-            "Se marcó como entrega no exitosa el pedido'". Pedidos2::CodigoDe($order) . "'. Motivo: " . $motivo,
-            $nuevoStatus,
-            $user
-        );
-
-        if(!empty($observaciones)){
-            Pedidos2::Log(
-                $id,
-                "Observaciones entrega no exitosa",
-                "Comentario:" . $observaciones,
-                $nuevoStatus,
-                $user
-            );
-        }
-
-        return redirect("pedidos2/pedido/" . $order->id)->with("succes", "Entrega no exitosa registrada correctamente.");
-
-    }
-    //------------------------------------------------------------------//
-    //----------------------QUITAR EN PUERTA---------------------------//
-    //-----------------------------------------------------------------//
-
-
-
-    //----------------------------------------------------------------//
-    //-------------------ACTUALIZAR DIRECCION-------------------------//
-    //----------------------------------------------------------------//
-
-    public function guardarDireccion(Request $request, $id){
-        /*LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
-            'pedido_id' => $id,
-            'request' => $request->all()
-        ]);
-        */
-        $user = auth()->user();
-        $now = now();
-
-        $pedido = Order::find($id);
-
-        if(!$pedido){
-            Feedback::error("Pedido no valido");
-            Feedback::j(0);
-            return;
-        }
-
-        /*
-        LaravelLog::info('PASO 2: pedido encontrado', [
-            'pedido_id' => $pedido->id,
-            'cliente_id' => $pedido->cliente_id,
-            'origin' => $pedido->origin,
-        ]);
-        */
-
-        if($pedido->origin === "R"){
-            Feedback::error("Este pedido no permite direccion");
-            Feedback::j(0);
-            return;
-        }
-
-        //LaravelLog::info('PASO 3: origin valido');
-
-        DB::beginTransaction();
-
-        try{
-            $estado_direccion = $request->estado_direccion;
-            /*
-            LaravelLog::info('PASO 4: estado_direccion recibido', [
-                'estado_direccion' => $estado_direccion
-            ]);
-            */
-            if($estado_direccion === 'recoge'){
-                $pedido->update([
-                    'estado_direccion' => 'recoge',
-                    'cliente_direccion_id' => null,
-                    'nombre_direccion' => null,
-                    'direccion' => null,
-                    'colonia' => null,
-                    'ciudad' => null,
-                    'estado' => null,
-                    'codigo_postal' => null,
-                    'celular' => null,
-                    'telefono' => null,
-                    'nombre_recibe' => null,
-                    'url_mapa' => null,
-                    'instrucciones' => null,
-                ]);
-
-                DB::commit();
-                Feedback::message("Pedido marcado como cliente recoge");
                 Feedback::j(1);
                 return;
+                
             }
 
-            //LaravelLog::info('PASO 5: no es recoge');
 
-            if($estado_direccion !== 'completa'){
-                Feedback::error("Estado de direccion no valido");
+            //ESTA FUNCION PUEDE CAMBIAR ESTATUS E INCLUIR ETIQUETAS O QUITARLARLAS 
+            public function set_multistatus(Request $request) {
+                $user   = auth()->user();
+                $modo   = $request->get('modo', 'estatus');
+                $quitar = (int)$request->get('quitar_etiquetas', 0);
+
+                $estatuses = [
+                    2  => "Recibido por embarques",
+                    3  => "En Fabricación",
+                    4  => "Fabricado",
+                    10 => "Recibido por Auditoría",
+                ];    
+
+                $listaor = $request->lista ?? [];
+                $lista   = [];
+                foreach ($listaor as $li) { $lista[] = (int)$li; }
+
+                $n = 0;
+                $d = date("Y-m-d H:i:s");
+
+                if($modo == 'etiquetas'){
+                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
+
+                    if(empty($request->lista) || empty($request->etiquetas)){
+                        return response()->json(['status' => 0, 'errors' => 'Faltan pedidos o etiquetas']);
+                    }
+                    foreach($request->lista as $pedido_id){
+                        $pedido = Order::find($pedido_id);
+                        $idLog  = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id;
+
+                        if($quitar){
+                            DB::table('etiqueta_pedido')
+                                ->where('pedido_id', $pedido_id)
+                                ->whereIn('etiqueta_id', $request->etiquetas)
+                                ->delete();
+
+                            foreach($request->etiquetas as $etiqueta_id){
+                                $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+                            }
+                        }else{
+                            $etiquetas_actuales = DB::table('etiqueta_pedido')
+                                ->where('pedido_id', $pedido_id)
+                                ->pluck('etiqueta_id')->toArray();
+
+                            foreach ($request->etiquetas as $etiqueta_id) {
+                                if(!in_array($etiqueta_id, $etiquetas_actuales)){
+
+                                    DB::table('etiqueta_pedido')->insert([
+                                        'pedido_id'   => $pedido_id,
+                                        'etiqueta_id' => $etiqueta_id,
+                                    ]);
+                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                // LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                                    Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+
+                                }else{
+                                    LaravelLog::info('Etiqueta ya existente — NO insertada', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                                }
+                            }
+                        }
+                        $n++;
+                    }
+                    return response()->json(['status' => 1, 'value' => $n]);
+                }
+                if($modo == 'combo'){
+                    $status_id = Tools::_int($request->status_id);
+                    $catalogo  = $request->get('catalogo', '');
+
+                    if(!in_array($status_id, array_keys($estatuses))){
+                        return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
+                    }
+                    if(empty($request->etiquetas) || empty($lista)){
+                        return response()->json(['status' => 0, 'errors' => "Faltan etiquetas o lista de pedidos"]);
+                    }
+
+                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
+
+                    foreach ($lista as $li){
+
+                        DB::transaction(function () use ($li, $status_id, $catalogo, $d, $user, $estatuses, $request, $quitar, $mapa_etiquetas) {
+                            $data = ["status_id" => $status_id, "updated_at" => $d];
+
+                            if($status_id == 2){
+
+                                $pedido = Order::find($li);
+                                if($pedido && !$pedido->recibido_embarques_at){
+                                    $data["recibido_embarques_at"] = now();
+                                    $idLogReg = Pedidos2::CodigoDe($pedido);
+                                    Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLogReg}", $status_id, $user);
+                                }
+
+                            }
+
+                            if($catalogo == "order"){
+
+                                if($status_id > 2){
+                                    $data["status_" . $status_id] = 1;
+                                }
+                                Order::where("id", $li)->update($data);
+                                $order = Order::find($li);
+                                $idLog = Pedidos2::CodigoDe($order);
+                                Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
+
+                            }elseif($catalogo == "morder"){
+
+                                if($status_id > 2){
+                                    $data["status_" . $status_id] = 1;
+                                }
+                                ManufacturingOrder::where("id", $li)->update($data);
+                                $morder = ManufacturingOrder::find($li);
+                                Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+                            
+                            }
+
+                            $pedidoReal = Order::find($catalogo == 'order' ? $li : optional(ManufacturingOrder::find($li))->order_id);
+                            $pedido_id  = optional($pedidoReal)->id ?: $li;
+                            $idLog2     = $pedidoReal ? Pedidos2::CodigoDe($pedidoReal) : $pedido_id;
+
+                            if($quitar){
+                                DB::table('etiqueta_pedido')
+                                    ->where('pedido_id', $pedido_id)
+                                    ->whereIn('etiqueta_id', $request->etiquetas)
+                                    ->delete();
+
+                                foreach ($request->etiquetas as $etiqueta_id) {
+                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                    Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                                }
+
+                            }else{
+
+                                $etiquetas_actuales = DB::table('etiqueta_pedido')
+                                    ->where('pedido_id', $pedido_id)
+                                    ->pluck('etiqueta_id')
+                                    ->toArray();
+
+                                foreach ($request->etiquetas as $etiqueta_id){
+                                    if (!in_array($etiqueta_id, $etiquetas_actuales)){
+                                        DB::table('etiqueta_pedido')->insert([
+                                            'pedido_id'   => $pedido_id,
+                                            'etiqueta_id' => $etiqueta_id,
+                                        ]);
+                                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                        Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                                    }
+                                }
+                            }
+                        });
+                        $n++;
+                    }
+                    return response()->json(['status' => 1, 'value' => $n]);
+                }
+
+                $status_id = Tools::_int($request->status_id);
+                $catalogo  = $request->get('catalogo', '');
+
+                if(!in_array($status_id, array_keys($estatuses))){
+                    return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
+                }
+
+                foreach($lista as $li){
+
+                    $data = ["status_id" => $status_id, "updated_at" => $d];
+                    if($status_id == 2){
+                        $pedido = Order::find($li);
+                        if ($pedido && !$pedido->recibido_embarques_at) {
+                            $data["recibido_embarques_at"] = now();
+                            $idLog = Pedidos2::CodigoDe($pedido);
+                            Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLog}", $status_id, $user);
+                        }
+                    }
+
+                    if($catalogo == "order"){
+                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                        Order::where("id", $li)->update($data);
+                        $order = Order::find($li);
+                        $idLog = Pedidos2::CodigoDe($order);
+                        Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
+                        $n++;
+                    }elseif($catalogo == "morder"){
+                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                        ManufacturingOrder::where("id", $li)->update($data);
+                        $morder = ManufacturingOrder::find($li);
+                        Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+                        $n++;
+                    }
+                }
+                return response()->json(['status' => 1, 'value' => $n]);
+            }
+
+        //----------------------------------------//
+        //-------- FIN DE CAMBIAR ESTATUS --------//
+        //----------------------------------------//
+
+    //===========================================================//
+    //======== FLUJO MULTIE | ETIQUETAS | ESTATUS (FIN) =========//
+    //===========================================================//
+
+
+
+    //=========================================================================//
+    //======== ACTUALIZAR DIRECCION DENTRO DE PEDIDO | CAMBIAR ESTATUS ========//
+    //=========================================================================//
+
+        public function guardar_direccion(Request $request, $id){
+            /*LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
+                'pedido_id' => $id,
+                'request' => $request->all()
+            ]);
+            */
+            $user = auth()->user();
+            $now = now();
+
+            $pedido = Order::find($id);
+
+            if(!$pedido){
+                Feedback::error("Pedido no valido");
                 Feedback::j(0);
                 return;
             }
 
-            //LaravelLog::info('PASO 6: estado_direccion es completa');
+            /*
+            LaravelLog::info('PASO 2: pedido encontrado', [
+                'pedido_id' => $pedido->id,
+                'cliente_id' => $pedido->cliente_id,
+                'origin' => $pedido->origin,
+            ]);
+            */
 
-            if(empty($pedido->cliente_id)){
+            if($pedido->origin === "R"){
+                Feedback::error("Este pedido no permite direccion");
+                Feedback::j(0);
+                return;
+            }
 
-                //LaravelLog::info('PASO 7: flujo SIN cliente');
+            //LaravelLog::info('PASO 3: origin valido');
 
-                if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                    Feedback::error("Faltan datos obligatorios de la direccion");
+            DB::beginTransaction();
+
+            try{
+                $estado_direccion = $request->estado_direccion;
+                /*
+                LaravelLog::info('PASO 4: estado_direccion recibido', [
+                    'estado_direccion' => $estado_direccion
+                ]);
+                */
+                if($estado_direccion === 'recoge'){
+                    $pedido->update([
+                        'estado_direccion' => 'recoge',
+                        'cliente_direccion_id' => null,
+                        'nombre_direccion' => null,
+                        'direccion' => null,
+                        'colonia' => null,
+                        'ciudad' => null,
+                        'estado' => null,
+                        'codigo_postal' => null,
+                        'celular' => null,
+                        'telefono' => null,
+                        'nombre_recibe' => null,
+                        'url_mapa' => null,
+                        'instrucciones' => null,
+                    ]);
+
+                    DB::commit();
+                    Feedback::message("Pedido marcado como cliente recoge");
+                    Feedback::j(1);
+                    return;
+                }
+
+                //LaravelLog::info('PASO 5: no es recoge');
+
+                if($estado_direccion !== 'completa'){
+                    Feedback::error("Estado de direccion no valido");
                     Feedback::j(0);
                     return;
                 }
 
-                //LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+                //LaravelLog::info('PASO 6: estado_direccion es completa');
+
+                if(empty($pedido->cliente_id)){
+
+                    //LaravelLog::info('PASO 7: flujo SIN cliente');
+
+                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                        Feedback::error("Faltan datos obligatorios de la direccion");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    //LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+
+                    $pedido->update([
+                        'estado_direccion' => 'completa',
+                        'cliente_direccion_id' => null,
+                        'nombre_direccion' => $request->nombre_direccion,
+                        'direccion' => $request->direccion,
+                        'colonia' => $request->colonia,
+                        'ciudad' => $request->ciudad,
+                        'estado' => $request->estado,
+                        'codigo_postal' => $request->codigo_postal,
+                        'celular' => $request->celular,
+                        'telefono' => $request->telefono,
+                        'nombre_recibe' => $request->nombre_recibe,
+                        'url_mapa' => $request->url_mapa,
+                        'instrucciones' => $request->instrucciones,
+                    ]);
+
+                    //LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+
+                    DB::commit();
+                    Feedback::message("Direccion guardada correctamente");
+                    Feedback::j(1);
+                    return;
+                }
+
+                /*
+                LaravelLog::info('PASO 10: flujo CON cliente', [
+                    'cliente_id' => $pedido->cliente_id
+                ]);
+                */
+
+                $modo = $request->modo_direccion ?? 'nueva';
+                $direccionCliente = null;
+
+                LaravelLog::info('PASO 11: modo direccion',[
+                    'modo' => $modo
+                ]);
+
+                if($modo === 'existente'){
+
+                    if(empty($request->cliente_direccion_id)){
+                        Feedback::error("Debe seleccionar una direccion existente");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+                    if(!$direccionCliente){
+                        Feedback::error("Direccion no valida");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    LaravelLog::info('PASO 12: direccion cliente existente cargada', [
+                        'direccion_cliente_id' => $direccionCliente->id
+                    ]);
+
+                }else{
+                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                        Feedback::error("Faltan datos obligatorios de la direccion");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    if(!empty($pedido->cliente_direccion_id)){
+                        $direccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
+                    }
+
+                    if(!$direccionCliente){
+                        $direccionCliente = new DireccionCliente();
+                        $direccionCliente->cliente_id = $pedido->cliente_id;
+                    }
+
+                    $direccionCliente->nombre_direccion = $request->nombre_direccion;
+                    $direccionCliente->direccion = $request->direccion;
+                    $direccionCliente->colonia = $request->colonia;
+                    $direccionCliente->ciudad = $request->ciudad;
+                    $direccionCliente->estado = $request->estado;
+                    $direccionCliente->codigo_postal = $request->codigo_postal;
+                    $direccionCliente->celular = $request->celular;
+                    $direccionCliente->telefono = $request->telefono;
+                    $direccionCliente->nombre_recibe = $request->nombre_recibe;
+                    $direccionCliente->url_mapa = $request->url_mapa;
+                    $direccionCliente->instrucciones = $request->instrucciones;
+                    $direccionCliente->estado_direccion = 'completa';
+                    $direccionCliente->save();
+                    
+                    /*
+                    LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
+                        'direccion_cliente_id' => $direccionCliente->id
+                    ]);
+                    */
+                }
+
+                if(!$direccionCliente){
+                    Feedback::error("No se pudo determinar la direccion del cliente");
+                    Feedback::j(0);
+                    return;
+                }
 
                 $pedido->update([
                     'estado_direccion' => 'completa',
-                    'cliente_direccion_id' => null,
-                    'nombre_direccion' => $request->nombre_direccion,
-                    'direccion' => $request->direccion,
-                    'colonia' => $request->colonia,
-                    'ciudad' => $request->ciudad,
-                    'estado' => $request->estado,
-                    'codigo_postal' => $request->codigo_postal,
-                    'celular' => $request->celular,
-                    'telefono' => $request->telefono,
-                    'nombre_recibe' => $request->nombre_recibe,
-                    'url_mapa' => $request->url_mapa,
-                    'instrucciones' => $request->instrucciones,
+                    'cliente_direccion_id' => $direccionCliente->id,
+                    'nombre_direccion' => $direccionCliente->nombre_direccion,
+                    'direccion' => $direccionCliente->direccion,
+                    'colonia' => $direccionCliente->colonia,
+                    'ciudad' => $direccionCliente->ciudad,
+                    'estado' => $direccionCliente->estado,
+                    'codigo_postal' => $direccionCliente->codigo_postal,
+                    'celular' => $direccionCliente->celular,
+                    'telefono' => $direccionCliente->telefono,
+                    'nombre_recibe' => $direccionCliente->nombre_recibe,
+                    'url_mapa' => $direccionCliente->url_mapa,
+                    'instrucciones' => $direccionCliente->instrucciones,
                 ]);
 
-                //LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+                //LaravelLog::info('PASO 14: pedido actualizado CON cliente');
 
                 DB::commit();
                 Feedback::message("Direccion guardada correctamente");
                 Feedback::j(1);
-                return;
-            }
 
-            /*
-            LaravelLog::info('PASO 10: flujo CON cliente', [
-                'cliente_id' => $pedido->cliente_id
-            ]);
-            */
+            }catch(\Exception $e){
 
-            $modo = $request->modo_direccion ?? 'nueva';
-            $direccionCliente = null;
+                DB::rollBack();
 
-            LaravelLog::info('PASO 11: modo direccion',[
-                'modo' => $modo
-            ]);
-
-            if($modo === 'existente'){
-
-                if(empty($request->cliente_direccion_id)){
-                    Feedback::error("Debe seleccionar una direccion existente");
-                    Feedback::j(0);
-                    return;
-                }
-
-                $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
-
-                if(!$direccionCliente){
-                    Feedback::error("Direccion no valida");
-                    Feedback::j(0);
-                    return;
-                }
-
-                LaravelLog::info('PASO 12: direccion cliente existente cargada', [
-                    'direccion_cliente_id' => $direccionCliente->id
-                ]);
-
-            }else{
-                if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                    Feedback::error("Faltan datos obligatorios de la direccion");
-                    Feedback::j(0);
-                    return;
-                }
-
-                if(!empty($pedido->cliente_direccion_id)){
-                    $direccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
-                }
-
-                if(!$direccionCliente){
-                    $direccionCliente = new DireccionCliente();
-                    $direccionCliente->cliente_id = $pedido->cliente_id;
-                }
-
-                $direccionCliente->nombre_direccion = $request->nombre_direccion;
-                $direccionCliente->direccion = $request->direccion;
-                $direccionCliente->colonia = $request->colonia;
-                $direccionCliente->ciudad = $request->ciudad;
-                $direccionCliente->estado = $request->estado;
-                $direccionCliente->codigo_postal = $request->codigo_postal;
-                $direccionCliente->celular = $request->celular;
-                $direccionCliente->telefono = $request->telefono;
-                $direccionCliente->nombre_recibe = $request->nombre_recibe;
-                $direccionCliente->url_mapa = $request->url_mapa;
-                $direccionCliente->instrucciones = $request->instrucciones;
-                $direccionCliente->estado_direccion = 'completa';
-                $direccionCliente->save();
-                
                 /*
-                LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
-                    'direccion_cliente_id' => $direccionCliente->id
+                LaravelLog::error('ERROR guardarDireccion', [
+                    'msg' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
                 ]);
                 */
-            }
 
-            if(!$direccionCliente){
-                Feedback::error("No se pudo determinar la direccion del cliente");
+                Feedback::error("Error al guardar la direccion");
                 Feedback::j(0);
                 return;
             }
-
-            $pedido->update([
-                'estado_direccion' => 'completa',
-                'cliente_direccion_id' => $direccionCliente->id,
-                'nombre_direccion' => $direccionCliente->nombre_direccion,
-                'direccion' => $direccionCliente->direccion,
-                'colonia' => $direccionCliente->colonia,
-                'ciudad' => $direccionCliente->ciudad,
-                'estado' => $direccionCliente->estado,
-                'codigo_postal' => $direccionCliente->codigo_postal,
-                'celular' => $direccionCliente->celular,
-                'telefono' => $direccionCliente->telefono,
-                'nombre_recibe' => $direccionCliente->nombre_recibe,
-                'url_mapa' => $direccionCliente->url_mapa,
-                'instrucciones' => $direccionCliente->instrucciones,
-            ]);
-
-            //LaravelLog::info('PASO 14: pedido actualizado CON cliente');
-
-            DB::commit();
-            Feedback::message("Direccion guardada correctamente");
-            Feedback::j(1);
-
-        }catch(\Exception $e){
-
-            DB::rollBack();
-
-            /*
-            LaravelLog::error('ERROR guardarDireccion', [
-                'msg' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
-            */
-
-            Feedback::error("Error al guardar la direccion");
-            Feedback::j(0);
-            return;
-        }
-    }
-
-            
-
-
-    public function getDireccionCliente($id){
-        $direccion = DireccionCliente::find($id);
-
-        if(!$direccion){
-            return response()->json(['status' => 0]);
         }
 
-        return response()->json([
-            'status' => 1,
-            'data' => [
-                'nombre_direccion' => $direccion->nombre_direccion,
-                'direccion' => $direccion->direccion,
-                'colonia' => $direccion->colonia,
-                'ciudad' => $direccion->ciudad,
-                'estado' => $direccion->estado,
-                'codigo_postal' => $direccion->codigo_postal,
-                'celular' => $direccion->celular,
-                'telefono' => $direccion->telefono,
-                'nombre_recibe' => $direccion->nombre_recibe,
-                'url_mapa' => $direccion->url_mapa,
-                'instrucciones' => $direccion->instrucciones,
-            ]
-        ]);
-    }
+                
+
+
+        public function obtener_direccioncliente($id){
+            $direccion = DireccionCliente::find($id);
+
+            if(!$direccion){
+                return response()->json(['status' => 0]);
+            }
+
+            return response()->json([
+                'status' => 1,
+                'data' => [
+                    'nombre_direccion' => $direccion->nombre_direccion,
+                    'direccion' => $direccion->direccion,
+                    'colonia' => $direccion->colonia,
+                    'ciudad' => $direccion->ciudad,
+                    'estado' => $direccion->estado,
+                    'codigo_postal' => $direccion->codigo_postal,
+                    'celular' => $direccion->celular,
+                    'telefono' => $direccion->telefono,
+                    'nombre_recibe' => $direccion->nombre_recibe,
+                    'url_mapa' => $direccion->url_mapa,
+                    'instrucciones' => $direccion->instrucciones,
+                ]
+            ]);
+        }
+
+    //============================================//
+    //======== FIN DE MODIFICAR DIRECCION ========//
+    //============================================//
 
     public function add_nota($id, Request $request){
         $id = Tools::_int($id);       
@@ -4311,6 +4215,118 @@ public function guardarEntregaProgramada(Request $request, $id){
 
 
 
+    //==========================================================//
+    //======== FLUJOS VIEJOS | NO SIRVEN | REEMPLAZADOS ========//
+    //==========================================================//
 
+        function set_accion_fabricado(Request $request, int $id, object $user){
+            $data=[
+                "status_id"=>4,
+                "status_4"=>1,
+                "updated_at"=>date("Y-m-d H:i:s")
+            ];
+            Order::where(["id"=>$id])->update($data);
+            Pedidos2::Log($id,"Fabricado", "El pedido fue fabricado", 4,$user);
+        }
+
+
+        //====================================================================//
+        //======== VIEJO FLUJO DE DEVOLUCIONES YA HA SIDO REEMPLAZADO ========//
+        //====================================================================//
+
+            public function devolucion_crear($order_id,Request $request){
+                $user = auth()->user();
+
+                $number = Tools::_string( $request->number,90);  
+                $razon = $request->razon;
+                
+                $deb = Debolution::create([
+                    "order_id"=>$order_id,
+                    "reason_id"=>$razon,
+                    "created_at"=>date("Y-m-d H:i:s"),
+                    "updated_at"=>date("Y-m-d H:i:s")
+                ]);
+                
+
+                if($request->hasFile("archivo")){
+                    $archivo = $request->file("archivo");
+                    $mimeType= $archivo->getClientMimeType();
+
+                    $mimeExt = Pedidos2::mimeExtensions();
+
+                    if(in_array($mimeType,array_keys($mimeExt))){
+                        $ext= $mimeExt[$mimeType];
+                        $fileName = $order_id . "." . $ext;
+                        $archivo->storeAs("public/Devoluciones", $fileName);
+                        $filePath="Devoluciones/".$fileName;     
+                        
+                        Evidence::create([
+                            "file" => $filePath,    
+                            "debolution_id" => $deb->id,
+                            "required"=>1,
+                            "number"=>$number,
+                            "file"=>$filePath,
+                            "created_at"=>date("Y-m-d H:i:s"),
+                            "updated_at"=>date("Y-m-d H:i:s")
+                        ],["debolution_id"],["required","number","document","updated_at"]);
+
+                    }
+                }
+                
+                $data=[
+                    "status_id"=>9,
+                    "updated_at"=>date("Y-m-d H:i:s")
+                ];
+                Order::where(["id"=>$order_id])->update($data);
+
+                Pedidos2::Log($order_id,"Devolución", "Devolucion '$number' fue registrada", 9, $user);
+
+                return view("pedidos2/devolucion/nuevo2",["ob"=>$deb]);
+            //  Feedback::custom("url",url());
+                //Feedback::j(1);
+            }
+
+
+
+            public function devolucion_edit($id,Request $request){
+                $user = User::find(auth()->user()->id);
+
+                $id = Tools::_int($id);   
+                
+                $ob = Debolution::where(["id"=>$id])->first();
+                $reasons = Reason::get();
+
+                return view("pedidos2/devolucion/edit",compact("id","ob","reasons"));
+            }
+
+            public function devolucion_update($id,Request $request){
+                $id = Tools::_int($id);       
+                $user = auth()->user();
+
+                $reason_id = Tools::_int($request->reason_id);    
+
+                $debo = Debolution::where("id", $id)->first(); 
+
+                    $data = [
+                        "reason_id" => $reason_id,
+                        "updated_at"=>date("Y-m-d H:i:s")
+                    ];
+
+                Debolution::where("id", $id)->update($data); 
+
+                $reason = Reason::where("id",$reason_id)->first();
+
+                Pedidos2::Log($debo->order_id,"Devolucion", "Cambio en devolución '$reason->reason' ", 0, $user);
+                Feedback::j(1);
+                return;
+            }
+        
+        //=============================================//
+        //======== FIN DE DEVOLUCIONES | VIEJO ========//
+        //=============================================//
+
+    //================================================//
+    //======== FIN DE FLUJOS VIEJOS/INUTILES =========//
+    //================================================//
 
  }

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('cliente_id')->constrained('clientes')->cascadeOnDelete();
             $table->string('nombre_direccion', 50);
+            $table->enum('tipo_residencia', ['industria', 'taller', 'residencial', 'obra'])->default('residencial');
             $table->string('direccion');
             $table->string('ciudad', 100)->nullable();
             $table->string('estado', 100)->nullable();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->string('nombre_recibe', 50)->nullable();
             $table->string('url_mapa')->nullable();
             $table->text('instrucciones')->nullable();
+            $table->text('requerimientos_especiales')->nullable();
             $table->timestamps();
 
             $table->index('cliente_id');

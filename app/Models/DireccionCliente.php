@@ -12,6 +12,7 @@ class DireccionCliente extends Model
 
         'cliente_id',
         'nombre_direccion',
+        'tipo_residencia',
         'direccion',
         'ciudad',
         'estado',
