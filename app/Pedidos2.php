@@ -843,10 +843,7 @@ public static function OrigenesCat() : array
             JOIN users u ON u.id = mo.created_by
             LEFT JOIN etiqueta_pedido ep ON ep.pedido_id = o.id
             LEFT JOIN etiquetas e ON e.id = ep.etiqueta_id
-            WHERE mo.status_id IN (1,3)
-            AND o.status_id NOT IN (6,7,8,9,10)
-            AND mo.created_at BETWEEN '2025-01-01 00:00:00' AND '2026-01-07 23:59:59'
-            AND u.office = 'San Pablo'
+            WHERE $whereStr
             GROUP BY
                 mo.id,
                 mo.number,
@@ -860,7 +857,7 @@ public static function OrigenesCat() : array
                 u.name,
                 u.office
             ORDER BY mo.created_at DESC
-            LIMIT 1 OFFSET 0;";
+            LIMIT " . self::$rpp . " OFFSET $ini";
 
         $resultados = DB::select($query);
 
