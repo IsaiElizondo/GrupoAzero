@@ -934,195 +934,74 @@ class ReportesController extends Controller
 
 
    public function ExcelFabricacion(Request $request){
-
-     $user = auth()->user();
-
-    $termino = $request->query("termino", "");
-    $desde = "2025-01-01 00:00:00";
-    $hasta = now()->format("Y-m-d 23:59:59");
-
-    $status = (array)$request->query("st");
-    $subprocesos = (array)$request->query("sp");
-    $origen = (array)$request->query("or");
-    $sucursal = (array)$request->query("suc");
-    $subpstatus = (array)$request->query("spsub");
-    $recogido = (array)$request->query("rec");
-    $orsub = (array)$request->query("orsob");
-    $etiquetas = (array)$request->query("etiquetas");
-
-    $pag = max(1, (int)$request->query("p", 1));
-
-    $ordenRecibido = $request->query('orden_recibido', '');
     
-    //LaravelLog::info('Origen recibido: ',['origen' => $origen]);
-    Pedidos2::$rpp = 9999999;
-    
-    $lista = collect(Pedidos2::Lista(
+        $user = auth()->user();
+        $termino = $request->query("termino", "");
+        $desde = "2025-01-01";
+        $hasta = now()->format("Y-m-d");
 
-        $pag, 
-        $termino,
-        $desde,
-        $hasta,
-        $status,
-        $subprocesos,
-        $origen,
-        $sucursal,
-        $subpstatus,
-        $recogido,
-        $orsub,
-        $user->id,
-        $etiquetas
+        $status = (array)$request->query("st");
+        $sucursal = (array)$request->query("suc");
+        $etiquetas = (array)$request->query("etiquetas");
 
-    ))->filter(function ($pedido)use ($user){
+        $filtros = [
+            'termino' => $termino,
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'st' => $status,
+            'suc' => $sucursal,
+            'etiquetas' => $etiquetas,
+        ];
 
-        /* LaravelLog::info('Filtro user_id vs auth_id', [
-            'pedido_id' => $pedido->id,
-            'pedido_user_id' => $pedido->user_id ?? 'NO DEFINIDO',
-            'auth_id' => $user->id
-        ]); */
+        Pedidos2::$rpp = 1;
+        $resultadoTotal = Pedidos2::ListaDashboardFabricacion(1, $user, $filtros);
+        $total = $resultadoTotal['total'] ?? 0;
 
-        //Filtros generales para todos los usuarios
-        $statusDahsboard = [2, 5];
+        Pedidos2::$rpp = $total > 0 ? $total : 1000;
+        $resultado = Pedidos2::ListaDashboardFabricacion(1, $user, $filtros);
+        $lista = collect($resultado['data']);
 
-        //Para usuarios de ventas vean solo sus pedidos
-        if($user->role_id == 2 && $user->department_id == 3){
+        $estatuses = \App\Status::pluck('name', 'id')->toArray();
+        $now = new \DateTime();
+        $hoyFormateado = $now->format('d/m/Y H:i');
 
-            return $pedido->user_id == $user->id && in_array($pedido->status_id, [1, 2, 3, 4, 5]);
+        $wExcel = new ExcelWriter();
+        $wExcel->writeSheetHeader('Sheet1', [
+            'Tipo de Pedido' => 'string',
+            'Folio de Pedido' => 'string',
+            'Fecha de emisión' => 'string',
+            'Hora de emisión' => 'string',
+            'Subproceso' => 'string',
+            'Folio/Numero' => 'string',
+            'Estatus Actual' => 'string',
+            'Creado en' => 'string',
+            'Creado por' => 'string',
+            'Sucursal' => 'string',
+            'Etiquetas' => 'string',
+            'Fecha y hora actual' => 'string',
+            'Días desde creación' => 'integer',
+        ]);
+        $wExcel->setAuthor('Departamento de Fabricación');
 
-        }
+        foreach ($lista as $li) {
 
-        
-        //Para usuarios de embarques vean solo lo "Recibido por embarques"
-        if($user->role_id == 2 && $user->department_id == 4){
+            $tipoPedido = '';
+            $folioPedido = '';
 
-            
-            if(in_array($pedido->status_id, $statusDahsboard)){
-
-                $ultimoLog = Log::where('order_id', $pedido->id)
-                    ->where('status', 'like', '%Recibido por embarques%')
-                    ->orderByDesc('created_at')
-                    ->first();
-
-                if($ultimoLog && $ultimoLog->user && $ultimoLog->user->office == $user->office){
-                    return true;
-                }
-
-                return false;
-
+            if (!empty($li->invoice_number)) {
+                $tipoPedido = 'Factura';
+                $folioPedido = $li->invoice_number;
+            } elseif (!empty($li->invoice)) {
+                $tipoPedido = 'Cotización';
+                $folioPedido = $li->invoice;
             }
 
-            return false;
+            $fechaEmision = new \DateTime($li->pedido_created_at);
+            $fechaStr = $fechaEmision->format('d/m/Y');
+            $horaStr = $fechaEmision->format('H:i');
 
-        }
-
-         //Para usuarios de fabricación
-        if($user->role_id == 2 && $user->department_id == 5){
-
-            $ordenes = ManufacturingOrder::where('order_id', $pedido->id)
-                ->whereIn('status_id', [1,3])
-                ->get();
-                
-                
-            $ordenesSucursal = $ordenes->filter(function($of) use($user){
-
-                $office = $of->office() ?: $of->officeCreated();
-                $office = trim(strtolower($office));
-                $userOffice = trim(strtolower($user->office));
-                return $office == $userOffice;
-
-            });
-
-            //LaravelLog::info("Pedido #{$pedido->id} - Ordenes Totales: " . $ordenes->count(). " - Ordenes sucursal: " . $ordenesSucursal->count());
-
-            return $ordenesSucursal->isNotEmpty() && !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-
-        //Usuarios de administración
-        if($user->role_id == 1 || $user->department_id == 2){
-
-            return !in_array($pedido->status_id, [6,7,8,9,10]);
-
-        }
-
-        //Usuarios de auditría
-        if(in_array($user->role_id, [1,2]) && $user->department_id == 9){
-
-            return in_array($pedido->status_id, [6, 7, 8, 9]);
-
-        }
-
-
-
-    })->values();
-
-    $estatuses = \App\Status::pluck('name', 'id')->toArray();
-    $now = new \DateTime();
-    $hoyFormateado = $now->format('d/m/Y H:i');
-
-    $wExcel = new ExcelWriter();
-    $wExcel->writeSheetHeader('Sheet1', [
-        'Tipo de Pedido' => 'string',
-        'Folio de Pedido' => 'string',
-        'Fecha de emisión' => 'string',
-        'Hora de emisión' => 'string',
-        'Subproceso' => 'string',
-        'Folio/Numero' => 'string',
-        'Estatus Actual' => 'string',
-        'Creado en' => 'string',
-        'Creado por' => 'string',
-        'Sucursal' => 'string',
-        'Etiquetas' => 'string',
-        'Fecha y hora actual' => 'string',
-        'Días desde creación' => 'integer',
-    ]);
-    $wExcel->setAuthor('Departamento de Fabricación');
-
-    foreach ($lista as $li) {
-        
-        // Tipo de pedido y folio
-        $tipoPedido = '';
-        $folioPedido = '';
-        if (!empty($li->invoice_number)) {
-            $tipoPedido = 'Factura';
-            $folioPedido = $li->invoice_number;
-        } elseif (!empty($li->invoice)) {
-            $tipoPedido = 'Cotización';
-            $folioPedido = $li->invoice;
-        } elseif (!empty($li->rsnumber)) {
-            $tipoPedido = 'Requisición Stock';
-            $folioPedido = $li->rsnumber;
-        }
-
-        $fechaEmision = new \DateTime($li->created_at);
-        $fechaStr = $fechaEmision->format('d/m/Y');
-        $horaStr = $fechaEmision->format('H:i');
-
-        $etiquetas = DB::table('etiqueta_pedido')
-            ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-            ->where('etiqueta_pedido.pedido_id', $li->id)
-            ->pluck('etiquetas.nombre')
-            ->toArray();
-        $etiquetas_string = implode(',', $etiquetas);
-
-        // Solo Órdenes de Fabricación válidas
-        $ordenes = \App\ManufacturingOrder::where("order_id", $li->id)
-            ->whereIn('status_id', [1, 3]) // Solo pendientes y en proceso
-            ->get()
-            ->filter(function($of) use ($user){
-                $office = $of->office() ?: $of->officeCreated();
-                $office = trim(strtolower($office));
-                $userOffice = trim(strtolower($user->office));
-                return $office == $userOffice;
-            });
-        foreach ($ordenes as $ord){
-            $creado = new \DateTime($ord->created_at);
+            $creado = new \DateTime($li->of_created_at);
             $dias = $creado->diff($now)->days;
-
-            $usr = \App\User::find($ord->created_by);
-            $creadoPor = $usr->name ?? '';
-            $sucursal = $usr->office ?? '';
 
             $row = [
                 $tipoPedido,
@@ -1130,28 +1009,21 @@ class ReportesController extends Controller
                 $fechaStr,
                 $horaStr,
                 'Orden Fabricación',
-                $ord->number,
-                $estatuses[$ord->status_id] ?? '',
+                $li->orden_fabricacion,
+                $estatuses[$li->of_status_id] ?? '',
                 $creado->format('d/m/Y H:i'),
-                $creadoPor,
-                $sucursal,
-                $etiquetas_string,
+                $li->creado_por ?? '',
+                $li->sucursal ?? '',
+                $li->etiquetas ?? '',
                 $hoyFormateado,
                 $dias,
             ];
 
             $wExcel->writeSheetRow('Sheet1', $row);
-
         }
+
+        $nombreArchivo = "Reporte_Fabricacion_" . date("Y-m-d_H-i-s") . ".xlsx";
+        return $this->MandaReporte($wExcel, $nombreArchivo);
     }
 
-    $nombreArchivo = "Reporte_Fabricacion_" . date("Y-m-d_H-i-s") . ".xlsx";
-    return $this->MandaReporte($wExcel, $nombreArchivo);
-
-}
-
-
-
-
-   
 }

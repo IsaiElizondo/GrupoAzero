@@ -496,11 +496,11 @@ $pedidoStatusId = $pedido->status_id;
         <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
     @endif
 
-
+{{--
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
         <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
      @endif 
-
+--}}
     @if ($user->role_id == 1 || (in_array($user->department_id,[3,7]) && in_array($pedido->status_id, [7]) && !isset($rebilling->id)) )
 
         <a class="Candidato" rel="refacturacion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=refacturacion') }}">Refacturación</a>
@@ -602,7 +602,7 @@ $pedidoStatusId = $pedido->status_id;
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="headersub"> Etiquetas disponibles</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponiblesOcultas as $etiqueta)
                         @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
