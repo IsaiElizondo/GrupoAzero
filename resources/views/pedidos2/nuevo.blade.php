@@ -70,7 +70,7 @@
                                 <option value="completa">Dirección completa</option>
                                 <option value="recoge">Cliente recoge</option>
                             </select>
-                            <div id="form_general_direccion" style="display:none; margin-top:10px;">
+                            <div id="form_general_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
 
                                 <h5>Dirección completa</h5>
 
@@ -316,7 +316,7 @@
                                 <option value="pendiente">Pendiente</option>
                                 <option value="recoge">Cliente recoge</option>
                             </select>
-                            <div id="bloque_direccion_detalle" style="display:none; margin-top:10px;">
+                            <div id="bloque_direccion_detalle" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label">Nombre de Dirección *</label>
                                     <div class="col-sm-7">
@@ -346,7 +346,7 @@
 
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> Estado </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-3">
                                         <input class="form-control" type="text" name="nuevo_estado" placeholder="Estado">
                                     </div>
 
@@ -358,7 +358,7 @@
 
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> Colonia </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-3">
                                         <input class="form-control" type="text" name="nuevo_colonia" placeholder="Colonia">
                                     </div>
 
@@ -370,7 +370,7 @@
 
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> Celular </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-3">
                                         <input class="form-control" type="text" name="nuevo_celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Celular">
                                     </div>
 

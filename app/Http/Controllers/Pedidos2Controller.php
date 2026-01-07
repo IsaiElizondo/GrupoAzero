@@ -238,17 +238,17 @@ class Pedidos2Controller extends Controller
         $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
        // var_dump($purchaseOrder);
        
-       $etiquetasDisponibles = DB::table('etiquetas')->get();
+       $EtiquetasDisponibles = DB::table('etiquetas')->get();
 
-       $etiquetasAsignadas = DB::table('etiqueta_pedido')
+       $EtiquetasAsignadas = DB::table('etiqueta_pedido')
             ->where('pedido_id', $id)
             ->pluck('etiqueta_id')
             ->toArray();
 
-        $data['etiquetasDisponibles'] = $etiquetasDisponibles;
-        $data['etiquetasAsignadas'] = $etiquetasAsignadas;
+        $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
+        $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
         
-        $rutasAsociadas = DB::table('ruta_pedido')
+        $RutasAsociadas = DB::table('ruta_pedido')
             ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
             ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
             ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
@@ -281,10 +281,16 @@ class Pedidos2Controller extends Controller
             ->orderBy('ruta_pedido.id')
             ->get();
 
+        $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                ->where('activo', 1)
+                ->orderBy('nombre')
+                ->get();
+
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "etiquetasAsignadas", "etiquetasDisponibles", 'rutasAsociadas'));
+        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles",
+        'RutasAsociadas', 'RequerimientosEspeciales'));
     }
 
 
@@ -539,9 +545,12 @@ public function guardarEntregaProgramada(Request $request, $id){
 
     public function nuevo(){
         $user =auth()->user();
-   
+        $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                ->where('activo', 1)
+                ->orderBy('nombre')
+                ->get();
 
-        return view('pedidos2.nuevo', compact("user"));
+        return view('pedidos2.nuevo', compact("user", "RequerimientosEspeciales"));
     }
 
 
@@ -602,6 +611,7 @@ public function guardarEntregaProgramada(Request $request, $id){
 
         $nombre_cliente = null;
         $nombre_direccion_sn = null;
+        $tipo_residencia_sn = null;
         $direccion_sn = null;
         $colonia_sn = null;
         $ciudad_sn = null;
@@ -622,6 +632,7 @@ public function guardarEntregaProgramada(Request $request, $id){
             if($estado_direccion == 'completa'){
                 $nombre_cliente = "Cliente General";
                 $nombre_direccion_sn = $request->general_nombre_direccion ?? null;
+                $tipo_residencia_sn = $request->general_tipo_residencia ?? null;
                 $direccion_sn = $request->general_direccion ?? null;
                 $colonia_sn = $request->general_colonia ?? null;
                 $ciudad_sn = $request->general_ciudad ?? null;
@@ -636,6 +647,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                 $nombre_cliente = "Cliente General";
 
                 $nombre_direccion_sn = null;
+                $tipo_residencia_sn = null;
                 $direccion_sn = null;
                 $colonia_sn = null;
                 $ciudad_sn = null;
@@ -666,6 +678,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                     'cliente_id' => $cliente->id,
                     'estado_direccion' => 'completa',
                     'nombre_direccion' => $request->nombre_direccion,
+                    'tipo_residencia' => $request->tipo_residencia,
                     'direccion' => $request->direccion,
                     'colonia' => $request->colonia ?? null,
                     'ciudad' => $request->ciudad,
@@ -694,6 +707,7 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             $nombre_cliente = $cliente->nombre;
             $nombre_direccion_sn = $direccionCliente->nombre_direccion ?? null;
+            $tipo_residencia_sn = $direccionCliente->tipo_residencia ?? null;
             $direccion_sn = $direccionCliente->direccion ?? null;
             $colonia_sn = $direccionCliente->colonia ?? null;
             $ciudad_sn = $direccionCliente->ciudad ?? null;
@@ -719,11 +733,12 @@ public function guardarEntregaProgramada(Request $request, $id){
                     'cliente_id' => $cliente->id,
                     'estado_direccion' => 'completa',
                     'nombre_direccion' => $request->nuevo_nombre_direccion,
+                    'tipo_residencia' => $request->nuevo_tipo_residencia,
                     'direccion' => $request->nuevo_direccion,
                     'colonia' => $request->nuevo_colonia ?? null,
                     'ciudad' => $request->nuevo_ciudad,
                     'estado' => $request->nuevo_estado,
-                    'codigo_postal' => $request->nuevo_cp,
+                    'codigo_postal' => $request->nuevo_codigo_postal,
                     'celular' => $request->nuevo_celular,
                     'telefono' => $request->nuevo_telefono,
                     'nombre_recibe' => $request->nuevo_nombre_recibe,
@@ -738,6 +753,7 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             $nombre_cliente = $cliente->nombre;
             $nombre_direccion_sn = $direccionCliente->nombre_direccion ?? null;
+            $tipo_residencia_sn = $direccionCliente->tipo_residencia ?? null;
             $direccion_sn = $direccionCliente->direccion ?? null;
             $colonia_sn = $direccionCliente->colonia ?? null;
             $ciudad_sn = $direccionCliente->ciudad ?? null;
@@ -759,6 +775,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                 'client'=> $client,
                 'nombre_cliente'=> $nombre_cliente,
                 'nombre_direccion'=> $nombre_direccion_sn,
+                'tipo_residencia'=> $tipo_residencia_sn,
                 'direccion'=> $direccion_sn,
                 'colonia'=> $colonia_sn,
                 'ciudad'=> $ciudad_sn,
@@ -785,6 +802,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                 'client'=> $client,
                 'nombre_cliente'=> $nombre_cliente,
                 'nombre_direccion'=> $nombre_direccion_sn,
+                'tipo_residencia'=> $tipo_residencia_sn,
                 'direccion'=> $direccion_sn,
                 'colonia'=> $colonia_sn,
                 'ciudad'=> $ciudad_sn,
@@ -850,6 +868,7 @@ public function guardarEntregaProgramada(Request $request, $id){
     Feedback::message("Pedido creado");
     Feedback::custom("goto",url("pedidos2/pedido/".$order->id));
     Feedback::j(1);
+
     }
 
 
@@ -961,7 +980,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                 $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
                 //Obtener etiquetas ya activas
-                $etiquetasAsignadas = DB::table('etiqueta_pedido')
+                $EtiquetasAsignadas = DB::table('etiqueta_pedido')
                     ->where('pedido_id', $id)
                     ->pluck('etiqueta_id');
 
@@ -973,13 +992,13 @@ public function guardarEntregaProgramada(Request $request, $id){
                     ->pluck('id');
 
                 //Etiquetas que no puede modificar
-                $etiquetasNoModificables = $etiquetasAsignadas->diff($etiquetasPermitidas);
+                $etiquetasNoModificables = $EtiquetasAsignadas->diff($etiquetasPermitidas);
 
                 //Etiquetas que si puede modificar
                 $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
 
-                $eliminadas = $etiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
-                $nuevas = $etiquetasFiltradas->diff($etiquetasAsignadas);
+                $eliminadas = $EtiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
+                $nuevas = $etiquetasFiltradas->diff($EtiquetasAsignadas);
 
                 //Eliminar solo las etiquetas Permitidas
                 DB::table('etiqueta_pedido')
