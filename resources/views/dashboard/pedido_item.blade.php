@@ -378,7 +378,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 
                                 <div class="datito mt-1">
                                     <label> Tiempo desde fabricacion </label>
-                                    <span class="dias-contador text-warning">
+                                    <span class="dias-contador" style="color: #000080;">
                                         <center>
                                             @if($HorasFab < 24)
                                                 {{ number_format($HorasFab, 2) }} {{ $HorasFab == 1 ? 'hr' : 'hrs' }}
@@ -399,7 +399,7 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
 
                                 <div class="datito mt-1">
                                     <label> Fabricaciones ({{ $OfsVisibles->count() }})</label>
-                                    <span class="dias-contador text-warning abrir-modal" style="cursor:pointer;" data-toggle="modal" data-target="#ModalFabricacion{{$item->id}}">
+                                    <span class="dias-contador abrir-modal" style="cursor:pointer; color: #000080;" data-toggle="modal" data-target="#ModalFabricacion{{$item->id}}">
                                         <center>
                                             @if($HorasFab < 24)
                                                 {{ number_format($HorasFab, 2) }} hrs
