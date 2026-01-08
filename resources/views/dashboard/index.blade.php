@@ -100,16 +100,13 @@ use App\Http\Controllers\Pedidos2Controller;
                                     <div class="modal-body">
                                         
                                     <div class="AvanzadosSet">
-
                                         @if(in_array(auth()->user()->role->name, ['Administrador', 'ALEJANDRO GALICIA']) || in_array(auth()->user()->department_id, [2,3,5,6,7,8,9]))
 
                                                 <fieldset>
                                                     <legend>Status</legend>
-                                            
                                                     @foreach ($estatuses as $k=>$v)
                                                         @if ( !in_array($k, [6, 7, 8,9, 10] ))
                                                         <div class="checkpair"><input type="checkbox" name="st[]" value="{{ $k }}" id="st_{{ $v }}"> <label for="st_{{ $v }}">{{ $v }}</label></div>
-
                                                         @endif
                                                     @endforeach
                                         @endif 
@@ -192,7 +189,7 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     <legend>Sucursal</legend>
                                                     <div class="checkpair"><input type="checkbox" name="suc[]" value="San Pablo" id="suc_S"> <label for="suc_S">San Pablo</label></div>
                                                     <div class="checkpair"><input type="checkbox" name="suc[]" value="La Noria" id="suc_N"> <label for="suc_N">La Noria</label></div>
-                                                 @endif
+                                                @endif
                                                     <legend>Filtros por tiempo y folio </legend>
                                                     <div class="checkpair parent" rel="a0">
                                                         <input type="checkbox" name="sp[]" value="a0" id="sp_a0">
@@ -234,21 +231,21 @@ use App\Http\Controllers\Pedidos2Controller;
                                                         <label for="spsub_created_desc">Más reciente primero</label>
                                                     </div>   
                                                     
-                                                @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Embarques"]))
-                                                    <legend>Por Recibido por Embarques</legend>
-                                                    <div class="checkpair parent" rel="embarques">
-                                                        <input type="checkbox" name="sp[]" value="embarques" id="sp_embarques">
-                                                        <label for="sp_embarques"> Filtrar por Recibido por Embarques </label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="embarques">
-                                                        <input type="checkbox" name="spsub[]" value="recibido_embarques_at_asc" id="spsub_embarques_asc">
-                                                        <label for="spsub_embarques_asc">Más viejo primero</label>
-                                                    </div>
-                                                    <div class="checkpair sub" parent="embarques">
-                                                        <input type="checkbox" name="spsub[]" value="recibido_embarques_at_desc" id="spsub_embarques_desc">
-                                                        <label for="spsub_embarques_desc">Más reciente primero</label>
-                                                    </div>
-                                                @endif
+                                                    @if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && in_array(auth()->user()->department->name,["Administrador", "Embarques"]))
+                                                        <legend>Por Recibido por Embarques</legend>
+                                                        <div class="checkpair parent" rel="embarques">
+                                                            <input type="checkbox" name="sp[]" value="embarques" id="sp_embarques">
+                                                            <label for="sp_embarques"> Filtrar por Recibido por Embarques </label>
+                                                        </div>
+                                                        <div class="checkpair sub" parent="embarques">
+                                                            <input type="checkbox" name="spsub[]" value="recibido_embarques_at_asc" id="spsub_embarques_asc">
+                                                            <label for="spsub_embarques_asc">Más viejo primero</label>
+                                                        </div>
+                                                        <div class="checkpair sub" parent="embarques">
+                                                            <input type="checkbox" name="spsub[]" value="recibido_embarques_at_desc" id="spsub_embarques_desc">
+                                                            <label for="spsub_embarques_desc">Más reciente primero</label>
+                                                        </div>
+                                                    @endif
                                                 </fieldset>
 
                                             @php
@@ -332,20 +329,11 @@ use App\Http\Controllers\Pedidos2Controller;
                                                     @endforeach
                                                 </fieldset>
                                             @endif
-
-                                                
-
-                                                
-                                            
-
-
                                     </div>
                                 </div> 
                             </div> 
                         </div> 
                     </div> 
-
-
             </form>
             
             <h5> Total de Pedidos: <span id="contador-pedidos">{{ count($lista) }}</span></h5>
@@ -357,14 +345,6 @@ use App\Http\Controllers\Pedidos2Controller;
             </div>
             
             <input type="hidden" name="listaUrl" value="{{ url('pedidos2/dashboard/lista') }}" />
-            
-        
-
-
-
-
-        
-
     </div> 
 </main>
 
