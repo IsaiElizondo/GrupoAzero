@@ -82,9 +82,9 @@
                                 </div>
                                 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Tipo de reisdencia * </label>
+                                    <label class="col-sm-2 col-form-label"> Tipo de residencia * </label>
                                     <div class="col-sm-3">
-                                        <select name="general_tipo_residencia" class="form-control" required>
+                                        <select name="general_tipo_residencia" class="form-control">
                                             <option value=""> Seleccione </option>
                                             <option value="residencial"> Residencial </option>
                                             <option value="obra"> Obra </option>
@@ -211,9 +211,9 @@
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Tipo de reisdencia * </label>
+                                    <label class="col-sm-2 col-form-label"> Tipo de residencia * </label>
                                     <div class="col-sm-3">
-                                        <select name="tipo_residencia" class="form-control" required>
+                                        <select name="tipo_residencia" class="form-control">
                                             <option value=""> Seleccione </option>
                                             <option value="residencial"> Residencial </option>
                                             <option value="obra"> Obra </option>
@@ -325,9 +325,9 @@
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Tipo de reisdencia * </label>
+                                    <label class="col-sm-2 col-form-label"> Tipo de residencia * </label>
                                     <div class="col-sm-3">
-                                        <select name="nuevo_tipo_residencia" class="form-control" required>
+                                        <select name="nuevo_tipo_residencia" class="form-control">
                                             <option value=""> Seleccione </option>
                                             <option value="residencial"> Residencial </option>
                                             <option value="obra"> Obra </option>
@@ -376,7 +376,7 @@
 
                                     <label class="col-sm-1 col-form-label"> Teléf </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_codigo_postal" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
+                                        <input class="form-control" type="text" name="nuevo_telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
                                     </div>
                                 </div>
 
@@ -461,7 +461,7 @@
                 else{ window.location.href = json.goto; }
             }
         });
-
+    
         const codeInput = document.querySelector(".Tiposet input[name='code']");
         if(codeInput) codeInput.addEventListener("change", UnlockContinuar);
         const notaInput = document.querySelector(".Tiposet textarea[name='nota']");
@@ -547,6 +547,7 @@
             let datos = {
                 cliente_id: $('#cliente_id_ajax').val(),
                 nombre_direccion: $('#nombre_direccion').val(),
+                tipo_residencia: $('select[name="tipo_residencia"]').val(),
                 direccion: $('#direccion').val(),
                 colonia: $('#colonia').val(),
                 ciudad: $('#ciudad').val(),

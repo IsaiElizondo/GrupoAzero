@@ -184,7 +184,7 @@ var_dump($pedido);
                                         <label> Direcciones registradas </label>
                                         <select name="cliente_direccion_id" id="cliente_direccion_id" class="form-control">
                                             <option value="">-- Seleccione una direccion --</option>
-                                            @foreach($direccionesCliente as $dir)
+                                            @foreach($DireccionesCliente as $dir)
                                                 <option value="{{ $dir->id }}"> 
                                                     {{ $dir->direccion }}
                                                 </option>
@@ -199,6 +199,17 @@ var_dump($pedido);
                                     <label> Nombre de la direccion </label>
                                     <input type="text" name="nombre_direccion" class="form-control" value="{{ $pedido->nombre_direccion }}">
                                 </div>
+
+                                <div class="FormRow">
+                                    <label> Tipo de residencia </Label>
+                                    <select name="tipo_residencia" class="form-control">
+                                        <option value=""> -- Seleccione -- </option>
+                                        <option value="residencial" {{ $pedido->tipo_residencia == 'residencial' ? 'selected' : '' }}> Residencial </option>
+                                        <option value="obra" {{ $pedido->tipo_residencia == 'obra' ? 'selected' : ''}}> Obra </option>
+                                        <option value="taller" {{ $pedido->tipo_residencia == 'taller' ? 'selected' : '' }}> Taller </option>
+                                        <option value="industria" {{ $pedido->tipo_residencia == 'industria' ? 'selected' : ''}}> Industria </option>
+                                    </select>
+                                </div> 
                                 
                                 <div class="FormRow">
                                     <label> Direccion </label>
@@ -244,6 +255,20 @@ var_dump($pedido);
                                     <label> URL Mapa</label>
                                     <input type="text" name="url_mapa" class="form-control" value="{{ $pedido->url_mapa }}"> 
                                 </div>
+
+                                <div class="FormRow">
+                                    <label>Requerimientos especiales</label>
+                                    @foreach($RequerimientosEspeciales as $Req)
+                                        <label style="display:block">
+                                            <input type="checkbox"
+                                                name="requerimientos[]"
+                                                value="{{ $Req->id }}"
+                                                {{ in_array($Req->id, $RequerimientosDireccion ?? []) ? 'checked' : '' }}>
+                                            {{ $Req->nombre }}
+                                        </label>
+                                    @endforeach
+                                </div>  
+
                                 <div class="FormRow">
                                     <label> Instrucciones </label>
                                     <textarea name="instrucciones" class="form-control">{{ $pedido->instrucciones }}</textarea>
@@ -301,13 +326,26 @@ var_dump($pedido);
                         <div><label>Nombre Dirección</label><span>{{$pedido->nombre_direccion}}</span></div>
                     @endif
 
+                    @if($pedido->tipo_residencia)
+                        <div>
+                            <label>Tipo de residencia</label>
+                            <span>{{ ucfirst($pedido->tipo_residencia) }}</span>
+                        </div>
+                    @endif
+
                     <div>
                         <label>Dirección</label>
                         <span>
-                            {{$pedido->direccion}}
-                            @if($pedido->ciudad), {{$pedido->ciudad}} @endif
-                            @if($pedido->estado), {{$pedido->estado}} @endif
-                            @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
+                            @if($pedido->estado_direccion == 'recoge')
+                                Cliente recoge en sucursal
+                            @elseif($pedido->estado_direccion == 'pendiente')
+                                Dirección pendiente por definir
+                            @else
+                                {{$pedido->direccion}}
+                                @if($pedido->ciudad), {{$pedido->ciudad}} @endif
+                                @if($pedido->estado), {{$pedido->estado}} @endif
+                                @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
+                            @endif
                         </span>
                     </div>
 
@@ -353,7 +391,15 @@ var_dump($pedido);
                                 </a>
                             </span>
                         </div>
-                    @endif  
+                    @endif
+                    
+                    @if(!empty($RequerimientosTexto))
+                        <div>
+                            <label>Requerimientos</label>
+                            <span>{{ implode(', ', $RequerimientosTexto) }}</span>
+                        </div>
+                    @endif
+
                     
                     @if($pedido->instrucciones)
                         <div><label>Instrucciones</label><span>{{$pedido->instrucciones}}</span></div>
@@ -1314,7 +1360,7 @@ $(document).ready(function(){
         }
     }
 
-    function cargarDireccionCliente(id){
+    function CargarDireccionCliente(id){
         if(!id){
             return;
         }
@@ -1328,6 +1374,7 @@ $(document).ready(function(){
             let d = resp.data;
 
             $("input[name='nombre_direccion']").val(d.nombre_direccion);
+            $("select[name='tipo_residencia']").val(d.tipo_residencia);
             $("input[name='direccion']").val(d.direccion);
             $("input[name='colonia']").val(d.colonia);
             $("input[name='ciudad']").val(d.ciudad);
@@ -1338,6 +1385,14 @@ $(document).ready(function(){
             $("input[name='nombre_recibe']").val(d.nombre_recibe);
             $("input[name='url_mapa']").val(d.url_mapa);
             $("textarea[name='instrucciones']").val(d.instrucciones);
+
+            $("input[name='requerimientos[]']").prop("checked", false);
+
+            if(d.requerimientos){
+                d.requerimientos.forEach(function(reqId){
+                    $("input[name='requerimientos[]'][value='"+reqId+"']").prop("checked", true);
+                });
+            }
         });
     }
 
@@ -1353,7 +1408,7 @@ $(document).ready(function(){
                 if(clienteDireccionId){
                     $("#modo_direccion").val("existente");
                     $("#bloqueDireccionExistente").show();
-                    cargarDireccionCliente(clienteDireccionId);
+                    CargarDireccionCliente(clienteDireccionId);
                 }else{
                     $("#modo_direccion").val("nueva");
                     $("#bloqueDireccionCompleta").show();
@@ -1373,7 +1428,7 @@ $(document).ready(function(){
     });
 
     $("#cliente_direccion_id").on("change", function(){
-        cargarDireccionCliente($(this).val());
+        CargarDireccionCliente($(this).val());
     });
 
     $("#btnGuardarDireccion").on("click", function(){

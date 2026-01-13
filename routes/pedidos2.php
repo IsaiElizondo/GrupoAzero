@@ -98,7 +98,7 @@ Route::middleware('auth')->group(function () {
 	Route::get('pedidos2/parcial_desestatus/{id}/{status_id}', [Pedidos2Controller::class, 'parcial_desestatus']);
 	Route::get('pedidos2/ordenf_desestatus/{id}/{status_id}', [Pedidos2Controller::class, 'ordenf_desestatus']);
 
-	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardarEtiquetas'])->name('pedido.etiquetas.guardar');
+	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardado_etiquetaP'])->name('pedido.etiquetas.guardar');
 
 	//CRUD ETIQUETAS
 	Route::middleware(['auth'])->group(function () {
@@ -113,7 +113,7 @@ Route::middleware('auth')->group(function () {
 	//DASHBOARD
 	Route::middleware(['auth'])->group(function () {
 		Route::get('pedidos2/dashboard', [Pedidos2Controller::class, 'dashboard'])->name('dashboard');
-		Route::match(['get', 'post'], 'pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboardLista'])->name('dashboard.lista');
+		Route::match(['get', 'post'], 'pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboard_lista'])->name('dashboard.lista');
 
 	});
 
@@ -130,7 +130,7 @@ Route::middleware('auth')->group(function () {
 
 	//MODIFICAR DIRECCION DEL PEDIDO
 	Route::post('pedidos2/{id}/direccion', [Pedidos2Controller::class, 'guardar_direccion'])->name('guardar_direccion');
-	Route::get('pedidos2/direccion-cliente/{id}', [Pedidos2Controller::class, 'obtener_direccioncliente'])->name('obtener_direccioncliente');
+	Route::get('pedidos2/direccion-cliente/{id}', [Pedidos2Controller::class, 'direccion_cliente'])->name('direccion_cliente');
 
 
 });

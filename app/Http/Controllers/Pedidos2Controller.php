@@ -206,764 +206,1353 @@ class Pedidos2Controller extends Controller
         echo view("pedidos2.lista",compact("lista","estatuses","total","rpp","pag", "user"));
     }
 
+    //==============================================//
+    //====== FLUJO PEDIDO | CREAR/EDITAR DATOS =====//
+    //==============================================//
 
+        public function pedido($id){
 
-    public function pedido($id){
+            $id= intval($id);
+            $user = auth()->user();
+            $role = $user->role;
+            $pedido = Pedidos2::uno($id);
+            $shipments = Shipment::where(["order_id"=>$id])->get();
+            $evidences = Evidence::FromOrder($id);
+            $debolutions = Debolution::FromOrder($id);
+            $quote = Quote::where(["order_id" => $id])->first();
+            $imagenesEntrega = Picture::where(["order_id"=>$id,"event"=>"entregar"])->get();
+            $parciales = Partial::where(["order_id"=>$id])->get();
+            $statuses = Status::get();
+            $rebilling = Rebilling::where(["order_id"=>$id])->first();
+            $reasons = Reason::get();
+            $stockreq = Stockreq::where(["order_id"=>$id])->first();
+            $notes = Note::where(["order_id"=>$id])->get();
+            $smateriales_num = Smaterial::where(["order_id"=>$id])->count();
+            //var_dump($debolutions);
 
-        $id= intval($id);
-
+            //$pictures = Picture::FromOrder($id);
+            //$morders = ManufacturingOrder::where(["order_id"=>$id])->get();
+            //$picturesEntrega = Pictures::EnPuerta($id,"")
+            $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
+        // var_dump($purchaseOrder);
         
-        $user = auth()->user();
-        $role = $user->role;
+            $EtiquetasDisponibles = DB::table('etiquetas')->get();
 
-        $pedido = Pedidos2::uno($id);
+            $EtiquetasAsignadas = DB::table('etiqueta_pedido')
+                    ->where('pedido_id', $id)
+                    ->pluck('etiqueta_id')
+                    ->toArray();
 
-        $shipments = Shipment::where(["order_id"=>$id])->get();
-        $evidences = Evidence::FromOrder($id);
-        $debolutions = Debolution::FromOrder($id);
-        $quote = Quote::where(["order_id" => $id])->first();
-        $imagenesEntrega = Picture::where(["order_id"=>$id,"event"=>"entregar"])->get();
-        $parciales = Partial::where(["order_id"=>$id])->get();
-        $statuses = Status::get();
-        $rebilling = Rebilling::where(["order_id"=>$id])->first();
-        $reasons = Reason::get();
-        $stockreq = Stockreq::where(["order_id"=>$id])->first();
-        $notes = Note::where(["order_id"=>$id])->get();
-        $smateriales_num = Smaterial::where(["order_id"=>$id])->count();
-        //var_dump($debolutions);
+            $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
+            $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
+            
+            $RutasAsociadas = DB::table('ruta_pedido')
+                ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
+                ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
+                ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
+                ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
+                ->select(
+                    'ruta_pedido.id',
+                    'ruta_pedido.ruta_id',
+                    'ruta_pedido.order_id',
+                    'ruta_pedido.partial_folio',
+                    'ruta_pedido.smaterial_folio',
+                    'ruta_pedido.estatus_pago',
+                    'ruta_pedido.estatus_entrega',
+                    'ruta_pedido.monto_por_cobrar',
+                    'ruta_pedido.cliente_codigo',
+                    'ruta_pedido.cliente_nombre',
+                    'ruta_pedido.tipo_subproceso',
+                    'ruta_pedido.created_at as rp_created_at',
 
-        //$pictures = Picture::FromOrder($id);
-        //$morders = ManufacturingOrder::where(["order_id"=>$id])->get();
-        //$picturesEntrega = Pictures::EnPuerta($id,"")
-        $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
-       // var_dump($purchaseOrder);
-       
-       $EtiquetasDisponibles = DB::table('etiquetas')->get();
+                    'rutas.numero_ruta',
+                    'unidades.nombre_unidad as unidad',
+                    'users.name as chofer',
 
-       $EtiquetasAsignadas = DB::table('etiqueta_pedido')
-            ->where('pedido_id', $id)
-            ->pluck('etiqueta_id')
-            ->toArray();
-
-        $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
-        $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
-        
-        $RutasAsociadas = DB::table('ruta_pedido')
-            ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
-            ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
-            ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
-            ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
-            ->select(
-                'ruta_pedido.id',
-                'ruta_pedido.ruta_id',
-                'ruta_pedido.order_id',
-                'ruta_pedido.partial_folio',
-                'ruta_pedido.smaterial_folio',
-                'ruta_pedido.estatus_pago',
-                'ruta_pedido.estatus_entrega',
-                'ruta_pedido.monto_por_cobrar',
-                'ruta_pedido.cliente_codigo',
-                'ruta_pedido.cliente_nombre',
-                'ruta_pedido.tipo_subproceso',
-                'ruta_pedido.created_at as rp_created_at',
-
-                'rutas.numero_ruta',
-                'unidades.nombre_unidad as unidad',
-                'users.name as chofer',
-
-                'orders.nombre_recibe',
-                'orders.telefono',
-                'orders.celular',
-                'orders.direccion',
-                'orders.url_mapa'
-            )
-            ->where('ruta_pedido.order_id', $id)
-            ->orderBy('ruta_pedido.id')
-            ->get();
-
-        $RequerimientosEspeciales = DB::table('requerimientos_especiales')
-                ->where('activo', 1)
-                ->orderBy('nombre')
+                    'orders.nombre_recibe',
+                    'orders.telefono',
+                    'orders.celular',
+                    'orders.direccion',
+                    'orders.url_mapa'
+                )
+                ->where('ruta_pedido.order_id', $id)
+                ->orderBy('ruta_pedido.id')
                 ->get();
 
-
-        return view('pedidos2.pedido', compact('id','pedido','shipments',
-        'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles",
-        'RutasAsociadas', 'RequerimientosEspeciales'));
-    }
-
-
-    
-
-
-
-//-----------------------------------------------------------------------------------------------------------//
-//-------------------------------DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS---------------------------//
-//-----------------------------------------------------------------------------------------------------------//
-
-public function dashboard(){
-    
-    $user = auth()->user();
-
-    // Verificación de permisos
-    $departamentosPermitidos = [2, 3, 4, 5, 9];
-    $rolesPermitidos = [1, 4];
-
-    if (!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $rolesPermitidos)) {
-        abort(403, 'No tienes permiso para acceder a esta sección');
-    }
-
-    // Prefiltros iniciales
-    $termino = "";
-    $desde = "2025-01-01 00:00:00";
-    $hasta = now()->format("Y-m-d 23:59:59");
-    $pag = 1;
-    $rpp = 30;
-    Pedidos2::$rpp = 150; // Para tener espacio suficiente y filtrar después
-
-    $status = [];
-    $subprocesos = [];
-    $origen = [];
-    $sucursal = [];
-    $subpstatus = [];
-    $recogido = [];
-    $orsub = [];
-    $etiquetas = [];
-
-    // Obtener todos los pedidos relevantes
-    $lista = collect(Pedidos2::Lista(
-        $pag,
-        $termino,
-        $desde,
-        $hasta,
-        $status,
-        $subprocesos,
-        $origen,
-        $sucursal,
-        $subpstatus,
-        $recogido,
-        $orsub,
-        $user->id,
-        $etiquetas
-    ));
-
-    
-    $lista = $lista->filter(function ($pedido) use ($user) {
-
-        $statusExcluidos = [6, 7, 8, 9, 10];
-        $statusDashboard = [2, 5];
-
-        if (in_array($pedido->status_id, $statusExcluidos)) return false;
-
-        if ($user->role_id == 2 && $user->department_id == 4) {
-            return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
-        }
-
-        if ($user->role_id == 2 && $user->department_id == 3) {
-            return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
-        }
-
-        if ($user->role_id == 2 && $user->department_id == 5) {
-            return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
-        }
-
-        if ($user->role_id == 1 || $user->department_id == 2) {
-            return true;
-        }
-
-        if (in_array($user->role_id, [1, 2]) && $user->department_id == 9) {
-            return in_array($pedido->status_id, [6, 7, 8, 9, 10]);
-        }
-
-        return false;
-    })->values();
-
-    // Total real filtrado
-    $total = $lista->count();
-
-    // Paginar manualmente
-    $lista = $lista->forPage($pag, $rpp)->values();
-
-    // Etiquetas
-    foreach ($lista as $item) {
-        $item->etiquetas_render = [];
-
-        if (!empty($item->etiquetas_coloreadas)) {
-            $pairs = explode(',', $item->etiquetas_coloreadas);
-
-            foreach ($pairs as $p) {
-                if (str_contains($p, '|')) {
-                    [$nombre, $color] = explode('|', trim($p));
-                    $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
-
-                    $item->etiquetas_render[] = [
-                        'nombre' => $nombre,
-                        'color' => $color,
-                        'iniciales' => strtoupper($iniciales),
-                    ];
-                }
-            }
-        }
-    }
-
-    // Datos adicionales
-    $estatuses = Pedidos2::StatusesCat();
-    $estatusCodes = Pedidos2::StatusCodes();
-    $estatusesSM = Pedidos2::StatusesSmaterial();
-    $estatusesSP = Pedidos2::StatusesPartial();
-    $origenes = Pedidos2::OrigenesCat();
-    $events = DB::table('events')->pluck('name', 'id')->toArray();
-    $etiquetas = DB::table('etiquetas')->select('id', 'nombre')->get();
-
-    return view('dashboard.index', compact(
-        'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP',
-        'origenes', 'events', 'etiquetas', 'user', 'total', 'rpp', 'pag'
-    ));
-}
-
-
-public function dashboardLista(Request $request){
-    $user = auth()->user();
-
-    $pag = max(1, (int)($request->input("p") ?? 1));
-    $ordenRecibido = $request->input('orden_recibido', '');
-
-    $filtros = [
-        'termino' => (string) $request->input("termino", ""),
-        'desde' => "2025-01-01 00:00:00",
-        'hasta' => now()->format("Y-m-d 23:59:59"),
-        'st' => (array) $request->input("st", []),
-        'sp' => (array) $request->input("sp", []),
-        'spsub' => (array) $request->input("spsub", []),
-        'or' => (array) $request->input("or", []),
-        'orsob' => (array) $request->input("orsob", []),
-        'suc' => (array) $request->input("suc", []),
-        'rec' => (array) $request->input("rec", []),
-        'etiquetas' => (array) $request->input("etiquetas", []),
-        'orden_recibido' => $ordenRecibido,
-    ];
-
-    Pedidos2::$rpp = ($request->input('excel_dashboard') == 1) ? 99999 : 30;
-    Pedidos2::$pagina = $pag;
-
-    $resultado = Pedidos2::ListaDashboard($pag, $user, $filtros);
-
-    $lista = $resultado['data'];
-    $total = $resultado['total'];
-    $rpp = Pedidos2::$rpp;
-
-    foreach($lista as $item){
-        $item->etiquetas_render = [];
-
-        $item->devoluciones_mini = [];
-
-        if(!empty($item->devoluciones_info)){
-
-            $regs = explode(',', $item->devoluciones_info);
-
-            foreach($regs as $r){
-                if(str_contains($r, '|')){
-                    [$tipo, $folio] = explode('|', $r);
-                    $item->devoluciones_mini[] = [
-                        'tipo' => $tipo,
-                        'folio' => $folio,
-                        'letra' => strtoupper(substr($tipo, 0, 1))
-                    ];
-                }
+            $DireccionesCliente = collect();
+            if(!empty($pedido->cliente_id)){
+                $DireccionesCliente = DireccionCliente::where('cliente_id', $pedido->cliente_id)
+                    ->orderBy('id', 'desc')
+                    ->get();
             }
 
-        }
+            $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                    ->where('activo', 1)
+                    ->orderBy('nombre')
+                    ->get();
 
-        if(!empty($item->etiquetas_coloreadas)){
-            $pairs = explode(',', $item->etiquetas_coloreadas);
-            foreach($pairs as $p){
-                if(str_contains($p, '|')){
-                    [$nombre, $color] = explode('|', trim($p));
-                    $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
-                    $item->etiquetas_render[] = [
-                        'nombre' => $nombre, 
-                        'color' => $color,
-                        'iniciales' => strtoupper($iniciales),
-                    ];
-                }
+            $RequerimientosPedido = DB::table('direccion_requerimiento')
+                    ->join('requerimientos_especiales', 'direccion_requerimiento.requerimiento_especial_id', '=', 'requerimientos_especiales.id')
+                    ->where(function($q) use ($pedido){
+                        $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id)
+                        ->orWhere('direccion_requerimiento.order_id', $pedido->id);
+                    })
+                    ->pluck('requerimientos_especiales.nombre')
+                    ->toArray();
+
+            $RequerimientosDireccion = [];
+            if ($pedido->cliente_direccion_id) {
+                $RequerimientosDireccion = DB::table('direccion_requerimiento')
+                    ->where('cliente_direccion_id', $pedido->cliente_direccion_id)
+                    ->pluck('requerimiento_especial_id')
+                    ->toArray();
             }
-        }
-    }
 
-    if($request->input('excel_dashboard') == 1){
-        $RC = new ReportesController();
-        $RC->ExcelDashboard(collect($lista));
-        return;
-    }
-
-    $estatuses = Status::all()->pluck('name', 'id')->toArray();
-
-    return view("dashboard.lista", compact("lista","pag", "estatuses", "total", "rpp", "user"));
-}
-
-
-
-
-
-    //-----------------------------------------------------------------------------------------------------------//
-    //--------------------------FIN DASHBOARD PARA EMBARQUES, ADMINISTRACIÓN Y VENTAS----------------------------//
-    //-----------------------------------------------------------------------------------------------------------//
-    
-
-
-    //-----------------------------------------------------------------------------------------------------------//
-    //-----------------------------------------------------------------------------------------------------------//
-    //-----------------------------------------------------------------------------------------------------------//
-public function guardarEntregaProgramada(Request $request, $id){
-
-    $pedido = Order::find($id);
-
-    if(!$pedido){
-
-        return back()->with('error', 'Pedido no encontrado');
-
-    }
-
-    $fecha = $request->input('entrega_programada_at');
-    $pedido->entrega_programada_at = $fecha;
-    $pedido->updated_at = now();
-    $pedido->save();
-
-    $usuario = auth()->user();
-    $idLog = $pedido->id;
-    Pedidos2::Log($pedido->id, 'Entrega prograda', "Se actualizó la fecha de entrega programada del pedido #{$idLog} a {$fecha}", 0, $usuario);
-
-    return back()->with('success', 'Fecha de entrega programada actualizada correctamente');
-}
-
-    //-----------------------------------------------------------------------------------------------------------//
-    //-----------------------------------------------------------------------------------------------------------//
-    //-----------------------------------------------------------------------------------------------------------//
-
-
-
-    public function nuevo(){
-        $user =auth()->user();
-        $RequerimientosEspeciales = DB::table('requerimientos_especiales')
-                ->where('activo', 1)
-                ->orderBy('nombre')
-                ->get();
-
-        return view('pedidos2.nuevo', compact("user", "RequerimientosEspeciales"));
-    }
-
-
-
-
-    public function parcial_lista($id){
-        $id= intval($id);
-
-        $role = auth()->user()->role;
-        $user = auth()->user();
-
-        $list =Partial::where(['order_id' => $id])->get();
-        $estatuses = Pedidos2::StatusesCat();
-    
-
-        foreach($list as $li){
-            $pictures = Picture::where(["partial_id"=>$li->id])->get();
-            $events = [];
-
-            foreach($pictures as $pic){
-                if(!in_array($pic->event, $events)){$events[]=$pic->event;}
+            $RequerimientosTexto = [];
+            if ($pedido->cliente_direccion_id) {
+                $RequerimientosTexto = DB::table('direccion_requerimiento')
+                    ->join(
+                        'requerimientos_especiales',
+                        'direccion_requerimiento.requerimiento_especial_id',
+                        '=',
+                        'requerimientos_especiales.id'
+                    )
+                    ->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id)
+                    ->orderBy('requerimientos_especiales.nombre')
+                    ->pluck('requerimientos_especiales.nombre')
+                    ->toArray();
             }
-            //var_dump($pictures);
-            //var_dump($events);
-            echo view("pedidos2/parcial/ficha",["parcial"=>$li,"estatuses"=>$estatuses, "pictures"=>$pictures,"events"=>$events,"user"=>$user]);
+
+
+            return view('pedidos2.pedido', compact('id','pedido','shipments',
+            'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
+            "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles",
+            'RutasAsociadas', 'RequerimientosEspeciales', 'DireccionesCliente', 'RequerimientosPedido', 'RequerimientosDireccion', 'RequerimientosTexto'));
         }
 
-    }
 
 
-
-
-    public function crear(Request $request){
-        if(!isset($request->origin)){
-            redirect("pedidos2");
+        public function nuevo(){
+            $user =auth()->user();
+            $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                    ->where('activo', 1)
+                    ->orderBy('nombre')
+                    ->get();
+            return view('pedidos2.nuevo', compact("user", "RequerimientosEspeciales"));
         }
 
-        $user = User::find(auth()->user()->id);
-        $userOffice = !empty($user->office) ? $user->office : "San Pablo";
-        $origin = $request->origin;
-
-        $code = !empty($request->code) ? Tools::_string($request->code,18) : "";
-        $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
-        $nota = !empty($request->nota) ? Tools::_string($request->nota,190) : '';
-        $now = date("Y-m-d H:i:s");
-
-        $cliente = null;
-        $direccionCliente = null;
-        $cliente_id = null;
-        $cliente_direccion_id = null;
-
-        $estado_direccion = $request->estado_direccion ?? 'pendiente';
-
-        if(empty($code)){
-            Feedback::error("El folio es requerido");
-            Feedback::j(0);
-        }
-
-        $nombre_cliente = null;
-        $nombre_direccion_sn = null;
-        $tipo_residencia_sn = null;
-        $direccion_sn = null;
-        $colonia_sn = null;
-        $ciudad_sn = null;
-        $estado_sn = null;
-        $codigo_postal_sn = null;
-        $celular_sn = null;
-        $telefono_sn = null;
-        $nombre_recibe_sn = null;
-        $url_mapa_sn = null;
-        $instrucciones_sn = null;
 
 
-        if($request->tipo_cliente == 'general'){
-
-            $client = "XAXX";
-            $estado_direccion = $request->estado_direccion_general ?? 'pendiente';
-
-            if($estado_direccion == 'completa'){
-                $nombre_cliente = "Cliente General";
-                $nombre_direccion_sn = $request->general_nombre_direccion ?? null;
-                $tipo_residencia_sn = $request->general_tipo_residencia ?? null;
-                $direccion_sn = $request->general_direccion ?? null;
-                $colonia_sn = $request->general_colonia ?? null;
-                $ciudad_sn = $request->general_ciudad ?? null;
-                $estado_sn = $request->general_estado ?? null;
-                $codigo_postal_sn = $request->general_codigo_postal ?? null;
-                $celular_sn = $request->general_celular ?? null;
-                $telefono_sn = $request->general_telefono ?? null;
-                $nombre_recibe_sn = $request->general_nombre_recibe ?? null;
-                $url_mapa_sn = $request->general_url_mapa ?? null;
-                $instrucciones_sn = $request->general_instrucciones ?? null;
-            }else{
-                $nombre_cliente = "Cliente General";
-
-                $nombre_direccion_sn = null;
-                $tipo_residencia_sn = null;
-                $direccion_sn = null;
-                $colonia_sn = null;
-                $ciudad_sn = null;
-                $estado_sn = null;
-                $codigo_postal_sn = null;
-                $celular_sn = null;
-                $telefono_sn = null;
-                $nombre_recibe_sn = null;
-                $url_mapa_sn = null;
-                $instrucciones_sn = null;
+        public function crear(Request $request){
+            if(!isset($request->origin)){
+                redirect("pedidos2");
             }
-        }
 
-        elseif($request->tipo_cliente == 'existente'){
-            $cliente = Cliente::find($request->cliente_id);
+            $user = User::find(auth()->user()->id);
+            $userOffice = !empty($user->office) ? $user->office : "San Pablo";
+            $origin = $request->origin;
 
-            if(!$cliente){
-                Feedback::error("Cliente no válido");
+            $code = !empty($request->code) ? Tools::_string($request->code,18) : "";
+            $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
+            $nota = !empty($request->nota) ? Tools::_string($request->nota,190) : '';
+            $now = date("Y-m-d H:i:s");
+
+            $cliente = null;
+            $DireccionCliente = null;
+            $cliente_id = null;
+            $cliente_direccion_id = null;
+
+            $estado_direccion = $request->estado_direccion ?? 'pendiente';
+
+            if(empty($code)){
+                Feedback::error("El folio es requerido");
                 Feedback::j(0);
             }
 
-            if($request->mode_direccion_existente == 'escoger'){
-                $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
-                $estado_direccion = $direccionCliente->estado_direccion ?? 'completa';
+            $nombre_cliente = null;
+            $nombre_direccion_sn = null;
+            $tipo_residencia_sn = null;
+            $direccion_sn = null;
+            $colonia_sn = null;
+            $ciudad_sn = null;
+            $estado_sn = null;
+            $codigo_postal_sn = null;
+            $celular_sn = null;
+            $telefono_sn = null;
+            $nombre_recibe_sn = null;
+            $url_mapa_sn = null;
+            $instrucciones_sn = null;
+
+
+            if($request->tipo_cliente == 'general'){
+
+                $client = "XAXX";
+                $estado_direccion = $request->estado_direccion_general ?? 'pendiente';
+
+                if($estado_direccion == 'completa'){
+                    $nombre_cliente = "Cliente General";
+                    $nombre_direccion_sn = $request->general_nombre_direccion ?? null;
+                    $tipo_residencia_sn = $request->general_tipo_residencia ?? null;
+                    $direccion_sn = $request->general_direccion ?? null;
+                    $colonia_sn = $request->general_colonia ?? null;
+                    $ciudad_sn = $request->general_ciudad ?? null;
+                    $estado_sn = $request->general_estado ?? null;
+                    $codigo_postal_sn = $request->general_codigo_postal ?? null;
+                    $celular_sn = $request->general_celular ?? null;
+                    $telefono_sn = $request->general_telefono ?? null;
+                    $nombre_recibe_sn = $request->general_nombre_recibe ?? null;
+                    $url_mapa_sn = $request->general_url_mapa ?? null;
+                    $instrucciones_sn = $request->general_instrucciones ?? null;
+                }else{
+                    $nombre_cliente = "Cliente General";
+
+                    $nombre_direccion_sn = null;
+                    $tipo_residencia_sn = null;
+                    $direccion_sn = null;
+                    $colonia_sn = null;
+                    $ciudad_sn = null;
+                    $estado_sn = null;
+                    $codigo_postal_sn = null;
+                    $celular_sn = null;
+                    $telefono_sn = null;
+                    $nombre_recibe_sn = null;
+                    $url_mapa_sn = null;
+                    $instrucciones_sn = null;
+                }
             }
-            elseif($request->mode_direccion_existente == 'nueva'){
-                $direccionCliente = DireccionCliente::create([
-                    'cliente_id' => $cliente->id,
-                    'estado_direccion' => 'completa',
-                    'nombre_direccion' => $request->nombre_direccion,
-                    'tipo_residencia' => $request->tipo_residencia,
-                    'direccion' => $request->direccion,
-                    'colonia' => $request->colonia ?? null,
-                    'ciudad' => $request->ciudad,
-                    'estado' => $request->estado,
-                    'codigo_postal' => $request->codigo_postal,
-                    'celular' => $request->celular,
-                    'telefono' => $request->telefono,
-                    'nombre_recibe' => $request->nombre_recibe,
-                    'url_mapa' => $request->url_mapa,
-                    'instrucciones' => $request->instrucciones,
+
+            elseif($request->tipo_cliente == 'existente'){
+                $cliente = Cliente::find($request->cliente_id);
+
+                if(!$cliente){
+                    Feedback::error("Cliente no válido");
+                    Feedback::j(0);
+                }
+
+                if($request->mode_direccion_existente == 'escoger'){
+                    $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+                    $estado_direccion = $DireccionCliente->estado_direccion ?? 'completa';
+                }
+                elseif($request->mode_direccion_existente == 'nueva'){
+                    $DireccionCliente = DireccionCliente::create([
+                        'cliente_id' => $cliente->id,
+                        'estado_direccion' => 'completa',
+                        'nombre_direccion' => $request->nombre_direccion,
+                        'tipo_residencia' => $request->tipo_residencia,
+                        'direccion' => $request->direccion,
+                        'colonia' => $request->colonia ?? null,
+                        'ciudad' => $request->ciudad,
+                        'estado' => $request->estado,
+                        'codigo_postal' => $request->codigo_postal,
+                        'celular' => $request->celular,
+                        'telefono' => $request->telefono,
+                        'nombre_recibe' => $request->nombre_recibe,
+                        'url_mapa' => $request->url_mapa,
+                        'instrucciones' => $request->instrucciones,
+                    ]);
+
+                    if(!empty($request->requerimientos)){
+                        foreach($request->requerimientos as $ReqId){
+                            DB::table('direccion_requerimiento')->insert([
+                                'order_id' => null,
+                                'cliente_direccion_id' => $DireccionCliente->id,
+                                'requerimiento_especial_id' => $ReqId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                    $estado_direccion = 'completa';
+                }
+                elseif($request->mode_direccion_existente == 'pendiente'){
+                    $DireccionCliente = null;
+                    $estado_direccion = 'pendiente';
+                }
+                elseif($request->mode_direccion_existente == 'recoge'){
+                    $DireccionCliente = null;
+                    $estado_direccion = 'recoge';
+                }
+
+                $client = $cliente->codigo_cliente;
+                $cliente_id = $cliente->id;
+                $cliente_direccion_id = $DireccionCliente->id ?? null;
+
+                $nombre_cliente = $cliente->nombre;
+                $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
+                $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
+                $direccion_sn = $DireccionCliente->direccion ?? null;
+                $colonia_sn = $DireccionCliente->colonia ?? null;
+                $ciudad_sn = $DireccionCliente->ciudad ?? null;
+                $estado_sn = $DireccionCliente->estado ?? null;
+                $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
+                $celular_sn = $DireccionCliente->celular ?? null;
+                $telefono_sn = $DireccionCliente->telefono ?? null;
+                $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
+                $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
+                $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
+            }
+            elseif($request->tipo_cliente == 'nuevo'){
+                $cliente = Cliente::create([
+                    'nombre' => $request->nuevo_nombre,
+                    'codigo_cliente' => $request->nuevo_codigo,
                 ]);
-                $estado_direccion = 'completa';
-            }
-            elseif($request->mode_direccion_existente == 'pendiente'){
-                $direccionCliente = null;
-                $estado_direccion = 'pendiente';
-            }
-            elseif($request->mode_direccion_existente == 'recoge'){
-                $direccionCliente = null;
-                $estado_direccion = 'recoge';
+
+                $client = $cliente->codigo_cliente;
+                $cliente_id = $cliente->id;
+
+                if($estado_direccion == 'completa'){
+                    $DireccionCliente = DireccionCliente::create([
+                        'cliente_id' => $cliente->id,
+                        'estado_direccion' => 'completa',
+                        'nombre_direccion' => $request->nuevo_nombre_direccion,
+                        'tipo_residencia' => $request->nuevo_tipo_residencia,
+                        'direccion' => $request->nuevo_direccion,
+                        'colonia' => $request->nuevo_colonia ?? null,
+                        'ciudad' => $request->nuevo_ciudad,
+                        'estado' => $request->nuevo_estado,
+                        'codigo_postal' => $request->nuevo_codigo_postal,
+                        'celular' => $request->nuevo_celular,
+                        'telefono' => $request->nuevo_telefono,
+                        'nombre_recibe' => $request->nuevo_nombre_recibe,
+                        'url_mapa' => $request->nuevo_url_mapa,
+                        'instrucciones' => $request->nuevo_instrucciones,
+                    ]);
+
+                    if(!empty($request->nuevo_requerimientos)){
+                        foreach($request->nuevo_requerimientos as $ReqId){
+                            DB::table('direccion_requerimiento')->insert([
+                                'order_id' => null,
+                                'cliente_direccion_id' => $DireccionCliente->id,
+                                'requerimiento_especial_id' =>$ReqId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+
+                    $cliente_direccion_id = $DireccionCliente->id;
+                }else{
+                    $DireccionCliente = null;
+                }
+
+                $nombre_cliente = $cliente->nombre;
+                $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
+                $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
+                $direccion_sn = $DireccionCliente->direccion ?? null;
+                $colonia_sn = $DireccionCliente->colonia ?? null;
+                $ciudad_sn = $DireccionCliente->ciudad ?? null;
+                $estado_sn = $DireccionCliente->estado ?? null;
+                $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
+                $celular_sn = $DireccionCliente->celular ?? null;
+                $telefono_sn = $DireccionCliente->telefono ?? null;
+                $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
+                $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
+                $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
             }
 
-            $client = $cliente->codigo_cliente;
-            $cliente_id = $cliente->id;
-            $cliente_direccion_id = $direccionCliente->id ?? null;
+            if($origin=="F"){
+                $orderData = [
+                    'office' => $userOffice,
+                    'invoice_number'=>$code,
+                    'invoice'=>'',
+                    'origin'=> $origin,
+                    'client'=> $client,
+                    'nombre_cliente'=> $nombre_cliente,
+                    'nombre_direccion'=> $nombre_direccion_sn,
+                    'tipo_residencia'=> $tipo_residencia_sn,
+                    'direccion'=> $direccion_sn,
+                    'colonia'=> $colonia_sn,
+                    'ciudad'=> $ciudad_sn,
+                    'estado'=> $estado_sn,
+                    'codigo_postal'=> $codigo_postal_sn,
+                    'celular'=> $celular_sn,
+                    'telefono'=> $telefono_sn,
+                    'nombre_recibe'=> $nombre_recibe_sn,
+                    'url_mapa'=> $url_mapa_sn,
+                    'instrucciones'=> $instrucciones_sn,
+                    'cliente_id'=> $cliente_id,
+                    'cliente_direccion_id'=> $cliente_direccion_id,
+                    'estado_direccion'=> $estado_direccion,
+                    'credit'=> 0,
+                    'status_id'=> 1,
+                    'created_at'=> $now
+                ];
+            }
+            elseif($origin=="C"){
+                $orderData = [
+                    'office'=> $userOffice,
+                    'invoice'=> $code,
+                    'origin'=> $origin,
+                    'client'=> $client,
+                    'nombre_cliente'=> $nombre_cliente,
+                    'nombre_direccion'=> $nombre_direccion_sn,
+                    'tipo_residencia'=> $tipo_residencia_sn,
+                    'direccion'=> $direccion_sn,
+                    'colonia'=> $colonia_sn,
+                    'ciudad'=> $ciudad_sn,
+                    'estado'=> $estado_sn,
+                    'codigo_postal'=> $codigo_postal_sn,
+                    'celular'=> $celular_sn,
+                    'telefono'=> $telefono_sn,
+                    'nombre_recibe'=> $nombre_recibe_sn,
+                    'url_mapa'=> $url_mapa_sn,
+                    'instrucciones'=> $instrucciones_sn,
+                    'cliente_id'=> $cliente_id,
+                    'cliente_direccion_id'=> $cliente_direccion_id,
+                    'estado_direccion'=> $estado_direccion,
+                    'credit'=> 0,
+                    'status_id'=> 1,
+                    'created_at'=> $now
+                ];
+            }
+            else{
+                $orderData = [
+                    'office'=> $userOffice,
+                    'invoice'=> "",
+                    'origin'=> $origin,
+                    'client'=> $client,
+                    'estado_direccion'=> $estado_direccion,
+                    'credit'=> 0,
+                    'status_id'=> 1,
+                    'created_at'=> $now
+                ];
+            }
 
-            $nombre_cliente = $cliente->nombre;
-            $nombre_direccion_sn = $direccionCliente->nombre_direccion ?? null;
-            $tipo_residencia_sn = $direccionCliente->tipo_residencia ?? null;
-            $direccion_sn = $direccionCliente->direccion ?? null;
-            $colonia_sn = $direccionCliente->colonia ?? null;
-            $ciudad_sn = $direccionCliente->ciudad ?? null;
-            $estado_sn = $direccionCliente->estado ?? null;
-            $codigo_postal_sn = $direccionCliente->codigo_postal ?? null;
-            $celular_sn = $direccionCliente->celular ?? null;
-            $telefono_sn = $direccionCliente->telefono ?? null;
-            $nombre_recibe_sn = $direccionCliente->nombre_recibe ?? null;
-            $url_mapa_sn = $direccionCliente->url_mapa ?? null;
-            $instrucciones_sn = $direccionCliente->instrucciones ?? null;
-        }
-        elseif($request->tipo_cliente == 'nuevo'){
-            $cliente = Cliente::create([
-                'nombre' => $request->nuevo_nombre,
-                'codigo_cliente' => $request->nuevo_codigo,
+            $order = Order::create($orderData);
+
+            if($request->tipo_cliente == 'general' && $estado_direccion == 'completa' && !empty($request->general_requerimientos)){
+                foreach($request->general_requerimientos as $ReqId){
+                    DB::table('direccion_requerimiento')->insert([
+                        'order_id' => $order->id,
+                        'cliente_direccion_id' => null,
+                        'requerimiento_especial_id' => $ReqId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            if($request->hasFile('archivo') && $origin != "R"){
+                $file = $request->file('archivo');
+                $name = $order["id"].".".$file->getClientOriginalExtension();
+                $sqlPath = ($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/').$name;
+                Storage::putFileAs('/public/'.($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/'), $file, $name);
+                Order::where("id",$order->id)->update(["invoice_document"=>$sqlPath]);
+            }
+
+            Note::create([
+                "note"=>$nota,
+                "order_id"=>$order->id,
+                "user_id"=>$user->id,
+                "created_at"=>$now,
+                "updated_at"=>$now
             ]);
 
-            $client = $cliente->codigo_cliente;
-            $cliente_id = $cliente->id;
+            $status = Status::find(1);
+            $origins=["C"=>"con cotización","F"=>"Con factura","R"=>"como requisición stock"];
+            $action = 'Creado '.$origins[$origin].': '.$code;
 
-            if($estado_direccion == 'completa'){
-                $direccionCliente = DireccionCliente::create([
-                    'cliente_id' => $cliente->id,
-                    'estado_direccion' => 'completa',
-                    'nombre_direccion' => $request->nuevo_nombre_direccion,
-                    'tipo_residencia' => $request->nuevo_tipo_residencia,
-                    'direccion' => $request->nuevo_direccion,
-                    'colonia' => $request->nuevo_colonia ?? null,
-                    'ciudad' => $request->nuevo_ciudad,
-                    'estado' => $request->nuevo_estado,
-                    'codigo_postal' => $request->nuevo_codigo_postal,
-                    'celular' => $request->nuevo_celular,
-                    'telefono' => $request->nuevo_telefono,
-                    'nombre_recibe' => $request->nuevo_nombre_recibe,
-                    'url_mapa' => $request->nuevo_url_mapa,
-                    'instrucciones' => $request->nuevo_instrucciones,
+            Log::create([
+                'status'=> $status->name,
+                'action'=> $action,
+                'order_id'=> $order->id,
+                'user_id'=> $user->id,
+                'department_id'=> $user->department->id,
+                'created_at'=> $now
+            ]);
+
+            Feedback::message("Pedido creado");
+            Feedback::custom("goto",url("pedidos2/pedido/".$order->id));
+            Feedback::j(1);
+
+        }
+
+
+
+        //FUNCION PARA MODIFICAR DIRECCION
+        public function guardar_direccion(Request $request, $id){
+                LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
+                    'pedido_id' => $id,
+                    'request' => $request->all()
                 ]);
+                
+            $user = auth()->user();
+            $now = now();
 
-                $cliente_direccion_id = $direccionCliente->id;
-            }else{
-                $direccionCliente = null;
+            $pedido = Order::find($id);
+
+            if(!$pedido){
+                Feedback::error("Pedido no valido");
+                Feedback::j(0);
+                return;
             }
 
-            $nombre_cliente = $cliente->nombre;
-            $nombre_direccion_sn = $direccionCliente->nombre_direccion ?? null;
-            $tipo_residencia_sn = $direccionCliente->tipo_residencia ?? null;
-            $direccion_sn = $direccionCliente->direccion ?? null;
-            $colonia_sn = $direccionCliente->colonia ?? null;
-            $ciudad_sn = $direccionCliente->ciudad ?? null;
-            $estado_sn = $direccionCliente->estado ?? null;
-            $codigo_postal_sn = $direccionCliente->codigo_postal ?? null;
-            $celular_sn = $direccionCliente->celular ?? null;
-            $telefono_sn = $direccionCliente->telefono ?? null;
-            $nombre_recibe_sn = $direccionCliente->nombre_recibe ?? null;
-            $url_mapa_sn = $direccionCliente->url_mapa ?? null;
-            $instrucciones_sn = $direccionCliente->instrucciones ?? null;
-        }
-
-        if($origin=="F"){
-            $orderData = [
-                'office' => $userOffice,
-                'invoice_number'=>$code,
-                'invoice'=>'',
-                'origin'=> $origin,
-                'client'=> $client,
-                'nombre_cliente'=> $nombre_cliente,
-                'nombre_direccion'=> $nombre_direccion_sn,
-                'tipo_residencia'=> $tipo_residencia_sn,
-                'direccion'=> $direccion_sn,
-                'colonia'=> $colonia_sn,
-                'ciudad'=> $ciudad_sn,
-                'estado'=> $estado_sn,
-                'codigo_postal'=> $codigo_postal_sn,
-                'celular'=> $celular_sn,
-                'telefono'=> $telefono_sn,
-                'nombre_recibe'=> $nombre_recibe_sn,
-                'url_mapa'=> $url_mapa_sn,
-                'instrucciones'=> $instrucciones_sn,
-                'cliente_id'=> $cliente_id,
-                'cliente_direccion_id'=> $cliente_direccion_id,
-                'estado_direccion'=> $estado_direccion,
-                'credit'=> 0,
-                'status_id'=> 1,
-                'created_at'=> $now
-            ];
-        }
-        elseif($origin=="C"){
-            $orderData = [
-                'office'=> $userOffice,
-                'invoice'=> $code,
-                'origin'=> $origin,
-                'client'=> $client,
-                'nombre_cliente'=> $nombre_cliente,
-                'nombre_direccion'=> $nombre_direccion_sn,
-                'tipo_residencia'=> $tipo_residencia_sn,
-                'direccion'=> $direccion_sn,
-                'colonia'=> $colonia_sn,
-                'ciudad'=> $ciudad_sn,
-                'estado'=> $estado_sn,
-                'codigo_postal'=> $codigo_postal_sn,
-                'celular'=> $celular_sn,
-                'telefono'=> $telefono_sn,
-                'nombre_recibe'=> $nombre_recibe_sn,
-                'url_mapa'=> $url_mapa_sn,
-                'instrucciones'=> $instrucciones_sn,
-                'cliente_id'=> $cliente_id,
-                'cliente_direccion_id'=> $cliente_direccion_id,
-                'estado_direccion'=> $estado_direccion,
-                'credit'=> 0,
-                'status_id'=> 1,
-                'created_at'=> $now
-            ];
-        }
-        else{
-            $orderData = [
-                'office'=> $userOffice,
-                'invoice'=> "",
-                'origin'=> $origin,
-                'client'=> $client,
-                'estado_direccion'=> $estado_direccion,
-                'credit'=> 0,
-                'status_id'=> 1,
-                'created_at'=> $now
-            ];
-        }
-
-        $order = Order::create($orderData);
-
-        if($request->hasFile('archivo') && $origin != "R"){
-            $file = $request->file('archivo');
-            $name = $order["id"].".".$file->getClientOriginalExtension();
-            $sqlPath = ($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/').$name;
-            Storage::putFileAs('/public/'.($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/'), $file, $name);
-            Order::where("id",$order->id)->update(["invoice_document"=>$sqlPath]);
-        }
-
-        Note::create([
-            "note"=>$nota,
-            "order_id"=>$order->id,
-            "user_id"=>$user->id,
-            "created_at"=>$now,
-            "updated_at"=>$now
-        ]);
-
-        $status = Status::find(1);
-        $origins=["C"=>"con cotización","F"=>"Con factura","R"=>"como requisición stock"];
-        $action = 'Creado '.$origins[$origin].': '.$code;
-
-        Log::create([
-            'status'=> $status->name,
-            'action'=> $action,
-            'order_id'=> $order->id,
-            'user_id'=> $user->id,
-            'department_id'=> $user->department->id,
-            'created_at'=> $now
-        ]);
-
-    Feedback::message("Pedido creado");
-    Feedback::custom("goto",url("pedidos2/pedido/".$order->id));
-    Feedback::j(1);
-
-    }
-
-
-
-
-    public function guardar($id, Request $request){
-        $user = User::find(auth()->user()->id);
-        
-        // $user = User::find(auth()->user()->id);
-         $userOffice = !empty($user->office) ? $user->office : "San Pablo";  
-         
-         $invoice = !empty($request->invoice) ? Tools::_string($request->invoice,18) : "" ;//Folio cotizacion
-         $invoice_number = !empty($request->invoice_number) ? Tools::_string($request->invoice_number,18) : "" ;//Folio Factura
-         
-         $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
- 
-         $obPrevio = Order::where("id",$id)->first();
-         $aFactura=false;
-            if(empty($obPrevio->invoice_number) && !empty($invoice_number)){
-                $aFactura=true;
-            }
-
-         $now = date("Y-m-d H:i:s");
-
-        $orderData=["updated_at"=>$now];
-            if(!empty($invoice)){$orderData["invoice"]=$invoice;}
-            if(!empty($invoice_number)){$orderData["invoice_number"]=$invoice_number;}
-            if(!empty($client)){$orderData["client"]=$client;}
-        
-
-        Order::where("id",$id)->update($orderData);
-
-        Quote::where(["order_id"=>$id])->update(["number"=>$invoice]);
-
-         //ARCHIVO
-
-         if($request->hasFile("cotizacion")){
-            $file = $request->file('cotizacion');
-            $name = $id.".".$file->getClientOriginalExtension();
-            $sqlPath = 'Cotizaciones/' . $name;
-            Storage::putFileAs('/public/Cotizaciones/', $file, $name );
             
-            $quo = Quote::where(["order_id"=>$id])->first();
-            //var_dump($quo);die();
-                if(is_null($quo) || $quo->exists()==false){                    
-                    $quo = Quote::create([
-                        "order_id"=>$id,
-                        "number"=>$invoice,
-                        "document"=>$sqlPath,
-                        "created_at"=>$now
+            LaravelLog::info('PASO 2: pedido encontrado', [
+                'pedido_id' => $pedido->id,
+                'cliente_id' => $pedido->cliente_id,
+                'origin' => $pedido->origin,
+            ]);
+            
+
+            if($pedido->origin === "R"){
+                Feedback::error("Este pedido no permite direccion");
+                Feedback::j(0);
+                return;
+            }
+
+            LaravelLog::info('PASO 3: origin valido');
+
+            DB::beginTransaction();
+
+            try{
+                $estado_direccion = $request->estado_direccion;
+                
+                LaravelLog::info('PASO 4: estado_direccion recibido', [
+                    'estado_direccion' => $estado_direccion
+                ]);
+                
+                if($estado_direccion == 'recoge'){
+                    $pedido->update([
+                        'estado_direccion' => 'recoge',
+                        'cliente_direccion_id' => null,
+                        'nombre_direccion' => null,
+                        'tipo_residencia' => null,
+                        'direccion' => null,
+                        'colonia' => null,
+                        'ciudad' => null,
+                        'estado' => null,
+                        'codigo_postal' => null,
+                        'celular' => null,
+                        'telefono' => null,
+                        'nombre_recibe' => null,
+                        'url_mapa' => null,
+                        'instrucciones' => null,
                     ]);
-                }else{
-                    $quo->document = $sqlPath;
-                    $quo->updated_at = date("Y-m-d H:i:s");
-                    $quo->save();
+
+                    DB::commit();
+                    Feedback::message("Pedido marcado como cliente recoge");
+                    Feedback::j(1);
+                    return;
+                }
+
+                if($estado_direccion == 'pendiente'){
+                    $pedido->update([
+                        'estado_direccion' => 'pendiente',
+                        'cliente_direccion_id' => null,
+                        'nombre_direccion' => null,
+                        'tipo_residencia' => null,
+                        'direccion' => null,
+                        'colonia' => null,
+                        'ciudad' => null,
+                        'estado' => null,
+                        'codigo_postal' => null,
+                        'celular' => null,
+                        'telefono' => null,
+                        'nombre_recibe' => null,
+                        'url_mapa' => null,
+                        'instrucciones' => null,
+                    ]);
+
+                    DB::commit();
+                    Feedback::message("Direccion marcada como pendiente");
+                    Feedback::j(1);
+                    return;
                 }
 
 
+                LaravelLog::info('PASO 5: no es recoge');
+
+                if($estado_direccion !== 'completa'){
+                    Feedback::error("Estado de direccion no valido");
+                    Feedback::j(0);
+                    return;
+                }
+
+                LaravelLog::info('PASO 6: estado_direccion es completa');
+
+                if(empty($pedido->cliente_id)){
+
+                    LaravelLog::info('PASO 7: flujo SIN cliente');
+
+                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                        Feedback::error("Faltan datos obligatorios de la direccion");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+
+                    $pedido->update([
+                        'estado_direccion' => 'completa',
+                        'cliente_direccion_id' => null,
+                        'nombre_direccion' => $request->nombre_direccion,
+                        'tipo_residencia' => $request->tipo_residencia,
+                        'direccion' => $request->direccion,
+                        'colonia' => $request->colonia,
+                        'ciudad' => $request->ciudad,
+                        'estado' => $request->estado,
+                        'codigo_postal' => $request->codigo_postal,
+                        'celular' => $request->celular,
+                        'telefono' => $request->telefono,
+                        'nombre_recibe' => $request->nombre_recibe,
+                        'url_mapa' => $request->url_mapa,
+                        'instrucciones' => $request->instrucciones,
+                    ]);
+
+                    LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+
+                    DB::commit();
+                    Feedback::message("Direccion guardada correctamente");
+                    Feedback::j(1);
+                    return;
+                }
+
+                
+                LaravelLog::info('PASO 10: flujo CON cliente', [
+                    'cliente_id' => $pedido->cliente_id
+                ]);
+                
+
+                $modo = $request->modo_direccion ?? 'nueva';
+                $DireccionCliente = null;
+
+                
+                LaravelLog::info('PASO 11: modo direccion',[
+                    'modo' => $modo
+                ]);
+                
+
+                if($modo == 'existente'){
+
+                    if(empty($request->cliente_direccion_id)){
+                        Feedback::error("Debe seleccionar una direccion existente");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+                    if(!$DireccionCliente){
+                        Feedback::error("Direccion no valida");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    
+                    LaravelLog::info('PASO 12: direccion cliente existente cargada', [
+                        'direccion_cliente_id' => $DireccionCliente->id
+                    ]);
+                    
+
+                }else{
+                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                        Feedback::error("Faltan datos obligatorios de la direccion");
+                        Feedback::j(0);
+                        return;
+                    }
+
+                    if(!empty($pedido->cliente_direccion_id)){
+                        $DireccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
+                    }
+
+                    if(!$DireccionCliente){
+                        $DireccionCliente = new DireccionCliente();
+                        $DireccionCliente->cliente_id = $pedido->cliente_id;
+                    }
+
+                    $DireccionCliente->nombre_direccion = $request->nombre_direccion;
+                    $DireccionCliente->tipo_residencia = $request->tipo_residencia;
+                    $DireccionCliente->direccion = $request->direccion;
+                    $DireccionCliente->colonia = $request->colonia;
+                    $DireccionCliente->ciudad = $request->ciudad;
+                    $DireccionCliente->estado = $request->estado;
+                    $DireccionCliente->codigo_postal = $request->codigo_postal;
+                    $DireccionCliente->celular = $request->celular;
+                    $DireccionCliente->telefono = $request->telefono;
+                    $DireccionCliente->nombre_recibe = $request->nombre_recibe;
+                    $DireccionCliente->url_mapa = $request->url_mapa;
+                    $DireccionCliente->instrucciones = $request->instrucciones;
+                    $DireccionCliente->save();
+
+                    DB::table('direccion_requerimiento')
+                        ->where('cliente_direccion_id', $DireccionCliente->id)
+                        ->delete();
+
+                    if(!empty($request->requerimientos)){
+                        foreach($request->requerimientos as $ReqId){
+                            DB::table('direccion_requerimiento')->insert([
+                                'cliente_direccion_id' => $DireccionCliente->id,
+                                'order_id' => null,
+                                'requerimiento_especial_id' => $ReqId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                    
+                    
+                    LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
+                        'direccion_cliente_id' => $DireccionCliente->id
+                    ]);
+                    
+                }
+
+                if(!$DireccionCliente){
+                    Feedback::error("No se pudo determinar la direccion del cliente");
+                    Feedback::j(0);
+                    return;
+                }
+
+                $pedido->update([
+                    'estado_direccion' => 'completa',
+                    'cliente_direccion_id' => $DireccionCliente->id,
+                    'nombre_direccion' => $DireccionCliente->nombre_direccion,
+                    'tipo_residencia' => $DireccionCliente->tipo_residencia,
+                    'direccion' => $DireccionCliente->direccion,
+                    'colonia' => $DireccionCliente->colonia,
+                    'ciudad' => $DireccionCliente->ciudad,
+                    'estado' => $DireccionCliente->estado,
+                    'codigo_postal' => $DireccionCliente->codigo_postal,
+                    'celular' => $DireccionCliente->celular,
+                    'telefono' => $DireccionCliente->telefono,
+                    'nombre_recibe' => $DireccionCliente->nombre_recibe,
+                    'url_mapa' => $DireccionCliente->url_mapa,
+                    'instrucciones' => $DireccionCliente->instrucciones,
+                ]);
+
+                LaravelLog::info('PASO 14: pedido actualizado CON cliente');
+
+                DB::commit();
+                Feedback::message("Direccion guardada correctamente");
+                Feedback::j(1);
+
+            }catch(\Exception $e){
+
+                DB::rollBack();
+
+                
+                LaravelLog::error('ERROR guardarDireccion', [
+                    'msg' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ]);
+                
+
+                Feedback::error("Error al guardar la direccion");
+                Feedback::j(0);
+                return;
+            }
         }
 
-         if($request->hasFile("factura")){
-            $file = $request->file('factura');
-            $name = $id.".".$file->getClientOriginalExtension();
-            $sqlPath = 'OrdenesDeCompra/' . $name;
-            Storage::putFileAs('/public/OrdenesDeCompra/', $file, $name );
+                    
+
+        public function direccion_cliente($id){
+            $direccion = DireccionCliente::find($id);
+
+            if(!$direccion){
+                return response()->json(['status' => 0]);
+            }
+
+            $reqs = DB::table('direccion_requerimiento')
+                ->where('cliente_direccion_id', $direccion->id)
+                ->pluck('requerimiento_especial_id')
+                ->toArray();
+
+            return response()->json([
+                'status' => 1,
+                'data' => [
+                    'nombre_direccion' => $direccion->nombre_direccion,
+                    'tipo_residencia' => $direccion->tipo_residencia,
+                    'direccion' => $direccion->direccion,
+                    'colonia' => $direccion->colonia,
+                    'ciudad' => $direccion->ciudad,
+                    'estado' => $direccion->estado,
+                    'codigo_postal' => $direccion->codigo_postal,
+                    'celular' => $direccion->celular,
+                    'telefono' => $direccion->telefono,
+                    'nombre_recibe' => $direccion->nombre_recibe,
+                    'url_mapa' => $direccion->url_mapa,
+                    'requerimientos' => $reqs,
+                    'instrucciones' => $direccion->instrucciones,
+                ]
+            ]);
+        }
+
+
+        public function guardarEntregaProgramada(Request $request, $id){
+            $pedido = Order::find($id);
+            if(!$pedido){
+                return back()->with('error', 'Pedido no encontrado');
+            }
+            $fecha = $request->input('entrega_programada_at');
+            $pedido->entrega_programada_at = $fecha;
+            $pedido->updated_at = now();
+            $pedido->save();
+            $usuario = auth()->user();
+            $idLog = $pedido->id;
+            Pedidos2::Log($pedido->id, 'Entrega prograda', "Se actualizó la fecha de entrega programada del pedido #{$idLog} a {$fecha}", 0, $usuario);
+            return back()->with('success', 'Fecha de entrega programada actualizada correctamente');
+        }
+    
+    //===================================================//
+    //====== FINAL FLUJO PEDIDO | CREACION/EDICION ======//
+    //===================================================//
+
+
+    //============================//
+    //====== FLUJO DASHBOARD =====//
+    //============================//
+
+        public function dashboard(){
             
-            //$po = PurchaseOrder::where(["order_id"=>$id])->first();
-            //$po->document = $sqlPath;
-            //$po->save();
-            Order::where("id",$id)->update(["invoice_document"=>$sqlPath,"updated_at"=>date("Y-m-d H:i:s")]);
-         }
+            $user = auth()->user();
 
-    $ob = Order::where("id",$id)->first();   
-   
-         if($aFactura==true){
-            $accionTxt = "La cotización {$obPrevio->invoice} se convirtió en factura {$invoice_number}";
-         }else{
-            $idLog = Pedidos2::CodigoDe($ob);
-            $accionTxt = "El pedido $idLog fue modificado ";
-         }
+            // Verificación de permisos
+            $departamentosPermitidos = [2, 3, 4, 5, 9];
+            $RolesPermitidos = [1, 4];
 
-    Pedidos2::Log($id,"Pedido", $accionTxt, $ob->status_id,$user);         
+            if (!in_array($user->department_id, $departamentosPermitidos) && !in_array($user->role_id, $RolesPermitidos)) {
+                abort(403, 'No tienes permiso para acceder a esta sección');
+            }
 
-    return redirect("pedidos2/pedido/".$id);     
+            // Prefiltros iniciales
+            $termino = "";
+            $desde = "2025-01-01 00:00:00";
+            $hasta = now()->format("Y-m-d 23:59:59");
+            $pag = 1;
+            $rpp = 30;
+            Pedidos2::$rpp = 150; // Para tener espacio suficiente y filtrar después
 
-    }
+            $status = [];
+            $subprocesos = [];
+            $origen = [];
+            $sucursal = [];
+            $subpstatus = [];
+            $recogido = [];
+            $orsub = [];
+            $etiquetas = [];
+
+            // Obtener todos los pedidos relevantes
+            $lista = collect(Pedidos2::Lista(
+                $pag,
+                $termino,
+                $desde,
+                $hasta,
+                $status,
+                $subprocesos,
+                $origen,
+                $sucursal,
+                $subpstatus,
+                $recogido,
+                $orsub,
+                $user->id,
+                $etiquetas
+            ));
+
+            
+            $lista = $lista->filter(function ($pedido) use ($user) {
+
+                $statusExcluidos = [6, 7, 8, 9, 10];
+                $statusDashboard = [2, 5];
+
+                if (in_array($pedido->status_id, $statusExcluidos)) return false;
+
+                if ($user->role_id == 2 && $user->department_id == 4) {
+                    return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
+                }
+
+                if ($user->role_id == 2 && $user->department_id == 3) {
+                    return in_array($pedido->status_id, $statusDashboard) && $pedido->office == $user->office;
+                }
+
+                if ($user->role_id == 2 && $user->department_id == 5) {
+                    return in_array($pedido->ordenf_status_id, [1, 3]) && $pedido->office == $user->office;
+                }
+
+                if ($user->role_id == 1 || $user->department_id == 2) {
+                    return true;
+                }
+
+                if (in_array($user->role_id, [1, 2]) && $user->department_id == 9) {
+                    return in_array($pedido->status_id, [6, 7, 8, 9, 10]);
+                }
+
+                return false;
+            })->values();
+
+            // Total real filtrado
+            $total = $lista->count();
+
+            // Paginar manualmente
+            $lista = $lista->forPage($pag, $rpp)->values();
+
+            // Etiquetas
+            foreach ($lista as $item) {
+                $item->etiquetas_render = [];
+
+                if (!empty($item->etiquetas_coloreadas)) {
+                    $pairs = explode(',', $item->etiquetas_coloreadas);
+
+                    foreach ($pairs as $p) {
+                        if (str_contains($p, '|')) {
+                            [$nombre, $color] = explode('|', trim($p));
+                            $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
+
+                            $item->etiquetas_render[] = [
+                                'nombre' => $nombre,
+                                'color' => $color,
+                                'iniciales' => strtoupper($iniciales),
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Datos adicionales
+            $estatuses = Pedidos2::StatusesCat();
+            $estatusCodes = Pedidos2::StatusCodes();
+            $estatusesSM = Pedidos2::StatusesSmaterial();
+            $estatusesSP = Pedidos2::StatusesPartial();
+            $origenes = Pedidos2::OrigenesCat();
+            $events = DB::table('events')->pluck('name', 'id')->toArray();
+            $etiquetas = DB::table('etiquetas')->select('id', 'nombre')->get();
+
+            return view('dashboard.index', compact(
+                'lista', 'estatuses', 'estatusCodes', 'estatusesSM', 'estatusesSP',
+                'origenes', 'events', 'etiquetas', 'user', 'total', 'rpp', 'pag'
+            ));
+        }
 
 
-    public function masinfo($id){
+        public function dashboard_lista(Request $request){
+            $user = auth()->user();
 
-        $pedido = Pedidos2::uno($id);
-        $logs = Pedidos2::LogsDe($id);
+            $pag = max(1, (int)($request->input("p") ?? 1));
+            $ordenRecibido = $request->input('orden_recibido', '');
 
-        return view('pedidos2.masinfo', compact('id','pedido',"logs"));      
-    }
+            $filtros = [
+                'termino' => (string) $request->input("termino", ""),
+                'desde' => "2025-01-01 00:00:00",
+                'hasta' => now()->format("Y-m-d 23:59:59"),
+                'st' => (array) $request->input("st", []),
+                'sp' => (array) $request->input("sp", []),
+                'spsub' => (array) $request->input("spsub", []),
+                'or' => (array) $request->input("or", []),
+                'orsob' => (array) $request->input("orsob", []),
+                'suc' => (array) $request->input("suc", []),
+                'rec' => (array) $request->input("rec", []),
+                'etiquetas' => (array) $request->input("etiquetas", []),
+                'orden_recibido' => $ordenRecibido,
+            ];
+
+            Pedidos2::$rpp = ($request->input('excel_dashboard') == 1) ? 99999 : 30;
+            Pedidos2::$pagina = $pag;
+
+            $resultado = Pedidos2::ListaDashboard($pag, $user, $filtros);
+
+            $lista = $resultado['data'];
+            $total = $resultado['total'];
+            $rpp = Pedidos2::$rpp;
+
+            foreach($lista as $item){
+                $item->etiquetas_render = [];
+
+                $item->devoluciones_mini = [];
+
+                if(!empty($item->devoluciones_info)){
+
+                    $regs = explode(',', $item->devoluciones_info);
+
+                    foreach($regs as $r){
+                        if(str_contains($r, '|')){
+                            [$tipo, $folio] = explode('|', $r);
+                            $item->devoluciones_mini[] = [
+                                'tipo' => $tipo,
+                                'folio' => $folio,
+                                'letra' => strtoupper(substr($tipo, 0, 1))
+                            ];
+                        }
+                    }
+
+                }
+
+                if(!empty($item->etiquetas_coloreadas)){
+                    $pairs = explode(',', $item->etiquetas_coloreadas);
+                    foreach($pairs as $p){
+                        if(str_contains($p, '|')){
+                            [$nombre, $color] = explode('|', trim($p));
+                            $iniciales = implode('', array_map(fn($w) => mb_substr($w, 0, 1), explode(' ', $nombre)));
+                            $item->etiquetas_render[] = [
+                                'nombre' => $nombre, 
+                                'color' => $color,
+                                'iniciales' => strtoupper($iniciales),
+                            ];
+                        }
+                    }
+                }
+            }
+
+            if($request->input('excel_dashboard') == 1){
+                $RC = new ReportesController();
+                $RC->ExcelDashboard(collect($lista));
+                return;
+            }
+
+            $estatuses = Status::all()->pluck('name', 'id')->toArray();
+
+            return view("dashboard.lista", compact("lista","pag", "estatuses", "total", "rpp", "user"));
+        }
+
+    //=================================//
+    //====== FIN FLUJO DASHBOARD ======//
+    //=================================//
+
+
+    //====================================================================//
+    //======== FLUJO MULTIE | AGREGAR ETIQUETAS | CAMBIAR ESTATUS ========//
+    //====================================================================//
+        
+        //------------------------------------//
+        //-------- LISTAS DE BUSQUEDA --------//
+        //------------------------------------//
+            public function multie(Request $request){
+                
+                $user = auth()->user();
+                $role = $user->role;
+
+                $estatus = $request->get("estatus");
+                $modo = $request->get("modo", "estatus");
+                $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
+
+                $estatus = intval($estatus);
+                $validos =[2,3,4,10];
+                $estatus = in_array($estatus,$validos) ? $estatus : 0;       
+
+                return view('pedidos2.multie.index', compact('user','role','estatus', 'modo', 'etiquetas'));
+            }
+
+
+            public function multie_lista(Request $request){
+                $user = auth()->user();
+                $role = $user->role;
+
+                $modo = $request->get("modo", "estatus");
+                $term = Tools::_string($request->get("term"), 16);
+
+                $wseg = "";
+                $wsegmo = "";
+                if (strlen($term) > 1) {
+                    $wseg   = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
+                    $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
+                }
+
+                $statusesq = Status::all();
+                $statuses = [];
+                foreach ($statusesq as $st) {
+                    $statuses[$st->id] = $st->name;
+                }
+
+                if($modo == "etiquetas"){
+                    $estatus_ocultos = implode(',', [6,7,8,9,10]);
+                    $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
+                        FROM orders 
+                        WHERE status_id NOT IN ($estatus_ocultos) $wseg
+                        LIMIT 50";
+                    $shipments = DB::select($q);
+
+                    $pedido_ids = array_column($shipments, 'id');
+
+                    $etiquetas_por_pedido = DB::table('etiqueta_pedido')
+                        ->whereIn('pedido_id', $pedido_ids)
+                        ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                        ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
+                        ->get()
+                        ->groupBy('pedido_id');
+
+                    return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+                }
+
+                if($modo == "combo" || $modo == "estatus"){
+                    $estatus = Tools::_int($request->get("estatus"));
+
+                    $qOrders = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
+                    $qMO     = "SELECT mo.*, o.invoice_number, o.invoice 
+                                FROM manufacturing_orders mo 
+                                JOIN orders o ON o.id = mo.order_id 
+                                WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
+
+                    if($estatus == 2 || $estatus == 10){
+
+                        $shipments = DB::select($qOrders);
+
+                        $etiquetas_por_pedido = collect();
+                        if ($modo == "combo" && !empty($shipments)) {
+                            $pedido_ids = array_column($shipments, 'id');
+                            $etiquetas_por_pedido = DB::table('etiqueta_pedido')
+                                ->whereIn('pedido_id', $pedido_ids)
+                                ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
+                                ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
+                                ->get()
+                                ->groupBy('pedido_id');
+                        }
+
+                        return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
+                    }else{
+                        $lista = DB::select($qMO);
+                        return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
+                    }
+                }
+                return view("pedidos2.multie.lista", ['user'=>$user, 'shipments'=>[], 'statuses'=>$statuses]);
+            }
+
+        //-------------------------------//
+        //-------- FIN DE LISTAS --------//
+        //-------------------------------//
+
+        
+        //----------------------------------//
+        //--------- CAMBIAR ESTATUS --------//
+        //----------------------------------//
+
+            public function set_status($id, Request $request){
+                $id = Tools::_int($id);       
+                $user = auth()->user();
+
+                $estatuses = [2=>"Entregado", 3 => "En Fabricaicón", 4=>"Fabricado"];
+
+                $status_id = Tools::_int($request->ids);    
+                    if(!isset($estatuses[$status_id])){
+                        Feedback::error("Status off range");
+                        Feedback::j(0);
+                    }
+
+                $data = [
+                        "status_id"=>$status_id,
+                        "updated_at"=>date("Y-m-d H:i:s")
+                    ];
+
+                    if($status_id > 2){
+                        $data["status_".$status_id] = 1;
+                        $data["embarques_by"]= $user->id;
+                    }
+
+                Order::where("id", $id)->update($data);
+                $order = Order::find($id);
+
+                if($status_id == 2 && $order->recibido_embarques_at == null){
+
+                    $order->recibido_embarques_at = now();
+                    $order->save();
+                }
+
+                $idLog = Pedidos2::CodigoDe($order);
+                Pedidos::Log($id, "Order", "Cambio de status " . $estatuses[$status_id] . " en el pedido #{$idLog}", $status_id, $user);
+
+                Feedback::j(1);
+                return;
+                
+            }
+
+
+            //ESTA FUNCION PUEDE CAMBIAR ESTATUS E INCLUIR ETIQUETAS O QUITARLARLAS 
+            public function set_multistatus(Request $request) {
+                $user   = auth()->user();
+                $modo   = $request->get('modo', 'estatus');
+                $quitar = (int)$request->get('quitar_etiquetas', 0);
+
+                $estatuses = [
+                    2  => "Recibido por embarques",
+                    3  => "En Fabricación",
+                    4  => "Fabricado",
+                    10 => "Recibido por Auditoría",
+                ];    
+
+                $listaor = $request->lista ?? [];
+                $lista   = [];
+                foreach ($listaor as $li) { $lista[] = (int)$li; }
+
+                $n = 0;
+                $d = date("Y-m-d H:i:s");
+
+                if($modo == 'etiquetas'){
+                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
+
+                    if(empty($request->lista) || empty($request->etiquetas)){
+                        return response()->json(['status' => 0, 'errors' => 'Faltan pedidos o etiquetas']);
+                    }
+                    foreach($request->lista as $pedido_id){
+                        $pedido = Order::find($pedido_id);
+                        $idLog  = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id;
+
+                        if($quitar){
+                            DB::table('etiqueta_pedido')
+                                ->where('pedido_id', $pedido_id)
+                                ->whereIn('etiqueta_id', $request->etiquetas)
+                                ->delete();
+
+                            foreach($request->etiquetas as $etiqueta_id){
+                                $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+                            }
+                        }else{
+                            $etiquetas_actuales = DB::table('etiqueta_pedido')
+                                ->where('pedido_id', $pedido_id)
+                                ->pluck('etiqueta_id')->toArray();
+
+                            foreach ($request->etiquetas as $etiqueta_id) {
+                                if(!in_array($etiqueta_id, $etiquetas_actuales)){
+
+                                    DB::table('etiqueta_pedido')->insert([
+                                        'pedido_id'   => $pedido_id,
+                                        'etiqueta_id' => $etiqueta_id,
+                                    ]);
+                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                // LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                                    Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
+
+                                }else{
+                                    LaravelLog::info('Etiqueta ya existente — NO insertada', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
+                                }
+                            }
+                        }
+                        $n++;
+                    }
+                    return response()->json(['status' => 1, 'value' => $n]);
+                }
+                if($modo == 'combo'){
+                    $status_id = Tools::_int($request->status_id);
+                    $catalogo  = $request->get('catalogo', '');
+
+                    if(!in_array($status_id, array_keys($estatuses))){
+                        return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
+                    }
+                    if(empty($request->etiquetas) || empty($lista)){
+                        return response()->json(['status' => 0, 'errors' => "Faltan etiquetas o lista de pedidos"]);
+                    }
+
+                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
+
+                    foreach ($lista as $li){
+
+                        DB::transaction(function () use ($li, $status_id, $catalogo, $d, $user, $estatuses, $request, $quitar, $mapa_etiquetas) {
+                            $data = ["status_id" => $status_id, "updated_at" => $d];
+
+                            if($status_id == 2){
+
+                                $pedido = Order::find($li);
+                                if($pedido && !$pedido->recibido_embarques_at){
+                                    $data["recibido_embarques_at"] = now();
+                                    $idLogReg = Pedidos2::CodigoDe($pedido);
+                                    Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLogReg}", $status_id, $user);
+                                }
+
+                            }
+
+                            if($catalogo == "order"){
+
+                                if($status_id > 2){
+                                    $data["status_" . $status_id] = 1;
+                                }
+                                Order::where("id", $li)->update($data);
+                                $order = Order::find($li);
+                                $idLog = Pedidos2::CodigoDe($order);
+                                Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
+
+                            }elseif($catalogo == "morder"){
+
+                                if($status_id > 2){
+                                    $data["status_" . $status_id] = 1;
+                                }
+                                ManufacturingOrder::where("id", $li)->update($data);
+                                $morder = ManufacturingOrder::find($li);
+                                Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+                            
+                            }
+
+                            $pedidoReal = Order::find($catalogo == 'order' ? $li : optional(ManufacturingOrder::find($li))->order_id);
+                            $pedido_id  = optional($pedidoReal)->id ?: $li;
+                            $idLog2     = $pedidoReal ? Pedidos2::CodigoDe($pedidoReal) : $pedido_id;
+
+                            if($quitar){
+                                DB::table('etiqueta_pedido')
+                                    ->where('pedido_id', $pedido_id)
+                                    ->whereIn('etiqueta_id', $request->etiquetas)
+                                    ->delete();
+
+                                foreach ($request->etiquetas as $etiqueta_id) {
+                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                    Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                                }
+
+                            }else{
+
+                                $etiquetas_actuales = DB::table('etiqueta_pedido')
+                                    ->where('pedido_id', $pedido_id)
+                                    ->pluck('etiqueta_id')
+                                    ->toArray();
+
+                                foreach ($request->etiquetas as $etiqueta_id){
+                                    if (!in_array($etiqueta_id, $etiquetas_actuales)){
+                                        DB::table('etiqueta_pedido')->insert([
+                                            'pedido_id'   => $pedido_id,
+                                            'etiqueta_id' => $etiqueta_id,
+                                        ]);
+                                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
+                                        Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
+                                    }
+                                }
+                            }
+                        });
+                        $n++;
+                    }
+                    return response()->json(['status' => 1, 'value' => $n]);
+                }
+
+                $status_id = Tools::_int($request->status_id);
+                $catalogo  = $request->get('catalogo', '');
+
+                if(!in_array($status_id, array_keys($estatuses))){
+                    return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
+                }
+
+                foreach($lista as $li){
+
+                    $data = ["status_id" => $status_id, "updated_at" => $d];
+                    if($status_id == 2){
+                        $pedido = Order::find($li);
+                        if ($pedido && !$pedido->recibido_embarques_at) {
+                            $data["recibido_embarques_at"] = now();
+                            $idLog = Pedidos2::CodigoDe($pedido);
+                            Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLog}", $status_id, $user);
+                        }
+                    }
+
+                    if($catalogo == "order"){
+                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                        Order::where("id", $li)->update($data);
+                        $order = Order::find($li);
+                        $idLog = Pedidos2::CodigoDe($order);
+                        Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
+                        $n++;
+                    }elseif($catalogo == "morder"){
+                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
+                        ManufacturingOrder::where("id", $li)->update($data);
+                        $morder = ManufacturingOrder::find($li);
+                        Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
+                        $n++;
+                    }
+                }
+                return response()->json(['status' => 1, 'value' => $n]);
+            }
+
+        //----------------------------------------//
+        //-------- FIN DE CAMBIAR ESTATUS --------//
+        //----------------------------------------//
+
+    //===========================================================//
+    //======== FLUJO MULTIE | ETIQUETAS | ESTATUS (FIN) =========//
+    //===========================================================//
 
     //======================================================//
     //======== FLUJO DE ETIQUETAS | CATALOGO | CRUD ========//
@@ -973,11 +1562,11 @@ public function guardarEntregaProgramada(Request $request, $id){
         //-------- GUARDADO CONTROLADO DE ETIQUETAS --------//
         //--------------------------------------------------//
 
-            public function guardarEtiquetas(Request $request, $id){
+            public function guardado_etiquetaP(Request $request, $id){
             
                 $user = auth()->user();
 
-                $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
+                $EtiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
                 //Obtener etiquetas ya activas
                 $EtiquetasAsignadas = DB::table('etiqueta_pedido')
@@ -985,29 +1574,29 @@ public function guardarEntregaProgramada(Request $request, $id){
                     ->pluck('etiqueta_id');
 
                 //Obtener las etiquetas nuevas de fabricación
-                $etiquetasPermitidas = DB::table('etiquetas')
+                $EtiquetasPermitidas = DB::table('etiquetas')
                     ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
                     ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
                     ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
                     ->pluck('id');
 
                 //Etiquetas que no puede modificar
-                $etiquetasNoModificables = $EtiquetasAsignadas->diff($etiquetasPermitidas);
+                $EtiquetasNoModificables = $EtiquetasAsignadas->diff($EtiquetasPermitidas);
 
                 //Etiquetas que si puede modificar
-                $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
+                $EtiquetasFiltradas = $EtiquetasSeleccionadas->intersect($EtiquetasPermitidas);
 
-                $eliminadas = $EtiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
-                $nuevas = $etiquetasFiltradas->diff($EtiquetasAsignadas);
+                $eliminadas = $EtiquetasAsignadas->intersect($EtiquetasPermitidas)->diff($EtiquetasFiltradas);
+                $nuevas = $EtiquetasFiltradas->diff($EtiquetasAsignadas);
 
                 //Eliminar solo las etiquetas Permitidas
                 DB::table('etiqueta_pedido')
                     ->where('pedido_id', $id)
-                    ->whereIN('etiqueta_id', $etiquetasPermitidas)
+                    ->whereIN('etiqueta_id', $EtiquetasPermitidas)
                     ->delete();
 
                 //Volver a poner las nuevas etiquetas permitidas
-                foreach($etiquetasFiltradas as $etiqueta_id){
+                foreach($EtiquetasFiltradas as $etiqueta_id){
 
                     DB::table('etiqueta_pedido')->insert([
                         'pedido_id' => $id,
@@ -1019,7 +1608,7 @@ public function guardarEntregaProgramada(Request $request, $id){
                 }
 
                 //Volver a poner las etiquetas no permitidas
-                foreach($etiquetasNoModificables as $etiqueta_id){
+                foreach($EtiquetasNoModificables as $etiqueta_id){
 
                     DB::table('etiqueta_pedido')->insert([
                         'pedido_id' => $id,
@@ -1033,13 +1622,13 @@ public function guardarEntregaProgramada(Request $request, $id){
                 //Registrar en el historial
                 foreach($nuevas as $nueva){
 
-                    $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
+                    $NombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
 
                     DB::table('logs')->insert([
                         'order_id' => $id,
                         'user_id' =>$user->id,
                         'action' => "Añadió etiqueta",
-                        'status' => 'Etiqueta añadida: ' .$nombreEtiqueta,
+                        'status' => 'Etiqueta añadida: ' .$NombreEtiqueta,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -1048,13 +1637,13 @@ public function guardarEntregaProgramada(Request $request, $id){
 
                 foreach($eliminadas as $eliminada){
 
-                    $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
+                    $NombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
 
                     DB::table('logs')->insert([
                         'order_id' => $id,
                         'user_id' =>$user->id,
                         'action' => "Eliminó etiqueta",
-                        'status' => 'Etiqueta eliminada: ' .$nombreEtiqueta,
+                        'status' => 'Etiqueta eliminada: ' .$NombreEtiqueta,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -1077,9 +1666,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function index_etiquetas(){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
 
-                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                if(!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2){
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1095,9 +1684,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function crear_etiqueta(){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
                 
-                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                if(!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2){
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1109,9 +1698,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function guardar_etiqueta(Request $request){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
 
-                if (!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2) {
+                if (!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2) {
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1136,9 +1725,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function editar_etiqueta($id){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
 
-                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                if(!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2){
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1152,9 +1741,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function actualizar_etiqueta(Request $request, $id){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
 
-                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                if(!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2){
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1176,9 +1765,9 @@ public function guardarEntregaProgramada(Request $request, $id){
 
             public function borrar_etiqueta($id){
                 $user = auth()->user();
-                $rolesPermitidos = [1, 4];
+                $RolesPermitidos = [1, 4];
 
-                if(!in_array($user->role->id, $rolesPermitidos) && $user->department_id != 2){
+                if(!in_array($user->role->id, $RolesPermitidos) && $user->department_id != 2){
                     return redirect()->route('pedidos2.index')->with('error', 'No tienes permiso para acceder a esta sección.');
                 }
 
@@ -1736,6 +2325,124 @@ public function guardarEntregaProgramada(Request $request, $id){
     //=============================================//
     //======== DEVULUCIONES PARCIALES(FIN) ========//
     //=============================================//
+    
+    public function parcial_lista($id){
+        $id= intval($id);
+
+        $role = auth()->user()->role;
+        $user = auth()->user();
+
+        $list =Partial::where(['order_id' => $id])->get();
+        $estatuses = Pedidos2::StatusesCat();
+    
+
+        foreach($list as $li){
+            $pictures = Picture::where(["partial_id"=>$li->id])->get();
+            $events = [];
+
+            foreach($pictures as $pic){
+                if(!in_array($pic->event, $events)){$events[]=$pic->event;}
+            }
+            //var_dump($pictures);
+            //var_dump($events);
+            echo view("pedidos2/parcial/ficha",["parcial"=>$li,"estatuses"=>$estatuses, "pictures"=>$pictures,"events"=>$events,"user"=>$user]);
+        }
+
+    }
+
+
+    public function guardar($id, Request $request){
+        $user = User::find(auth()->user()->id);
+        
+        // $user = User::find(auth()->user()->id);
+         $userOffice = !empty($user->office) ? $user->office : "San Pablo";  
+         
+         $invoice = !empty($request->invoice) ? Tools::_string($request->invoice,18) : "" ;//Folio cotizacion
+         $invoice_number = !empty($request->invoice_number) ? Tools::_string($request->invoice_number,18) : "" ;//Folio Factura
+         
+         $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
+ 
+         $obPrevio = Order::where("id",$id)->first();
+         $aFactura=false;
+            if(empty($obPrevio->invoice_number) && !empty($invoice_number)){
+                $aFactura=true;
+            }
+
+         $now = date("Y-m-d H:i:s");
+
+        $orderData=["updated_at"=>$now];
+            if(!empty($invoice)){$orderData["invoice"]=$invoice;}
+            if(!empty($invoice_number)){$orderData["invoice_number"]=$invoice_number;}
+            if(!empty($client)){$orderData["client"]=$client;}
+        
+
+        Order::where("id",$id)->update($orderData);
+
+        Quote::where(["order_id"=>$id])->update(["number"=>$invoice]);
+
+         //ARCHIVO
+
+         if($request->hasFile("cotizacion")){
+            $file = $request->file('cotizacion');
+            $name = $id.".".$file->getClientOriginalExtension();
+            $sqlPath = 'Cotizaciones/' . $name;
+            Storage::putFileAs('/public/Cotizaciones/', $file, $name );
+            
+            $quo = Quote::where(["order_id"=>$id])->first();
+            //var_dump($quo);die();
+                if(is_null($quo) || $quo->exists()==false){                    
+                    $quo = Quote::create([
+                        "order_id"=>$id,
+                        "number"=>$invoice,
+                        "document"=>$sqlPath,
+                        "created_at"=>$now
+                    ]);
+                }else{
+                    $quo->document = $sqlPath;
+                    $quo->updated_at = date("Y-m-d H:i:s");
+                    $quo->save();
+                }
+
+
+        }
+
+         if($request->hasFile("factura")){
+            $file = $request->file('factura');
+            $name = $id.".".$file->getClientOriginalExtension();
+            $sqlPath = 'OrdenesDeCompra/' . $name;
+            Storage::putFileAs('/public/OrdenesDeCompra/', $file, $name );
+            
+            //$po = PurchaseOrder::where(["order_id"=>$id])->first();
+            //$po->document = $sqlPath;
+            //$po->save();
+            Order::where("id",$id)->update(["invoice_document"=>$sqlPath,"updated_at"=>date("Y-m-d H:i:s")]);
+         }
+
+    $ob = Order::where("id",$id)->first();   
+   
+         if($aFactura==true){
+            $accionTxt = "La cotización {$obPrevio->invoice} se convirtió en factura {$invoice_number}";
+         }else{
+            $idLog = Pedidos2::CodigoDe($ob);
+            $accionTxt = "El pedido $idLog fue modificado ";
+         }
+
+    Pedidos2::Log($id,"Pedido", $accionTxt, $ob->status_id,$user);         
+
+    return redirect("pedidos2/pedido/".$id);     
+
+    }
+
+
+    public function masinfo($id){
+
+        $pedido = Pedidos2::uno($id);
+        $logs = Pedidos2::LogsDe($id);
+
+        return view('pedidos2.masinfo', compact('id','pedido',"logs"));      
+    }
+
+
 
     public function subproceso_nuevo($order_id, Request $request){ 
 
@@ -3570,616 +4277,6 @@ public function guardarEntregaProgramada(Request $request, $id){
         Feedback::json_service(1);
     }
 
-
-    //====================================================================//
-    //======== FLUJO MULTIE | AGREGAR ETIQUETAS | CAMBIAR ESTATUS ========//
-    //====================================================================//
-        
-        //------------------------------------//
-        //-------- LISTAS DE BUSQUEDA --------//
-        //------------------------------------//
-            public function multie(Request $request){
-                
-                $user = auth()->user();
-                $role = $user->role;
-
-                $estatus = $request->get("estatus");
-                $modo = $request->get("modo", "estatus");
-                $etiquetas = DB::table('etiquetas')->orderBy('nombre')->get();
-
-                $estatus = intval($estatus);
-                $validos =[2,3,4,10];
-                $estatus = in_array($estatus,$validos) ? $estatus : 0;       
-
-                return view('pedidos2.multie.index', compact('user','role','estatus', 'modo', 'etiquetas'));
-            }
-
-
-            public function multie_lista(Request $request){
-                $user = auth()->user();
-                $role = $user->role;
-
-                $modo = $request->get("modo", "estatus");
-                $term = Tools::_string($request->get("term"), 16);
-
-                $wseg = "";
-                $wsegmo = "";
-                if (strlen($term) > 1) {
-                    $wseg   = "AND (invoice_number LIKE '%{$term}%' OR invoice LIKE '%{$term}%')";
-                    $wsegmo = "AND mo.`number` LIKE '%{$term}%'";
-                }
-
-                $statusesq = Status::all();
-                $statuses = [];
-                foreach ($statusesq as $st) {
-                    $statuses[$st->id] = $st->name;
-                }
-
-                if($modo == "etiquetas"){
-                    $estatus_ocultos = implode(',', [6,7,8,9,10]);
-                    $q = "SELECT id, invoice_number, invoice, office, origin, client, created_at, status_id
-                        FROM orders 
-                        WHERE status_id NOT IN ($estatus_ocultos) $wseg
-                        LIMIT 50";
-                    $shipments = DB::select($q);
-
-                    $pedido_ids = array_column($shipments, 'id');
-
-                    $etiquetas_por_pedido = DB::table('etiqueta_pedido')
-                        ->whereIn('pedido_id', $pedido_ids)
-                        ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-                        ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
-                        ->get()
-                        ->groupBy('pedido_id');
-
-                    return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
-                }
-
-                if($modo == "combo" || $modo == "estatus"){
-                    $estatus = Tools::_int($request->get("estatus"));
-
-                    $qOrders = "SELECT * FROM orders WHERE status_id < $estatus $wseg LIMIT 10";
-                    $qMO     = "SELECT mo.*, o.invoice_number, o.invoice 
-                                FROM manufacturing_orders mo 
-                                JOIN orders o ON o.id = mo.order_id 
-                                WHERE mo.status_id < $estatus $wsegmo LIMIT 10";
-
-                    if($estatus == 2 || $estatus == 10){
-
-                        $shipments = DB::select($qOrders);
-
-                        $etiquetas_por_pedido = collect();
-                        if ($modo == "combo" && !empty($shipments)) {
-                            $pedido_ids = array_column($shipments, 'id');
-                            $etiquetas_por_pedido = DB::table('etiqueta_pedido')
-                                ->whereIn('pedido_id', $pedido_ids)
-                                ->join('etiquetas', 'etiquetas.id', '=', 'etiqueta_pedido.etiqueta_id')
-                                ->select('etiqueta_pedido.pedido_id', 'etiquetas.nombre', 'etiquetas.color')
-                                ->get()
-                                ->groupBy('pedido_id');
-                        }
-
-                        return view("pedidos2.multie.lista", compact('user', 'shipments', 'statuses', 'etiquetas_por_pedido'));
-                    }else{
-                        $lista = DB::select($qMO);
-                        return view("pedidos2.multie.listamo", compact('user', 'lista', 'statuses'));
-                    }
-                }
-                return view("pedidos2.multie.lista", ['user'=>$user, 'shipments'=>[], 'statuses'=>$statuses]);
-            }
-
-        //-------------------------------//
-        //-------- FIN DE LISTAS --------//
-        //-------------------------------//
-
-        
-        //----------------------------------//
-        //--------- CAMBIAR ESTATUS --------//
-        //----------------------------------//
-
-            public function set_status($id, Request $request){
-                $id = Tools::_int($id);       
-                $user = auth()->user();
-
-                $estatuses = [2=>"Entregado", 3 => "En Fabricaicón", 4=>"Fabricado"];
-
-                $status_id = Tools::_int($request->ids);    
-                    if(!isset($estatuses[$status_id])){
-                        Feedback::error("Status off range");
-                        Feedback::j(0);
-                    }
-
-                $data = [
-                        "status_id"=>$status_id,
-                        "updated_at"=>date("Y-m-d H:i:s")
-                    ];
-
-                    if($status_id > 2){
-                        $data["status_".$status_id] = 1;
-                        $data["embarques_by"]= $user->id;
-                    }
-
-                Order::where("id", $id)->update($data);
-                $order = Order::find($id);
-
-                if($status_id == 2 && $order->recibido_embarques_at == null){
-
-                    $order->recibido_embarques_at = now();
-                    $order->save();
-                }
-
-                $idLog = Pedidos2::CodigoDe($order);
-                Pedidos::Log($id, "Order", "Cambio de status " . $estatuses[$status_id] . " en el pedido #{$idLog}", $status_id, $user);
-
-                Feedback::j(1);
-                return;
-                
-            }
-
-
-            //ESTA FUNCION PUEDE CAMBIAR ESTATUS E INCLUIR ETIQUETAS O QUITARLARLAS 
-            public function set_multistatus(Request $request) {
-                $user   = auth()->user();
-                $modo   = $request->get('modo', 'estatus');
-                $quitar = (int)$request->get('quitar_etiquetas', 0);
-
-                $estatuses = [
-                    2  => "Recibido por embarques",
-                    3  => "En Fabricación",
-                    4  => "Fabricado",
-                    10 => "Recibido por Auditoría",
-                ];    
-
-                $listaor = $request->lista ?? [];
-                $lista   = [];
-                foreach ($listaor as $li) { $lista[] = (int)$li; }
-
-                $n = 0;
-                $d = date("Y-m-d H:i:s");
-
-                if($modo == 'etiquetas'){
-                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
-
-                    if(empty($request->lista) || empty($request->etiquetas)){
-                        return response()->json(['status' => 0, 'errors' => 'Faltan pedidos o etiquetas']);
-                    }
-                    foreach($request->lista as $pedido_id){
-                        $pedido = Order::find($pedido_id);
-                        $idLog  = $pedido ? Pedidos2::CodigoDe($pedido) : $pedido_id;
-
-                        if($quitar){
-                            DB::table('etiqueta_pedido')
-                                ->where('pedido_id', $pedido_id)
-                                ->whereIn('etiqueta_id', $request->etiquetas)
-                                ->delete();
-
-                            foreach($request->etiquetas as $etiqueta_id){
-                                $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                                Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-                            }
-                        }else{
-                            $etiquetas_actuales = DB::table('etiqueta_pedido')
-                                ->where('pedido_id', $pedido_id)
-                                ->pluck('etiqueta_id')->toArray();
-
-                            foreach ($request->etiquetas as $etiqueta_id) {
-                                if(!in_array($etiqueta_id, $etiquetas_actuales)){
-
-                                    DB::table('etiqueta_pedido')->insert([
-                                        'pedido_id'   => $pedido_id,
-                                        'etiqueta_id' => $etiqueta_id,
-                                    ]);
-                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                                // LaravelLog::info('Insertando etiqueta nueva', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
-                                    Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog}", 0, $user);
-
-                                }else{
-                                    LaravelLog::info('Etiqueta ya existente — NO insertada', ['pedido_id' => $pedido_id, 'etiqueta_id' => $etiqueta_id]);
-                                }
-                            }
-                        }
-                        $n++;
-                    }
-                    return response()->json(['status' => 1, 'value' => $n]);
-                }
-                if($modo == 'combo'){
-                    $status_id = Tools::_int($request->status_id);
-                    $catalogo  = $request->get('catalogo', '');
-
-                    if(!in_array($status_id, array_keys($estatuses))){
-                        return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
-                    }
-                    if(empty($request->etiquetas) || empty($lista)){
-                        return response()->json(['status' => 0, 'errors' => "Faltan etiquetas o lista de pedidos"]);
-                    }
-
-                    $mapa_etiquetas = DB::table('etiquetas')->pluck('nombre', 'id')->toArray();
-
-                    foreach ($lista as $li){
-
-                        DB::transaction(function () use ($li, $status_id, $catalogo, $d, $user, $estatuses, $request, $quitar, $mapa_etiquetas) {
-                            $data = ["status_id" => $status_id, "updated_at" => $d];
-
-                            if($status_id == 2){
-
-                                $pedido = Order::find($li);
-                                if($pedido && !$pedido->recibido_embarques_at){
-                                    $data["recibido_embarques_at"] = now();
-                                    $idLogReg = Pedidos2::CodigoDe($pedido);
-                                    Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLogReg}", $status_id, $user);
-                                }
-
-                            }
-
-                            if($catalogo == "order"){
-
-                                if($status_id > 2){
-                                    $data["status_" . $status_id] = 1;
-                                }
-                                Order::where("id", $li)->update($data);
-                                $order = Order::find($li);
-                                $idLog = Pedidos2::CodigoDe($order);
-                                Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
-
-                            }elseif($catalogo == "morder"){
-
-                                if($status_id > 2){
-                                    $data["status_" . $status_id] = 1;
-                                }
-                                ManufacturingOrder::where("id", $li)->update($data);
-                                $morder = ManufacturingOrder::find($li);
-                                Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
-                            
-                            }
-
-                            $pedidoReal = Order::find($catalogo == 'order' ? $li : optional(ManufacturingOrder::find($li))->order_id);
-                            $pedido_id  = optional($pedidoReal)->id ?: $li;
-                            $idLog2     = $pedidoReal ? Pedidos2::CodigoDe($pedidoReal) : $pedido_id;
-
-                            if($quitar){
-                                DB::table('etiqueta_pedido')
-                                    ->where('pedido_id', $pedido_id)
-                                    ->whereIn('etiqueta_id', $request->etiquetas)
-                                    ->delete();
-
-                                foreach ($request->etiquetas as $etiqueta_id) {
-                                    $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                                    Pedidos2::Log($pedido_id, 'Etiqueta/s eliminada/s', "Se eliminó la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
-                                }
-
-                            }else{
-
-                                $etiquetas_actuales = DB::table('etiqueta_pedido')
-                                    ->where('pedido_id', $pedido_id)
-                                    ->pluck('etiqueta_id')
-                                    ->toArray();
-
-                                foreach ($request->etiquetas as $etiqueta_id){
-                                    if (!in_array($etiqueta_id, $etiquetas_actuales)){
-                                        DB::table('etiqueta_pedido')->insert([
-                                            'pedido_id'   => $pedido_id,
-                                            'etiqueta_id' => $etiqueta_id,
-                                        ]);
-                                        $nombre = $mapa_etiquetas[$etiqueta_id] ?? "ID {$etiqueta_id}";
-                                        Pedidos2::Log($pedido_id, 'Etiqueta/s añadida/s', "Se añadió la etiqueta {$nombre} al pedido #{$idLog2}", 0, $user);
-                                    }
-                                }
-                            }
-                        });
-                        $n++;
-                    }
-                    return response()->json(['status' => 1, 'value' => $n]);
-                }
-
-                $status_id = Tools::_int($request->status_id);
-                $catalogo  = $request->get('catalogo', '');
-
-                if(!in_array($status_id, array_keys($estatuses))){
-                    return response()->json(['status' => 0, 'errors' => "Estatus inválido"]);
-                }
-
-                foreach($lista as $li){
-
-                    $data = ["status_id" => $status_id, "updated_at" => $d];
-                    if($status_id == 2){
-                        $pedido = Order::find($li);
-                        if ($pedido && !$pedido->recibido_embarques_at) {
-                            $data["recibido_embarques_at"] = now();
-                            $idLog = Pedidos2::CodigoDe($pedido);
-                            Pedidos2::Log($li, 'Fecha registrada', "Se registró recibido por embarques en pedido #{$idLog}", $status_id, $user);
-                        }
-                    }
-
-                    if($catalogo == "order"){
-                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-                        Order::where("id", $li)->update($data);
-                        $order = Order::find($li);
-                        $idLog = Pedidos2::CodigoDe($order);
-                        Pedidos2::Log($li, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en el pedido #{$idLog}", $status_id, $user);
-                        $n++;
-                    }elseif($catalogo == "morder"){
-                        if ($status_id > 2) { $data["status_" . $status_id] = 1; }
-                        ManufacturingOrder::where("id", $li)->update($data);
-                        $morder = ManufacturingOrder::find($li);
-                        Pedidos2::Log($morder->order_id, $estatuses[$status_id], "Cambio de status ".$estatuses[$status_id]." (masivo) en Orden Fabricación #{$morder->number}", $status_id, $user);
-                        $n++;
-                    }
-                }
-                return response()->json(['status' => 1, 'value' => $n]);
-            }
-
-        //----------------------------------------//
-        //-------- FIN DE CAMBIAR ESTATUS --------//
-        //----------------------------------------//
-
-    //===========================================================//
-    //======== FLUJO MULTIE | ETIQUETAS | ESTATUS (FIN) =========//
-    //===========================================================//
-
-
-
-    //=========================================================================//
-    //======== ACTUALIZAR DIRECCION DENTRO DE PEDIDO | CAMBIAR ESTATUS ========//
-    //=========================================================================//
-
-        public function guardar_direccion(Request $request, $id){
-            /*LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
-                'pedido_id' => $id,
-                'request' => $request->all()
-            ]);
-            */
-            $user = auth()->user();
-            $now = now();
-
-            $pedido = Order::find($id);
-
-            if(!$pedido){
-                Feedback::error("Pedido no valido");
-                Feedback::j(0);
-                return;
-            }
-
-            /*
-            LaravelLog::info('PASO 2: pedido encontrado', [
-                'pedido_id' => $pedido->id,
-                'cliente_id' => $pedido->cliente_id,
-                'origin' => $pedido->origin,
-            ]);
-            */
-
-            if($pedido->origin === "R"){
-                Feedback::error("Este pedido no permite direccion");
-                Feedback::j(0);
-                return;
-            }
-
-            //LaravelLog::info('PASO 3: origin valido');
-
-            DB::beginTransaction();
-
-            try{
-                $estado_direccion = $request->estado_direccion;
-                /*
-                LaravelLog::info('PASO 4: estado_direccion recibido', [
-                    'estado_direccion' => $estado_direccion
-                ]);
-                */
-                if($estado_direccion === 'recoge'){
-                    $pedido->update([
-                        'estado_direccion' => 'recoge',
-                        'cliente_direccion_id' => null,
-                        'nombre_direccion' => null,
-                        'direccion' => null,
-                        'colonia' => null,
-                        'ciudad' => null,
-                        'estado' => null,
-                        'codigo_postal' => null,
-                        'celular' => null,
-                        'telefono' => null,
-                        'nombre_recibe' => null,
-                        'url_mapa' => null,
-                        'instrucciones' => null,
-                    ]);
-
-                    DB::commit();
-                    Feedback::message("Pedido marcado como cliente recoge");
-                    Feedback::j(1);
-                    return;
-                }
-
-                //LaravelLog::info('PASO 5: no es recoge');
-
-                if($estado_direccion !== 'completa'){
-                    Feedback::error("Estado de direccion no valido");
-                    Feedback::j(0);
-                    return;
-                }
-
-                //LaravelLog::info('PASO 6: estado_direccion es completa');
-
-                if(empty($pedido->cliente_id)){
-
-                    //LaravelLog::info('PASO 7: flujo SIN cliente');
-
-                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                        Feedback::error("Faltan datos obligatorios de la direccion");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    //LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
-
-                    $pedido->update([
-                        'estado_direccion' => 'completa',
-                        'cliente_direccion_id' => null,
-                        'nombre_direccion' => $request->nombre_direccion,
-                        'direccion' => $request->direccion,
-                        'colonia' => $request->colonia,
-                        'ciudad' => $request->ciudad,
-                        'estado' => $request->estado,
-                        'codigo_postal' => $request->codigo_postal,
-                        'celular' => $request->celular,
-                        'telefono' => $request->telefono,
-                        'nombre_recibe' => $request->nombre_recibe,
-                        'url_mapa' => $request->url_mapa,
-                        'instrucciones' => $request->instrucciones,
-                    ]);
-
-                    //LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
-
-                    DB::commit();
-                    Feedback::message("Direccion guardada correctamente");
-                    Feedback::j(1);
-                    return;
-                }
-
-                /*
-                LaravelLog::info('PASO 10: flujo CON cliente', [
-                    'cliente_id' => $pedido->cliente_id
-                ]);
-                */
-
-                $modo = $request->modo_direccion ?? 'nueva';
-                $direccionCliente = null;
-
-                LaravelLog::info('PASO 11: modo direccion',[
-                    'modo' => $modo
-                ]);
-
-                if($modo === 'existente'){
-
-                    if(empty($request->cliente_direccion_id)){
-                        Feedback::error("Debe seleccionar una direccion existente");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    $direccionCliente = DireccionCliente::find($request->cliente_direccion_id);
-
-                    if(!$direccionCliente){
-                        Feedback::error("Direccion no valida");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    LaravelLog::info('PASO 12: direccion cliente existente cargada', [
-                        'direccion_cliente_id' => $direccionCliente->id
-                    ]);
-
-                }else{
-                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                        Feedback::error("Faltan datos obligatorios de la direccion");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    if(!empty($pedido->cliente_direccion_id)){
-                        $direccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
-                    }
-
-                    if(!$direccionCliente){
-                        $direccionCliente = new DireccionCliente();
-                        $direccionCliente->cliente_id = $pedido->cliente_id;
-                    }
-
-                    $direccionCliente->nombre_direccion = $request->nombre_direccion;
-                    $direccionCliente->direccion = $request->direccion;
-                    $direccionCliente->colonia = $request->colonia;
-                    $direccionCliente->ciudad = $request->ciudad;
-                    $direccionCliente->estado = $request->estado;
-                    $direccionCliente->codigo_postal = $request->codigo_postal;
-                    $direccionCliente->celular = $request->celular;
-                    $direccionCliente->telefono = $request->telefono;
-                    $direccionCliente->nombre_recibe = $request->nombre_recibe;
-                    $direccionCliente->url_mapa = $request->url_mapa;
-                    $direccionCliente->instrucciones = $request->instrucciones;
-                    $direccionCliente->estado_direccion = 'completa';
-                    $direccionCliente->save();
-                    
-                    /*
-                    LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
-                        'direccion_cliente_id' => $direccionCliente->id
-                    ]);
-                    */
-                }
-
-                if(!$direccionCliente){
-                    Feedback::error("No se pudo determinar la direccion del cliente");
-                    Feedback::j(0);
-                    return;
-                }
-
-                $pedido->update([
-                    'estado_direccion' => 'completa',
-                    'cliente_direccion_id' => $direccionCliente->id,
-                    'nombre_direccion' => $direccionCliente->nombre_direccion,
-                    'direccion' => $direccionCliente->direccion,
-                    'colonia' => $direccionCliente->colonia,
-                    'ciudad' => $direccionCliente->ciudad,
-                    'estado' => $direccionCliente->estado,
-                    'codigo_postal' => $direccionCliente->codigo_postal,
-                    'celular' => $direccionCliente->celular,
-                    'telefono' => $direccionCliente->telefono,
-                    'nombre_recibe' => $direccionCliente->nombre_recibe,
-                    'url_mapa' => $direccionCliente->url_mapa,
-                    'instrucciones' => $direccionCliente->instrucciones,
-                ]);
-
-                //LaravelLog::info('PASO 14: pedido actualizado CON cliente');
-
-                DB::commit();
-                Feedback::message("Direccion guardada correctamente");
-                Feedback::j(1);
-
-            }catch(\Exception $e){
-
-                DB::rollBack();
-
-                /*
-                LaravelLog::error('ERROR guardarDireccion', [
-                    'msg' => $e->getMessage(),
-                    'line' => $e->getLine(),
-                    'file' => $e->getFile(),
-                ]);
-                */
-
-                Feedback::error("Error al guardar la direccion");
-                Feedback::j(0);
-                return;
-            }
-        }
-
-                
-
-
-        public function obtener_direccioncliente($id){
-            $direccion = DireccionCliente::find($id);
-
-            if(!$direccion){
-                return response()->json(['status' => 0]);
-            }
-
-            return response()->json([
-                'status' => 1,
-                'data' => [
-                    'nombre_direccion' => $direccion->nombre_direccion,
-                    'direccion' => $direccion->direccion,
-                    'colonia' => $direccion->colonia,
-                    'ciudad' => $direccion->ciudad,
-                    'estado' => $direccion->estado,
-                    'codigo_postal' => $direccion->codigo_postal,
-                    'celular' => $direccion->celular,
-                    'telefono' => $direccion->telefono,
-                    'nombre_recibe' => $direccion->nombre_recibe,
-                    'url_mapa' => $direccion->url_mapa,
-                    'instrucciones' => $direccion->instrucciones,
-                ]
-            ]);
-        }
-
-    //============================================//
-    //======== FIN DE MODIFICAR DIRECCION ========//
-    //============================================//
 
     public function add_nota($id, Request $request){
         $id = Tools::_int($id);       

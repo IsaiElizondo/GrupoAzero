@@ -17,10 +17,11 @@ class Order extends Model
         'invoice_document',
         'client',
         //NUEVOS CAMPOS
-        'client_id',
-        'client_direccion_id',
+        'cliente_id',
+        'cliente_direccion_id',
         'estado_direccion',
         'nombre_cliente',
+        'tipo_residencia',
         'nombre_direccion',
         'direccion',
         'ciudad',
