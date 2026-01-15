@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SepomexController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,3 +26,5 @@ use Illuminate\Support\Facades\Route;
 // 		->rawColumns(['btn'])
 // 		->toJson();
 // });
+
+Route::get('sepomex/buscar-cp', [SepomexController::class, 'buscar_cp']);

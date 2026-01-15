@@ -70,7 +70,8 @@
                                 <option value="completa">Dirección completa</option>
                                 <option value="recoge">Cliente recoge</option>
                             </select>
-                            <div id="form_general_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
+
+                            <div id="form_general_direccion" class="direccion-scope" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
 
                                 <h5>Dirección completa</h5>
 
@@ -102,26 +103,26 @@
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label">Estado</label>
+                                    <label class="col-sm-2 col-form-label">C.P.</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_estado" placeholder="Estado">
+                                        <input class="form-control cp-input" type="text" name="general_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
                                     </div>
-
-                                    <label class="col-sm-1 col-form-label">Ciudad</label>
+                                
+                                    <label class="col-sm-1 col-form-label">Estado</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_ciudad" placeholder="Ciudad">
+                                        <input class="form-control estado-input" type="text" name="general_estado" placeholder="Estado">
                                     </div>
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label">Colonia</label>
+                                    <label class="col-sm-2 col-form-label">Ciudad</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_colonia" placeholder="Colonia">
+                                        <input class="form-control ciudad-input" type="text" name="general_ciudad" placeholder="Ciudad">
                                     </div>
 
-                                    <label class="col-sm-1 col-form-label">CP</label>
+                                    <label class="col-sm-1 col-form-label">Colonia</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_codigo_postal" placeholder="Código Postal">
+                                        <select class="form-control colonia-input" name="general_colonia" id="colonia" placeholder="Colonia"></select>
                                     </div>
                                 </div>
 
@@ -199,7 +200,7 @@
                             </div>
 
                             {{--////// AGREGAR NUEVA DIRECCIÓN //////--}}
-                            <div id="form_nueva_direccion" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
+                            <div id="form_nueva_direccion" class="direccion-scope" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
                                 <h5>Nueva Dirección</h5>
                                 <input type="hidden" name="cliente_id" id="cliente_id_ajax">
                                 
@@ -231,24 +232,27 @@
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label">Estado</label>
+                                    <label class="col-sm-2 col-form-label"> C.P. </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="estado" id="estado" placeholder="Estado">
+                                        <input class="form-control cp-input" type="text" name="codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" id="codigo_postal" placeholder="Código Postal">
                                     </div>
-                                    <label class="col-sm-1 col-form-label">Ciudad</label>
+
+                                    <label class="col-sm-1 col-form-label">Estado</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="ciudad" id="ciudad" placeholder="Ciudad">
+                                        <input class="form-control estado-input" type="text" name="estado" id="estado" placeholder="Estado">
                                     </div>
+                                    
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Colonia </label>
+                                    <label class="col-sm-2 col-form-label">Ciudad</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="colonia" id="colonia" placeholder="Colonia">
+                                        <input class="form-control ciudad-input" type="text" name="ciudad" id="ciudad" placeholder="Ciudad">
                                     </div>
-                                    <label class="col-sm-1 col-form-label"> C.P. </label>
+
+                                    <label class="col-sm-1 col-form-label"> Colonia </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="codigo_postal" id="codigo_postal" placeholder="Código Postal">
+                                        <select class="form-control colonia-input" name="colonia" id="colonia" placeholder="Colonia"></select>
                                     </div>
                                 </div>
                                 
@@ -316,7 +320,8 @@
                                 <option value="pendiente">Pendiente</option>
                                 <option value="recoge">Cliente recoge</option>
                             </select>
-                            <div id="bloque_direccion_detalle" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
+
+                            <div id="bloque_direccion_detalle" class="direccion-scope" style="display:none; border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:6px;">
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label">Nombre de Dirección *</label>
                                     <div class="col-sm-7">
@@ -345,26 +350,26 @@
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Estado </label>
+                                    <label class="col-sm-2 col-form-label"> C.P. </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_estado" placeholder="Estado">
+                                        <input class="form-control cp-input" type="text" name="nuevo_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
                                     </div>
 
-                                    <label class="col-sm-1 col-form-label"> Ciudad </label>
+                                    <label class="col-sm-1 col-form-label"> Estado </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_ciudad" placeholder="Ciudad">
+                                        <input class="form-control estado-input" type="text" name="nuevo_estado" placeholder="Estado">
                                     </div>
                                 </div>
 
                                 <div class="row mt-2">
-                                    <label class="col-sm-2 col-form-label"> Colonia </label>
+                                    <label class="col-sm-2 col-form-label"> Ciudad </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_colonia" placeholder="Colonia">
+                                        <input class="form-control ciudad-input" type="text" name="nuevo_ciudad" placeholder="Ciudad">
                                     </div>
 
-                                    <label class="col-sm-1 col-form-label"> C.P. </label>
+                                    <label class="col-sm-1 col-form-label"> Colonia </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_codigo_postal" placeholder="Código Postal">
+                                        <select class="form-control colonia-input" name="nuevo_colonia" id="colonia" placeholder="Colonia"></select>
                                     </div>
                                 </div>
 
@@ -443,6 +448,7 @@
 
 @push('js')
     <script type="text/javascript" src="{{ asset('js/jquery.form.js') }}"></script>
+    <script src="{{ asset('js/sepomex.js') }}"></script>
     <script type="text/javascript">
     $(document).ready(function(){
         $(".Eleccion button").click(function(e){

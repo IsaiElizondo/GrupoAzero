@@ -1,4 +1,4 @@
-@extends('layouts.app', ['activePage' => 'client-management', 'titlePage' => __('Clientes')])
+@extends('layouts.app', ['activePage' => 'clientes', 'titlePage' => __('Clientes')])
 
 @section('content')
     <div class="content">
@@ -59,17 +59,34 @@
                         @if($cliente->direcciones->count() > 0)
                             @foreach($cliente->direcciones as $dir)
                                 <div class="card p-3 mb-2">
-                                    <h3>{{ $dir->nombre_direccion }} </h3>
+                                    <h3>{{ $dir->nombre_direccion }}</h3>
+
                                     <h4><strong>{{ $dir->direccion }}</strong></h4>
+
                                     <h5 class="mb-1">
                                         {{ $dir->ciudad }},
                                         {{ $dir->estado }}
                                         — Colonia: {{ $dir->colonia }}
                                         — CP: {{ $dir->codigo_postal }}
-                                        — Celular: {{ $dir->celular }}
+                                    </h5>
+
+                                    <h5 class="mb-1">
+                                        Celular: {{ $dir->celular }}
                                         — Tel: {{ $dir->telefono }}
                                         — Recibe: {{ $dir->nombre_recibe }}
                                     </h5>
+
+                                    <h5 class="mb-1">
+                                        Tipo de residencia:
+                                        <strong>{{ ucfirst($dir->tipo_residencia ?? 'N/A') }}</strong>
+                                    </h5>
+
+                                    @if(!empty($dir->requerimientos_texto))
+                                        <h5 class="mb-1">
+                                            Requerimientos especiales:
+                                            <span class="text-muted">{{ implode(', ', $dir->requerimientos_texto) }}</span>
+                                        </h5>
+                                    @endif
                                     @if($dir->url_mapa)
                                         <p class="mb-1">
                                             <a href="{{ $dir->url_mapa }}" target="_blank">Ver en mapa</a>

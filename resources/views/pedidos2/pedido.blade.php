@@ -194,7 +194,7 @@ var_dump($pedido);
                                 </div>
                             @endif
 
-                            <div id="bloqueDireccionCompleta" style="display:none;">
+                            <div id="bloqueDireccionCompleta" class="direccion-scope" style="display:none;">
                                 <div class="FormRow">
                                     <label> Nombre de la direccion </label>
                                     <input type="text" name="nombre_direccion" class="form-control" value="{{ $pedido->nombre_direccion }}">
@@ -217,33 +217,33 @@ var_dump($pedido);
                                 </div>
 
                                 <div class="FormRow">
-                                    <label> Colonia </label>
-                                    <input type="text" name="colonia" class="form-control" value="{{ $pedido->colonia }}">
+                                    <label> Codigo Postal </label>
+                                    <input type="text" name="codigo_postal" class="form-control cp-input" input="numeric" pattern="[0-9]{5}" maxlength="5" value="{{ $pedido->codigo_postal }}">
                                 </div>
                                 
                                 <div class="FormRow">
-                                    <label> Ciudad </label>
-                                    <input type="text" name="ciudad" class="form-control" value="{{ $pedido->ciudad }}">
-                                </div>
-
-                                <div class="FormRow">
                                     <label> Estado </label>
-                                    <input type="text" name="estado" class="form-control" value="{{ $pedido->estado }}">
+                                    <input type="text" name="estado" class="form-control estado-input" value="{{ $pedido->estado }}">
                                 </div>
 
                                 <div class="FormRow">
-                                    <label> Codigo Postal </label>
-                                    <input type="text" name="codigo_postal" class="form-control" value="{{ $pedido->codigo_postal }}">
+                                    <label> Ciudad </label>
+                                    <input type="text" name="ciudad" class="form-control ciudad-input" value="{{ $pedido->ciudad }}">
+                                </div>
+
+                                <div class="FormRow">
+                                    <label> Colonia </label>
+                                    <select type="text" name="colonia" class="form-control colonia-input" value="{{ $pedido->colonia }}"></select>
                                 </div>
 
                                 <div class="FormRow">
                                     <label> Celular </label>
-                                    <input type="text" name="celular" class="form-control" value="{{ $pedido->celular }}">
+                                    <input type="text" name="celular" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->celular }}">
                                 </div>
 
                                 <div class="FormRow">
                                     <label> Telefono </label>
-                                    <input type="text" name="telefono" class="form-control" value="{{ $pedido->telefono }}">
+                                    <input type="text" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->telefono }}">
                                 </div>
 
                                 <div class="FormRow">
@@ -258,16 +258,18 @@ var_dump($pedido);
 
                                 <div class="FormRow">
                                     <label>Requerimientos especiales</label>
-                                    @foreach($RequerimientosEspeciales as $Req)
-                                        <label style="display:block">
-                                            <input type="checkbox"
-                                                name="requerimientos[]"
-                                                value="{{ $Req->id }}"
-                                                {{ in_array($Req->id, $RequerimientosDireccion ?? []) ? 'checked' : '' }}>
-                                            {{ $Req->nombre }}
-                                        </label>
-                                    @endforeach
-                                </div>  
+                                    <div class="requerimientos-grid">
+                                        @foreach($RequerimientosEspeciales as $Req)
+                                            <label class="req-item">
+                                                <input type="checkbox"
+                                                    name="requerimientos[]"
+                                                    value="{{ $Req->id }}"
+                                                    {{ in_array($Req->id, $RequerimientosDireccion ?? []) ? 'checked' : '' }}>
+                                                {{ $Req->nombre }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
 
                                 <div class="FormRow">
                                     <label> Instrucciones </label>
@@ -342,8 +344,9 @@ var_dump($pedido);
                                 Dirección pendiente por definir
                             @else
                                 {{$pedido->direccion}}
-                                @if($pedido->ciudad), {{$pedido->ciudad}} @endif
                                 @if($pedido->estado), {{$pedido->estado}} @endif
+                                @if($pedido->ciudad), {{$pedido->ciudad}} @endif
+                                @if($pedido->colonia), {{$pedido->colonia}} @endif
                                 @if($pedido->codigo_postal), C.P. {{$pedido->codigo_postal}} @endif
                             @endif
                         </span>
@@ -1041,7 +1044,7 @@ $pedidoStatusId = $pedido->status_id;
 <script type="text/javascript" src="{{asset('js/jquery.form.js')}}"></script>
 <script type="text/javascript" src="{{asset('js/piedramuda.js?x='.rand(0,999))}}"></script>
 <script type="text/javascript" src="{{asset('js/attachlist2.js?x='.rand(0,999))}}"></script>
-
+<script src="{{ asset('js/sepomex.js') }}"></script>
 <script type="text/javascript" src="{{asset('js/etiquetas/etiquetas.js?x='.rand(0,999))}}"></script>
 <script>
 $(document).ready(function(){
@@ -2141,7 +2144,6 @@ function MostrarDireccion(){
 
 function EsconderDireccion(){
     $(".DireccionInfo").slideUp();
-    $(".MainInfo").show();
     $(".MiniInfo").show();
 }
 

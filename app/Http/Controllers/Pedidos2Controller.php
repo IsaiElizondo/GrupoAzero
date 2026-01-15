@@ -234,7 +234,7 @@ class Pedidos2Controller extends Controller
             //$morders = ManufacturingOrder::where(["order_id"=>$id])->get();
             //$picturesEntrega = Pictures::EnPuerta($id,"")
             $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
-        // var_dump($purchaseOrder);
+            // var_dump($purchaseOrder);
         
             $EtiquetasDisponibles = DB::table('etiquetas')->get();
 
@@ -300,28 +300,37 @@ class Pedidos2Controller extends Controller
                     ->pluck('requerimientos_especiales.nombre')
                     ->toArray();
 
-            $RequerimientosDireccion = [];
-            if ($pedido->cliente_direccion_id) {
-                $RequerimientosDireccion = DB::table('direccion_requerimiento')
-                    ->where('cliente_direccion_id', $pedido->cliente_direccion_id)
-                    ->pluck('requerimiento_especial_id')
-                    ->toArray();
-            }
+            $RequerimientosDireccion = DB::table('direccion_requerimiento')
+                ->where(function($q) use ($pedido){
+                    if ($pedido->cliente_direccion_id){
+                        $q->where('cliente_direccion_id', $pedido->cliente_direccion_id);
+                    }else{
+                        $q->where('order_id', $pedido->id);
+                    }
+                })
+                ->pluck('requerimiento_especial_id')
+                ->toArray();
+
 
             $RequerimientosTexto = [];
-            if ($pedido->cliente_direccion_id) {
-                $RequerimientosTexto = DB::table('direccion_requerimiento')
-                    ->join(
-                        'requerimientos_especiales',
-                        'direccion_requerimiento.requerimiento_especial_id',
-                        '=',
-                        'requerimientos_especiales.id'
-                    )
-                    ->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id)
-                    ->orderBy('requerimientos_especiales.nombre')
-                    ->pluck('requerimientos_especiales.nombre')
-                    ->toArray();
-            }
+            $RequerimientosTexto = DB::table('direccion_requerimiento')
+                ->join(
+                    'requerimientos_especiales',
+                    'direccion_requerimiento.requerimiento_especial_id',
+                    '=',
+                    'requerimientos_especiales.id'
+                )
+                ->where(function($q) use ($pedido){
+                    if ($pedido->cliente_direccion_id) {
+                        $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id);
+                    }else{
+                        $q->where('direccion_requerimiento.order_id', $pedido->id);
+                    }
+                })
+                ->orderBy('requerimientos_especiales.nombre')
+                ->pluck('requerimientos_especiales.nombre')
+                ->toArray();
+
 
 
             return view('pedidos2.pedido', compact('id','pedido','shipments',
@@ -801,6 +810,22 @@ class Pedidos2Controller extends Controller
                     ]);
 
                     LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+                    DB::table('direccion_requerimiento')
+                        ->where('order_id', $pedido->id)
+                        ->delete();
+
+                    if(!empty($request->requerimientos)){
+                        foreach($request->requerimientos as $ReqId){
+                            DB::table('direccion_requerimiento')->insert([
+                                'order_id' => $pedido->id,
+                                'cliente_direccion_id' => null,
+                                'requerimiento_especial_id' => $ReqId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+
 
                     DB::commit();
                     Feedback::message("Direccion guardada correctamente");

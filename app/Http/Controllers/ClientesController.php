@@ -103,6 +103,24 @@ class ClientesController extends Controller
 
     public function show($id){
         $cliente = Cliente::with('direcciones')->findOrFail($id);
+
+        foreach ($cliente->direcciones as $dir) {
+
+        $RequerimientosTexto = DB::table('direccion_requerimiento')
+                ->join(
+                    'requerimientos_especiales',
+                    'direccion_requerimiento.requerimiento_especial_id',
+                    '=',
+                    'requerimientos_especiales.id'
+                )
+                ->where('direccion_requerimiento.cliente_direccion_id', $dir->id)
+                ->orderBy('requerimientos_especiales.nombre')
+                ->pluck('requerimientos_especiales.nombre')
+                ->toArray();
+
+            $dir->requerimientos_texto = $RequerimientosTexto;
+        }
+
         return view('clientes.show', compact('cliente'));
     }
 
@@ -115,22 +133,22 @@ class ClientesController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        $requerimientosPorDireccion = DB::table('direccion_requerimiento')
+        $RequerimientosPorDireccion = DB::table('direccion_requerimiento')
             ->whereIn(
                 'cliente_direccion_id',
                 $cliente->direcciones->pluck('id')
             )
             ->get()
             ->groupBy('cliente_direccion_id')
-            ->map(function ($rows) {
-                return $rows->pluck('requerimiento_especial_id')->toArray();
+            ->map(function ($items) {
+                return $items->pluck('requerimiento_especial_id')->toArray();
             })
             ->toArray();
 
         return view('clientes.edit', compact(
             'cliente',
             'requerimientos',
-            'requerimientosPorDireccion'
+            'RequerimientosPorDireccion'
         ));
     }
     
