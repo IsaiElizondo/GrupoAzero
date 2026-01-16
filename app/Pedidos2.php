@@ -763,37 +763,6 @@ class Pedidos2 extends Model
         ];
     }
 
-        // Filtros por rol y departamento
-        if($user->role_id == 2 && $user->department_id == 3){
-            $where[] = "log_creador.user_id = {$user->id}";
-            $where[] = "o.status_id IN (1,2,3,4,5)";
-        }elseif($user->role_id == 2 && $user->department_id == 4){
-            $where[] = "o.status_id IN (2,5)";
-            $where[] = "EXISTS (
-                SELECT 1
-                FROM logs l_emb
-                JOIN users ul_emb ON ul_emb.id = l_emb.user_id
-                WHERE l_emb.order_id = o.id
-                AND l_emb.status LIKE '%Recibido por embarques%'
-                AND ul_emb.office = '" . addslashes($user->office) . "'
-            )";
-        }elseif($user->role_id == 2 && $user->department_id == 5){
-            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
-            $where[] = "EXISTS (
-                SELECT 1
-                FROM manufacturing_orders mo
-                JOIN users u_mo ON u_mo.id = mo.created_by
-                WHERE mo.order_id = o.id
-                AND mo.status_id IN (1,3)
-                AND u_mo.office = '" . addslashes($user->office) . "'
-            )";
-        }
-        elseif($user->role_id == 1 || $user->department_id == 2){
-            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
-        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
-            $where[] = "o.status_id IN (6,7,8,9)";
-            $where[] = "o.origin IN ('F', 'C')";
-        }
 
     public static function ListaDashboardFabricacion(int $pag, $user, array $filtros): array{
         
