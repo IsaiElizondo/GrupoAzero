@@ -74,7 +74,7 @@ class Pedidos2Controller extends Controller
     }
 
 
-//FUNCIÓN PARA LA BÚSQUEDA AVANZADA
+    //FUNCIÓN PARA LA BÚSQUEDA AVANZADA
     public function lista(Request $request){
         $user = auth()->user();
 
@@ -210,799 +210,824 @@ class Pedidos2Controller extends Controller
     //====== FLUJO PEDIDO | CREAR/EDITAR DATOS =====//
     //==============================================//
 
-        public function pedido($id){
+        //----------------------------//
+        //----- VISTA DEL PEDIDO -----//
+        //----------------------------//
 
-            $id= intval($id);
-            $user = auth()->user();
-            $role = $user->role;
-            $pedido = Pedidos2::uno($id);
-            $shipments = Shipment::where(["order_id"=>$id])->get();
-            $evidences = Evidence::FromOrder($id);
-            $debolutions = Debolution::FromOrder($id);
-            $quote = Quote::where(["order_id" => $id])->first();
-            $imagenesEntrega = Picture::where(["order_id"=>$id,"event"=>"entregar"])->get();
-            $parciales = Partial::where(["order_id"=>$id])->get();
-            $statuses = Status::get();
-            $rebilling = Rebilling::where(["order_id"=>$id])->first();
-            $reasons = Reason::get();
-            $stockreq = Stockreq::where(["order_id"=>$id])->first();
-            $notes = Note::where(["order_id"=>$id])->get();
-            $smateriales_num = Smaterial::where(["order_id"=>$id])->count();
-            //var_dump($debolutions);
+            public function pedido($id){
 
-            //$pictures = Picture::FromOrder($id);
-            //$morders = ManufacturingOrder::where(["order_id"=>$id])->get();
-            //$picturesEntrega = Pictures::EnPuerta($id,"")
-            $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
-            // var_dump($purchaseOrder);
-        
-            $EtiquetasDisponibles = DB::table('etiquetas')->get();
+                $id= intval($id);
+                $user = auth()->user();
+                $role = $user->role;
+                $pedido = Pedidos2::uno($id);
+                $shipments = Shipment::where(["order_id"=>$id])->get();
+                $evidences = Evidence::FromOrder($id);
+                $debolutions = Debolution::FromOrder($id);
+                $quote = Quote::where(["order_id" => $id])->first();
+                $imagenesEntrega = Picture::where(["order_id"=>$id,"event"=>"entregar"])->get();
+                $parciales = Partial::where(["order_id"=>$id])->get();
+                $statuses = Status::get();
+                $rebilling = Rebilling::where(["order_id"=>$id])->first();
+                $reasons = Reason::get();
+                $stockreq = Stockreq::where(["order_id"=>$id])->first();
+                $notes = Note::where(["order_id"=>$id])->get();
+                $smateriales_num = Smaterial::where(["order_id"=>$id])->count();
+                //var_dump($debolutions);
 
-            $EtiquetasAsignadas = DB::table('etiqueta_pedido')
-                    ->where('pedido_id', $id)
-                    ->pluck('etiqueta_id')
+                //$pictures = Picture::FromOrder($id);
+                //$morders = ManufacturingOrder::where(["order_id"=>$id])->get();
+                //$picturesEntrega = Pictures::EnPuerta($id,"")
+                $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
+                // var_dump($purchaseOrder);
+            
+                $EtiquetasDisponibles = DB::table('etiquetas')->get();
+
+                $EtiquetasAsignadas = DB::table('etiqueta_pedido')
+                        ->where('pedido_id', $id)
+                        ->pluck('etiqueta_id')
+                        ->toArray();
+
+                $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
+                $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
+                
+                $RutasAsociadas = DB::table('ruta_pedido')
+                    ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
+                    ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
+                    ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
+                    ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
+                    ->select(
+                        'ruta_pedido.id',
+                        'ruta_pedido.ruta_id',
+                        'ruta_pedido.order_id',
+                        'ruta_pedido.partial_folio',
+                        'ruta_pedido.smaterial_folio',
+                        'ruta_pedido.estatus_pago',
+                        'ruta_pedido.estatus_entrega',
+                        'ruta_pedido.monto_por_cobrar',
+                        'ruta_pedido.cliente_codigo',
+                        'ruta_pedido.cliente_nombre',
+                        'ruta_pedido.tipo_subproceso',
+                        'ruta_pedido.created_at as rp_created_at',
+
+                        'rutas.numero_ruta',
+                        'unidades.nombre_unidad as unidad',
+                        'users.name as chofer',
+
+                        'orders.nombre_recibe',
+                        'orders.telefono',
+                        'orders.celular',
+                        'orders.direccion',
+                        'orders.url_mapa'
+                    )
+                    ->where('ruta_pedido.order_id', $id)
+                    ->orderBy('ruta_pedido.id')
+                    ->get();
+
+                $DireccionesCliente = collect();
+                if(!empty($pedido->cliente_id)){
+                    $DireccionesCliente = DireccionCliente::where('cliente_id', $pedido->cliente_id)
+                        ->orderBy('id', 'desc')
+                        ->get();
+                }
+
+                $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                        ->where('activo', 1)
+                        ->orderBy('nombre')
+                        ->get();
+
+                $RequerimientosPedido = DB::table('direccion_requerimiento')
+                        ->join('requerimientos_especiales', 'direccion_requerimiento.requerimiento_especial_id', '=', 'requerimientos_especiales.id')
+                        ->where(function($q) use ($pedido){
+                            $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id)
+                            ->orWhere('direccion_requerimiento.order_id', $pedido->id);
+                        })
+                        ->pluck('requerimientos_especiales.nombre')
+                        ->toArray();
+
+                $RequerimientosDireccion = DB::table('direccion_requerimiento')
+                    ->where(function($q) use ($pedido){
+                        if ($pedido->cliente_direccion_id){
+                            $q->where('cliente_direccion_id', $pedido->cliente_direccion_id);
+                        }else{
+                            $q->where('order_id', $pedido->id);
+                        }
+                    })
+                    ->pluck('requerimiento_especial_id')
                     ->toArray();
 
-            $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
-            $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
-            
-            $RutasAsociadas = DB::table('ruta_pedido')
-                ->join('rutas', 'ruta_pedido.ruta_id', '=', 'rutas.id')
-                ->leftJoin('unidades', 'rutas.unidad_id', '=', 'unidades.id')
-                ->leftJoin('users', 'rutas.chofer_id', '=', 'users.id')
-                ->leftJoin('orders', 'ruta_pedido.order_id', '=', 'orders.id')
-                ->select(
-                    'ruta_pedido.id',
-                    'ruta_pedido.ruta_id',
-                    'ruta_pedido.order_id',
-                    'ruta_pedido.partial_folio',
-                    'ruta_pedido.smaterial_folio',
-                    'ruta_pedido.estatus_pago',
-                    'ruta_pedido.estatus_entrega',
-                    'ruta_pedido.monto_por_cobrar',
-                    'ruta_pedido.cliente_codigo',
-                    'ruta_pedido.cliente_nombre',
-                    'ruta_pedido.tipo_subproceso',
-                    'ruta_pedido.created_at as rp_created_at',
 
-                    'rutas.numero_ruta',
-                    'unidades.nombre_unidad as unidad',
-                    'users.name as chofer',
-
-                    'orders.nombre_recibe',
-                    'orders.telefono',
-                    'orders.celular',
-                    'orders.direccion',
-                    'orders.url_mapa'
-                )
-                ->where('ruta_pedido.order_id', $id)
-                ->orderBy('ruta_pedido.id')
-                ->get();
-
-            $DireccionesCliente = collect();
-            if(!empty($pedido->cliente_id)){
-                $DireccionesCliente = DireccionCliente::where('cliente_id', $pedido->cliente_id)
-                    ->orderBy('id', 'desc')
-                    ->get();
-            }
-
-            $RequerimientosEspeciales = DB::table('requerimientos_especiales')
-                    ->where('activo', 1)
-                    ->orderBy('nombre')
-                    ->get();
-
-            $RequerimientosPedido = DB::table('direccion_requerimiento')
-                    ->join('requerimientos_especiales', 'direccion_requerimiento.requerimiento_especial_id', '=', 'requerimientos_especiales.id')
+                $RequerimientosTexto = [];
+                $RequerimientosTexto = DB::table('direccion_requerimiento')
+                    ->join(
+                        'requerimientos_especiales',
+                        'direccion_requerimiento.requerimiento_especial_id',
+                        '=',
+                        'requerimientos_especiales.id'
+                    )
                     ->where(function($q) use ($pedido){
-                        $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id)
-                        ->orWhere('direccion_requerimiento.order_id', $pedido->id);
+                        if ($pedido->cliente_direccion_id) {
+                            $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id);
+                        }else{
+                            $q->where('direccion_requerimiento.order_id', $pedido->id);
+                        }
                     })
+                    ->orderBy('requerimientos_especiales.nombre')
                     ->pluck('requerimientos_especiales.nombre')
                     ->toArray();
 
-            $RequerimientosDireccion = DB::table('direccion_requerimiento')
-                ->where(function($q) use ($pedido){
-                    if ($pedido->cliente_direccion_id){
-                        $q->where('cliente_direccion_id', $pedido->cliente_direccion_id);
-                    }else{
-                        $q->where('order_id', $pedido->id);
-                    }
-                })
-                ->pluck('requerimiento_especial_id')
-                ->toArray();
 
 
-            $RequerimientosTexto = [];
-            $RequerimientosTexto = DB::table('direccion_requerimiento')
-                ->join(
-                    'requerimientos_especiales',
-                    'direccion_requerimiento.requerimiento_especial_id',
-                    '=',
-                    'requerimientos_especiales.id'
-                )
-                ->where(function($q) use ($pedido){
-                    if ($pedido->cliente_direccion_id) {
-                        $q->where('direccion_requerimiento.cliente_direccion_id', $pedido->cliente_direccion_id);
-                    }else{
-                        $q->where('direccion_requerimiento.order_id', $pedido->id);
-                    }
-                })
-                ->orderBy('requerimientos_especiales.nombre')
-                ->pluck('requerimientos_especiales.nombre')
-                ->toArray();
-
-
-
-            return view('pedidos2.pedido', compact('id','pedido','shipments',
-            'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-            "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles",
-            'RutasAsociadas', 'RequerimientosEspeciales', 'DireccionesCliente', 'RequerimientosPedido', 'RequerimientosDireccion', 'RequerimientosTexto'));
-        }
-
-
-
-        public function nuevo(){
-            $user =auth()->user();
-            $RequerimientosEspeciales = DB::table('requerimientos_especiales')
-                    ->where('activo', 1)
-                    ->orderBy('nombre')
-                    ->get();
-            return view('pedidos2.nuevo', compact("user", "RequerimientosEspeciales"));
-        }
-
-
-
-        public function crear(Request $request){
-            if(!isset($request->origin)){
-                redirect("pedidos2");
+                return view('pedidos2.pedido', compact('id','pedido','shipments',
+                'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
+                "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles",
+                'RutasAsociadas', 'RequerimientosEspeciales', 'DireccionesCliente', 'RequerimientosPedido', 'RequerimientosDireccion', 'RequerimientosTexto'));
             }
 
-            $user = User::find(auth()->user()->id);
-            $userOffice = !empty($user->office) ? $user->office : "San Pablo";
-            $origin = $request->origin;
+        //--------------------------------//
+        //----- FIN VISTA DEL PEDIDO -----//
+        //--------------------------------//
 
-            $code = !empty($request->code) ? Tools::_string($request->code,18) : "";
-            $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
-            $nota = !empty($request->nota) ? Tools::_string($request->nota,190) : '';
-            $now = date("Y-m-d H:i:s");
+        
+        //------------------------------------------------------//
+        //----- FLUJO GENERAR PEDIDO | DIRECCION | CLIENTE -----//
+        //------------------------------------------------------//
 
-            $cliente = null;
-            $DireccionCliente = null;
-            $cliente_id = null;
-            $cliente_direccion_id = null;
-
-            $estado_direccion = $request->estado_direccion ?? 'pendiente';
-
-            if(empty($code)){
-                Feedback::error("El folio es requerido");
-                Feedback::j(0);
+            public function nuevo(){
+                $user =auth()->user();
+                $RequerimientosEspeciales = DB::table('requerimientos_especiales')
+                        ->where('activo', 1)
+                        ->orderBy('nombre')
+                        ->get();
+                return view('pedidos2.nuevo', compact("user", "RequerimientosEspeciales"));
             }
 
-            $nombre_cliente = null;
-            $nombre_direccion_sn = null;
-            $tipo_residencia_sn = null;
-            $direccion_sn = null;
-            $colonia_sn = null;
-            $ciudad_sn = null;
-            $estado_sn = null;
-            $codigo_postal_sn = null;
-            $celular_sn = null;
-            $telefono_sn = null;
-            $nombre_recibe_sn = null;
-            $url_mapa_sn = null;
-            $instrucciones_sn = null;
 
 
-            if($request->tipo_cliente == 'general'){
-
-                $client = "XAXX";
-                $estado_direccion = $request->estado_direccion_general ?? 'pendiente';
-
-                if($estado_direccion == 'completa'){
-                    $nombre_cliente = "Cliente General";
-                    $nombre_direccion_sn = $request->general_nombre_direccion ?? null;
-                    $tipo_residencia_sn = $request->general_tipo_residencia ?? null;
-                    $direccion_sn = $request->general_direccion ?? null;
-                    $colonia_sn = $request->general_colonia ?? null;
-                    $ciudad_sn = $request->general_ciudad ?? null;
-                    $estado_sn = $request->general_estado ?? null;
-                    $codigo_postal_sn = $request->general_codigo_postal ?? null;
-                    $celular_sn = $request->general_celular ?? null;
-                    $telefono_sn = $request->general_telefono ?? null;
-                    $nombre_recibe_sn = $request->general_nombre_recibe ?? null;
-                    $url_mapa_sn = $request->general_url_mapa ?? null;
-                    $instrucciones_sn = $request->general_instrucciones ?? null;
-                }else{
-                    $nombre_cliente = "Cliente General";
-
-                    $nombre_direccion_sn = null;
-                    $tipo_residencia_sn = null;
-                    $direccion_sn = null;
-                    $colonia_sn = null;
-                    $ciudad_sn = null;
-                    $estado_sn = null;
-                    $codigo_postal_sn = null;
-                    $celular_sn = null;
-                    $telefono_sn = null;
-                    $nombre_recibe_sn = null;
-                    $url_mapa_sn = null;
-                    $instrucciones_sn = null;
+            public function crear(Request $request){
+                if(!isset($request->origin)){
+                    redirect("pedidos2");
                 }
-            }
 
-            elseif($request->tipo_cliente == 'existente'){
-                $cliente = Cliente::find($request->cliente_id);
+                $user = User::find(auth()->user()->id);
+                $userOffice = !empty($user->office) ? $user->office : "San Pablo";
+                $origin = $request->origin;
 
-                if(!$cliente){
-                    Feedback::error("Cliente no válido");
+                $code = !empty($request->code) ? Tools::_string($request->code,18) : "";
+                $client = !empty($request->client) ? Tools::_string($request->client,24) : '';
+                $nota = !empty($request->nota) ? Tools::_string($request->nota,190) : '';
+                $now = date("Y-m-d H:i:s");
+
+                $cliente = null;
+                $DireccionCliente = null;
+                $cliente_id = null;
+                $cliente_direccion_id = null;
+
+                $estado_direccion = $request->estado_direccion ?? 'pendiente';
+
+                if(empty($code)){
+                    Feedback::error("El folio es requerido");
                     Feedback::j(0);
                 }
 
-                if($request->mode_direccion_existente == 'escoger'){
-                    $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
-                    $estado_direccion = $DireccionCliente->estado_direccion ?? 'completa';
+                $nombre_cliente = null;
+                $nombre_direccion_sn = null;
+                $tipo_residencia_sn = null;
+                $direccion_sn = null;
+                $colonia_sn = null;
+                $ciudad_sn = null;
+                $estado_sn = null;
+                $codigo_postal_sn = null;
+                $celular_sn = null;
+                $telefono_sn = null;
+                $nombre_recibe_sn = null;
+                $url_mapa_sn = null;
+                $instrucciones_sn = null;
+
+
+                if($request->tipo_cliente == 'general'){
+
+                    $client = "XAXX";
+                    $estado_direccion = $request->estado_direccion_general ?? 'pendiente';
+
+                    if($estado_direccion == 'completa'){
+                        $nombre_cliente = "Cliente General";
+                        $nombre_direccion_sn = $request->general_nombre_direccion ?? null;
+                        $tipo_residencia_sn = $request->general_tipo_residencia ?? null;
+                        $direccion_sn = $request->general_direccion ?? null;
+                        $colonia_sn = $request->general_colonia ?? null;
+                        $ciudad_sn = $request->general_ciudad ?? null;
+                        $estado_sn = $request->general_estado ?? null;
+                        $codigo_postal_sn = $request->general_codigo_postal ?? null;
+                        $celular_sn = $request->general_celular ?? null;
+                        $telefono_sn = $request->general_telefono ?? null;
+                        $nombre_recibe_sn = $request->general_nombre_recibe ?? null;
+                        $url_mapa_sn = $request->general_url_mapa ?? null;
+                        $instrucciones_sn = $request->general_instrucciones ?? null;
+                    }else{
+                        $nombre_cliente = "Cliente General";
+
+                        $nombre_direccion_sn = null;
+                        $tipo_residencia_sn = null;
+                        $direccion_sn = null;
+                        $colonia_sn = null;
+                        $ciudad_sn = null;
+                        $estado_sn = null;
+                        $codigo_postal_sn = null;
+                        $celular_sn = null;
+                        $telefono_sn = null;
+                        $nombre_recibe_sn = null;
+                        $url_mapa_sn = null;
+                        $instrucciones_sn = null;
+                    }
                 }
-                elseif($request->mode_direccion_existente == 'nueva'){
-                    $DireccionCliente = DireccionCliente::create([
-                        'cliente_id' => $cliente->id,
-                        'estado_direccion' => 'completa',
-                        'nombre_direccion' => $request->nombre_direccion,
-                        'tipo_residencia' => $request->tipo_residencia,
-                        'direccion' => $request->direccion,
-                        'colonia' => $request->colonia ?? null,
-                        'ciudad' => $request->ciudad,
-                        'estado' => $request->estado,
-                        'codigo_postal' => $request->codigo_postal,
-                        'celular' => $request->celular,
-                        'telefono' => $request->telefono,
-                        'nombre_recibe' => $request->nombre_recibe,
-                        'url_mapa' => $request->url_mapa,
-                        'instrucciones' => $request->instrucciones,
+
+                elseif($request->tipo_cliente == 'existente'){
+                    $cliente = Cliente::find($request->cliente_id);
+
+                    if(!$cliente){
+                        Feedback::error("Cliente no válido");
+                        Feedback::j(0);
+                    }
+
+                    if($request->mode_direccion_existente == 'escoger'){
+                        $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+                        $estado_direccion = $DireccionCliente->estado_direccion ?? 'completa';
+                    }
+                    elseif($request->mode_direccion_existente == 'nueva'){
+                        $DireccionCliente = DireccionCliente::create([
+                            'cliente_id' => $cliente->id,
+                            'estado_direccion' => 'completa',
+                            'nombre_direccion' => $request->nombre_direccion,
+                            'tipo_residencia' => $request->tipo_residencia,
+                            'direccion' => $request->direccion,
+                            'colonia' => $request->colonia ?? null,
+                            'ciudad' => $request->ciudad,
+                            'estado' => $request->estado,
+                            'codigo_postal' => $request->codigo_postal,
+                            'celular' => $request->celular,
+                            'telefono' => $request->telefono,
+                            'nombre_recibe' => $request->nombre_recibe,
+                            'url_mapa' => $request->url_mapa,
+                            'instrucciones' => $request->instrucciones,
+                        ]);
+
+                        if(!empty($request->requerimientos)){
+                            foreach($request->requerimientos as $ReqId){
+                                DB::table('direccion_requerimiento')->insert([
+                                    'order_id' => null,
+                                    'cliente_direccion_id' => $DireccionCliente->id,
+                                    'requerimiento_especial_id' => $ReqId,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
+                        $estado_direccion = 'completa';
+                    }
+                    elseif($request->mode_direccion_existente == 'pendiente'){
+                        $DireccionCliente = null;
+                        $estado_direccion = 'pendiente';
+                    }
+                    elseif($request->mode_direccion_existente == 'recoge'){
+                        $DireccionCliente = null;
+                        $estado_direccion = 'recoge';
+                    }
+
+                    $client = $cliente->codigo_cliente;
+                    $cliente_id = $cliente->id;
+                    $cliente_direccion_id = $DireccionCliente->id ?? null;
+
+                    $nombre_cliente = $cliente->nombre;
+                    $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
+                    $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
+                    $direccion_sn = $DireccionCliente->direccion ?? null;
+                    $colonia_sn = $DireccionCliente->colonia ?? null;
+                    $ciudad_sn = $DireccionCliente->ciudad ?? null;
+                    $estado_sn = $DireccionCliente->estado ?? null;
+                    $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
+                    $celular_sn = $DireccionCliente->celular ?? null;
+                    $telefono_sn = $DireccionCliente->telefono ?? null;
+                    $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
+                    $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
+                    $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
+                }
+                elseif($request->tipo_cliente == 'nuevo'){
+                    $cliente = Cliente::create([
+                        'nombre' => $request->nuevo_nombre,
+                        'codigo_cliente' => $request->nuevo_codigo,
                     ]);
 
-                    if(!empty($request->requerimientos)){
-                        foreach($request->requerimientos as $ReqId){
-                            DB::table('direccion_requerimiento')->insert([
-                                'order_id' => null,
-                                'cliente_direccion_id' => $DireccionCliente->id,
-                                'requerimiento_especial_id' => $ReqId,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                    $client = $cliente->codigo_cliente;
+                    $cliente_id = $cliente->id;
+
+                    if($estado_direccion == 'completa'){
+                        $DireccionCliente = DireccionCliente::create([
+                            'cliente_id' => $cliente->id,
+                            'estado_direccion' => 'completa',
+                            'nombre_direccion' => $request->nuevo_nombre_direccion,
+                            'tipo_residencia' => $request->nuevo_tipo_residencia,
+                            'direccion' => $request->nuevo_direccion,
+                            'colonia' => $request->nuevo_colonia ?? null,
+                            'ciudad' => $request->nuevo_ciudad,
+                            'estado' => $request->nuevo_estado,
+                            'codigo_postal' => $request->nuevo_codigo_postal,
+                            'celular' => $request->nuevo_celular,
+                            'telefono' => $request->nuevo_telefono,
+                            'nombre_recibe' => $request->nuevo_nombre_recibe,
+                            'url_mapa' => $request->nuevo_url_mapa,
+                            'instrucciones' => $request->nuevo_instrucciones,
+                        ]);
+
+                        if(!empty($request->nuevo_requerimientos)){
+                            foreach($request->nuevo_requerimientos as $ReqId){
+                                DB::table('direccion_requerimiento')->insert([
+                                    'order_id' => null,
+                                    'cliente_direccion_id' => $DireccionCliente->id,
+                                    'requerimiento_especial_id' =>$ReqId,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
                         }
+
+                        $cliente_direccion_id = $DireccionCliente->id;
+                    }else{
+                        $DireccionCliente = null;
                     }
-                    $estado_direccion = 'completa';
-                }
-                elseif($request->mode_direccion_existente == 'pendiente'){
-                    $DireccionCliente = null;
-                    $estado_direccion = 'pendiente';
-                }
-                elseif($request->mode_direccion_existente == 'recoge'){
-                    $DireccionCliente = null;
-                    $estado_direccion = 'recoge';
+
+                    $nombre_cliente = $cliente->nombre;
+                    $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
+                    $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
+                    $direccion_sn = $DireccionCliente->direccion ?? null;
+                    $colonia_sn = $DireccionCliente->colonia ?? null;
+                    $ciudad_sn = $DireccionCliente->ciudad ?? null;
+                    $estado_sn = $DireccionCliente->estado ?? null;
+                    $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
+                    $celular_sn = $DireccionCliente->celular ?? null;
+                    $telefono_sn = $DireccionCliente->telefono ?? null;
+                    $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
+                    $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
+                    $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
                 }
 
-                $client = $cliente->codigo_cliente;
-                $cliente_id = $cliente->id;
-                $cliente_direccion_id = $DireccionCliente->id ?? null;
+                if($origin=="F"){
+                    $orderData = [
+                        'office' => $userOffice,
+                        'invoice_number'=>$code,
+                        'invoice'=>'',
+                        'origin'=> $origin,
+                        'client'=> $client,
+                        'nombre_cliente'=> $nombre_cliente,
+                        'nombre_direccion'=> $nombre_direccion_sn,
+                        'tipo_residencia'=> $tipo_residencia_sn,
+                        'direccion'=> $direccion_sn,
+                        'colonia'=> $colonia_sn,
+                        'ciudad'=> $ciudad_sn,
+                        'estado'=> $estado_sn,
+                        'codigo_postal'=> $codigo_postal_sn,
+                        'celular'=> $celular_sn,
+                        'telefono'=> $telefono_sn,
+                        'nombre_recibe'=> $nombre_recibe_sn,
+                        'url_mapa'=> $url_mapa_sn,
+                        'instrucciones'=> $instrucciones_sn,
+                        'cliente_id'=> $cliente_id,
+                        'cliente_direccion_id'=> $cliente_direccion_id,
+                        'estado_direccion'=> $estado_direccion,
+                        'credit'=> 0,
+                        'status_id'=> 1,
+                        'created_at'=> $now
+                    ];
+                }
+                elseif($origin=="C"){
+                    $orderData = [
+                        'office'=> $userOffice,
+                        'invoice'=> $code,
+                        'origin'=> $origin,
+                        'client'=> $client,
+                        'nombre_cliente'=> $nombre_cliente,
+                        'nombre_direccion'=> $nombre_direccion_sn,
+                        'tipo_residencia'=> $tipo_residencia_sn,
+                        'direccion'=> $direccion_sn,
+                        'colonia'=> $colonia_sn,
+                        'ciudad'=> $ciudad_sn,
+                        'estado'=> $estado_sn,
+                        'codigo_postal'=> $codigo_postal_sn,
+                        'celular'=> $celular_sn,
+                        'telefono'=> $telefono_sn,
+                        'nombre_recibe'=> $nombre_recibe_sn,
+                        'url_mapa'=> $url_mapa_sn,
+                        'instrucciones'=> $instrucciones_sn,
+                        'cliente_id'=> $cliente_id,
+                        'cliente_direccion_id'=> $cliente_direccion_id,
+                        'estado_direccion'=> $estado_direccion,
+                        'credit'=> 0,
+                        'status_id'=> 1,
+                        'created_at'=> $now
+                    ];
+                }
+                else{
+                    $orderData = [
+                        'office'=> $userOffice,
+                        'invoice'=> "",
+                        'origin'=> $origin,
+                        'client'=> $client,
+                        'estado_direccion'=> $estado_direccion,
+                        'credit'=> 0,
+                        'status_id'=> 1,
+                        'created_at'=> $now
+                    ];
+                }
 
-                $nombre_cliente = $cliente->nombre;
-                $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
-                $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
-                $direccion_sn = $DireccionCliente->direccion ?? null;
-                $colonia_sn = $DireccionCliente->colonia ?? null;
-                $ciudad_sn = $DireccionCliente->ciudad ?? null;
-                $estado_sn = $DireccionCliente->estado ?? null;
-                $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
-                $celular_sn = $DireccionCliente->celular ?? null;
-                $telefono_sn = $DireccionCliente->telefono ?? null;
-                $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
-                $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
-                $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
-            }
-            elseif($request->tipo_cliente == 'nuevo'){
-                $cliente = Cliente::create([
-                    'nombre' => $request->nuevo_nombre,
-                    'codigo_cliente' => $request->nuevo_codigo,
+                $order = Order::create($orderData);
+
+                if($request->tipo_cliente == 'general' && $estado_direccion == 'completa' && !empty($request->general_requerimientos)){
+                    foreach($request->general_requerimientos as $ReqId){
+                        DB::table('direccion_requerimiento')->insert([
+                            'order_id' => $order->id,
+                            'cliente_direccion_id' => null,
+                            'requerimiento_especial_id' => $ReqId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                if($request->hasFile('archivo') && $origin != "R"){
+                    $file = $request->file('archivo');
+                    $name = $order["id"].".".$file->getClientOriginalExtension();
+                    $sqlPath = ($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/').$name;
+                    Storage::putFileAs('/public/'.($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/'), $file, $name);
+                    Order::where("id",$order->id)->update(["invoice_document"=>$sqlPath]);
+                }
+
+                Note::create([
+                    "note"=>$nota,
+                    "order_id"=>$order->id,
+                    "user_id"=>$user->id,
+                    "created_at"=>$now,
+                    "updated_at"=>$now
                 ]);
 
-                $client = $cliente->codigo_cliente;
-                $cliente_id = $cliente->id;
+                $status = Status::find(1);
+                $origins=["C"=>"con cotización","F"=>"Con factura","R"=>"como requisición stock"];
+                $action = 'Creado '.$origins[$origin].': '.$code;
 
-                if($estado_direccion == 'completa'){
-                    $DireccionCliente = DireccionCliente::create([
-                        'cliente_id' => $cliente->id,
-                        'estado_direccion' => 'completa',
-                        'nombre_direccion' => $request->nuevo_nombre_direccion,
-                        'tipo_residencia' => $request->nuevo_tipo_residencia,
-                        'direccion' => $request->nuevo_direccion,
-                        'colonia' => $request->nuevo_colonia ?? null,
-                        'ciudad' => $request->nuevo_ciudad,
-                        'estado' => $request->nuevo_estado,
-                        'codigo_postal' => $request->nuevo_codigo_postal,
-                        'celular' => $request->nuevo_celular,
-                        'telefono' => $request->nuevo_telefono,
-                        'nombre_recibe' => $request->nuevo_nombre_recibe,
-                        'url_mapa' => $request->nuevo_url_mapa,
-                        'instrucciones' => $request->nuevo_instrucciones,
-                    ]);
-
-                    if(!empty($request->nuevo_requerimientos)){
-                        foreach($request->nuevo_requerimientos as $ReqId){
-                            DB::table('direccion_requerimiento')->insert([
-                                'order_id' => null,
-                                'cliente_direccion_id' => $DireccionCliente->id,
-                                'requerimiento_especial_id' =>$ReqId,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
-
-                    $cliente_direccion_id = $DireccionCliente->id;
-                }else{
-                    $DireccionCliente = null;
-                }
-
-                $nombre_cliente = $cliente->nombre;
-                $nombre_direccion_sn = $DireccionCliente->nombre_direccion ?? null;
-                $tipo_residencia_sn = $DireccionCliente->tipo_residencia ?? null;
-                $direccion_sn = $DireccionCliente->direccion ?? null;
-                $colonia_sn = $DireccionCliente->colonia ?? null;
-                $ciudad_sn = $DireccionCliente->ciudad ?? null;
-                $estado_sn = $DireccionCliente->estado ?? null;
-                $codigo_postal_sn = $DireccionCliente->codigo_postal ?? null;
-                $celular_sn = $DireccionCliente->celular ?? null;
-                $telefono_sn = $DireccionCliente->telefono ?? null;
-                $nombre_recibe_sn = $DireccionCliente->nombre_recibe ?? null;
-                $url_mapa_sn = $DireccionCliente->url_mapa ?? null;
-                $instrucciones_sn = $DireccionCliente->instrucciones ?? null;
-            }
-
-            if($origin=="F"){
-                $orderData = [
-                    'office' => $userOffice,
-                    'invoice_number'=>$code,
-                    'invoice'=>'',
-                    'origin'=> $origin,
-                    'client'=> $client,
-                    'nombre_cliente'=> $nombre_cliente,
-                    'nombre_direccion'=> $nombre_direccion_sn,
-                    'tipo_residencia'=> $tipo_residencia_sn,
-                    'direccion'=> $direccion_sn,
-                    'colonia'=> $colonia_sn,
-                    'ciudad'=> $ciudad_sn,
-                    'estado'=> $estado_sn,
-                    'codigo_postal'=> $codigo_postal_sn,
-                    'celular'=> $celular_sn,
-                    'telefono'=> $telefono_sn,
-                    'nombre_recibe'=> $nombre_recibe_sn,
-                    'url_mapa'=> $url_mapa_sn,
-                    'instrucciones'=> $instrucciones_sn,
-                    'cliente_id'=> $cliente_id,
-                    'cliente_direccion_id'=> $cliente_direccion_id,
-                    'estado_direccion'=> $estado_direccion,
-                    'credit'=> 0,
-                    'status_id'=> 1,
+                Log::create([
+                    'status'=> $status->name,
+                    'action'=> $action,
+                    'order_id'=> $order->id,
+                    'user_id'=> $user->id,
+                    'department_id'=> $user->department->id,
                     'created_at'=> $now
-                ];
+                ]);
+
+                Feedback::message("Pedido creado");
+                Feedback::custom("goto",url("pedidos2/pedido/".$order->id));
+                Feedback::j(1);
+
             }
-            elseif($origin=="C"){
-                $orderData = [
-                    'office'=> $userOffice,
-                    'invoice'=> $code,
-                    'origin'=> $origin,
-                    'client'=> $client,
-                    'nombre_cliente'=> $nombre_cliente,
-                    'nombre_direccion'=> $nombre_direccion_sn,
-                    'tipo_residencia'=> $tipo_residencia_sn,
-                    'direccion'=> $direccion_sn,
-                    'colonia'=> $colonia_sn,
-                    'ciudad'=> $ciudad_sn,
-                    'estado'=> $estado_sn,
-                    'codigo_postal'=> $codigo_postal_sn,
-                    'celular'=> $celular_sn,
-                    'telefono'=> $telefono_sn,
-                    'nombre_recibe'=> $nombre_recibe_sn,
-                    'url_mapa'=> $url_mapa_sn,
-                    'instrucciones'=> $instrucciones_sn,
-                    'cliente_id'=> $cliente_id,
-                    'cliente_direccion_id'=> $cliente_direccion_id,
-                    'estado_direccion'=> $estado_direccion,
-                    'credit'=> 0,
-                    'status_id'=> 1,
-                    'created_at'=> $now
-                ];
-            }
-            else{
-                $orderData = [
-                    'office'=> $userOffice,
-                    'invoice'=> "",
-                    'origin'=> $origin,
-                    'client'=> $client,
-                    'estado_direccion'=> $estado_direccion,
-                    'credit'=> 0,
-                    'status_id'=> 1,
-                    'created_at'=> $now
-                ];
-            }
+        
+        //----------------------------------------------------------//
+        //----- FIN FLUJO GENERAR PEDIDO | DIRECCION | CLIENTE -----//
+        //----------------------------------------------------------//
 
-            $order = Order::create($orderData);
-
-            if($request->tipo_cliente == 'general' && $estado_direccion == 'completa' && !empty($request->general_requerimientos)){
-                foreach($request->general_requerimientos as $ReqId){
-                    DB::table('direccion_requerimiento')->insert([
-                        'order_id' => $order->id,
-                        'cliente_direccion_id' => null,
-                        'requerimiento_especial_id' => $ReqId,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-
-            if($request->hasFile('archivo') && $origin != "R"){
-                $file = $request->file('archivo');
-                $name = $order["id"].".".$file->getClientOriginalExtension();
-                $sqlPath = ($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/').$name;
-                Storage::putFileAs('/public/'.($origin=="F" ? 'OrdenesDeCompra/' : 'Cotizaciones/'), $file, $name);
-                Order::where("id",$order->id)->update(["invoice_document"=>$sqlPath]);
-            }
-
-            Note::create([
-                "note"=>$nota,
-                "order_id"=>$order->id,
-                "user_id"=>$user->id,
-                "created_at"=>$now,
-                "updated_at"=>$now
-            ]);
-
-            $status = Status::find(1);
-            $origins=["C"=>"con cotización","F"=>"Con factura","R"=>"como requisición stock"];
-            $action = 'Creado '.$origins[$origin].': '.$code;
-
-            Log::create([
-                'status'=> $status->name,
-                'action'=> $action,
-                'order_id'=> $order->id,
-                'user_id'=> $user->id,
-                'department_id'=> $user->department->id,
-                'created_at'=> $now
-            ]);
-
-            Feedback::message("Pedido creado");
-            Feedback::custom("goto",url("pedidos2/pedido/".$order->id));
-            Feedback::j(1);
-
-        }
-
-
-
-        //FUNCION PARA MODIFICAR DIRECCION
-        public function guardar_direccion(Request $request, $id){
+        
+        //----------------------------------------------------//
+        //----- FLUJO EDITAR DIRECCION DENTRO DEL PEDIDO -----//
+        //----------------------------------------------------//
+        
+            public function guardar_direccion(Request $request, $id){
+                /*
                 LaravelLog::info('PASO 1: ENTRO A guardarDireccion',[
                     'pedido_id' => $id,
                     'request' => $request->all()
                 ]);
-                
-            $user = auth()->user();
-            $now = now();
+                */    
+                $user = auth()->user();
+                $now = now();
 
-            $pedido = Order::find($id);
+                $pedido = Order::find($id);
 
-            if(!$pedido){
-                Feedback::error("Pedido no valido");
-                Feedback::j(0);
-                return;
-            }
-
-            
-            LaravelLog::info('PASO 2: pedido encontrado', [
-                'pedido_id' => $pedido->id,
-                'cliente_id' => $pedido->cliente_id,
-                'origin' => $pedido->origin,
-            ]);
-            
-
-            if($pedido->origin === "R"){
-                Feedback::error("Este pedido no permite direccion");
-                Feedback::j(0);
-                return;
-            }
-
-            LaravelLog::info('PASO 3: origin valido');
-
-            DB::beginTransaction();
-
-            try{
-                $estado_direccion = $request->estado_direccion;
-                
-                LaravelLog::info('PASO 4: estado_direccion recibido', [
-                    'estado_direccion' => $estado_direccion
-                ]);
-                
-                if($estado_direccion == 'recoge'){
-                    $pedido->update([
-                        'estado_direccion' => 'recoge',
-                        'cliente_direccion_id' => null,
-                        'nombre_direccion' => null,
-                        'tipo_residencia' => null,
-                        'direccion' => null,
-                        'colonia' => null,
-                        'ciudad' => null,
-                        'estado' => null,
-                        'codigo_postal' => null,
-                        'celular' => null,
-                        'telefono' => null,
-                        'nombre_recibe' => null,
-                        'url_mapa' => null,
-                        'instrucciones' => null,
-                    ]);
-
-                    DB::commit();
-                    Feedback::message("Pedido marcado como cliente recoge");
-                    Feedback::j(1);
-                    return;
-                }
-
-                if($estado_direccion == 'pendiente'){
-                    $pedido->update([
-                        'estado_direccion' => 'pendiente',
-                        'cliente_direccion_id' => null,
-                        'nombre_direccion' => null,
-                        'tipo_residencia' => null,
-                        'direccion' => null,
-                        'colonia' => null,
-                        'ciudad' => null,
-                        'estado' => null,
-                        'codigo_postal' => null,
-                        'celular' => null,
-                        'telefono' => null,
-                        'nombre_recibe' => null,
-                        'url_mapa' => null,
-                        'instrucciones' => null,
-                    ]);
-
-                    DB::commit();
-                    Feedback::message("Direccion marcada como pendiente");
-                    Feedback::j(1);
-                    return;
-                }
-
-
-                LaravelLog::info('PASO 5: no es recoge');
-
-                if($estado_direccion !== 'completa'){
-                    Feedback::error("Estado de direccion no valido");
+                if(!$pedido){
+                    Feedback::error("Pedido no valido");
                     Feedback::j(0);
                     return;
                 }
 
-                LaravelLog::info('PASO 6: estado_direccion es completa');
+                /*
+                LaravelLog::info('PASO 2: pedido encontrado', [
+                    'pedido_id' => $pedido->id,
+                    'cliente_id' => $pedido->cliente_id,
+                    'origin' => $pedido->origin,
+                ]);
+                */
 
-                if(empty($pedido->cliente_id)){
+                if($pedido->origin === "R"){
+                    Feedback::error("Este pedido no permite direccion");
+                    Feedback::j(0);
+                    return;
+                }
 
-                    LaravelLog::info('PASO 7: flujo SIN cliente');
+                //LaravelLog::info('PASO 3: origin valido');
 
-                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                        Feedback::error("Faltan datos obligatorios de la direccion");
+                DB::beginTransaction();
+
+                try{
+                    $estado_direccion = $request->estado_direccion;
+                    /*
+                    LaravelLog::info('PASO 4: estado_direccion recibido', [
+                        'estado_direccion' => $estado_direccion
+                    ]);
+                    */
+                    if($estado_direccion == 'recoge'){
+                        $pedido->update([
+                            'estado_direccion' => 'recoge',
+                            'cliente_direccion_id' => null,
+                            'nombre_direccion' => null,
+                            'tipo_residencia' => null,
+                            'direccion' => null,
+                            'colonia' => null,
+                            'ciudad' => null,
+                            'estado' => null,
+                            'codigo_postal' => null,
+                            'celular' => null,
+                            'telefono' => null,
+                            'nombre_recibe' => null,
+                            'url_mapa' => null,
+                            'instrucciones' => null,
+                        ]);
+
+                        DB::commit();
+                        Feedback::message("Pedido marcado como cliente recoge");
+                        Feedback::j(1);
+                        return;
+                    }
+
+                    if($estado_direccion == 'pendiente'){
+                        $pedido->update([
+                            'estado_direccion' => 'pendiente',
+                            'cliente_direccion_id' => null,
+                            'nombre_direccion' => null,
+                            'tipo_residencia' => null,
+                            'direccion' => null,
+                            'colonia' => null,
+                            'ciudad' => null,
+                            'estado' => null,
+                            'codigo_postal' => null,
+                            'celular' => null,
+                            'telefono' => null,
+                            'nombre_recibe' => null,
+                            'url_mapa' => null,
+                            'instrucciones' => null,
+                        ]);
+
+                        DB::commit();
+                        Feedback::message("Direccion marcada como pendiente");
+                        Feedback::j(1);
+                        return;
+                    }
+
+
+                    //LaravelLog::info('PASO 5: no es recoge');
+
+                    if($estado_direccion !== 'completa'){
+                        Feedback::error("Estado de direccion no valido");
                         Feedback::j(0);
                         return;
                     }
 
-                    LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+                    //LaravelLog::info('PASO 6: estado_direccion es completa');
+
+                    if(empty($pedido->cliente_id)){
+
+                        //LaravelLog::info('PASO 7: flujo SIN cliente');
+
+                        if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                            Feedback::error("Faltan datos obligatorios de la direccion");
+                            Feedback::j(0);
+                            return;
+                        }
+
+                        //LaravelLog::info('PASO 8: datos direccion completos (sin cliente)');
+
+                        $pedido->update([
+                            'estado_direccion' => 'completa',
+                            'cliente_direccion_id' => null,
+                            'nombre_direccion' => $request->nombre_direccion,
+                            'tipo_residencia' => $request->tipo_residencia,
+                            'direccion' => $request->direccion,
+                            'colonia' => $request->colonia,
+                            'ciudad' => $request->ciudad,
+                            'estado' => $request->estado,
+                            'codigo_postal' => $request->codigo_postal,
+                            'celular' => $request->celular,
+                            'telefono' => $request->telefono,
+                            'nombre_recibe' => $request->nombre_recibe,
+                            'url_mapa' => $request->url_mapa,
+                            'instrucciones' => $request->instrucciones,
+                        ]);
+
+                        /*
+                        LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
+                        DB::table('direccion_requerimiento')
+                            ->where('order_id', $pedido->id)
+                            ->delete();
+                        */
+
+                        if(!empty($request->requerimientos)){
+                            foreach($request->requerimientos as $ReqId){
+                                DB::table('direccion_requerimiento')->insert([
+                                    'order_id' => $pedido->id,
+                                    'cliente_direccion_id' => null,
+                                    'requerimiento_especial_id' => $ReqId,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
+
+
+                        DB::commit();
+                        Feedback::message("Direccion guardada correctamente");
+                        Feedback::j(1);
+                        return;
+                    }
+
+                    /*
+                    LaravelLog::info('PASO 10: flujo CON cliente', [
+                        'cliente_id' => $pedido->cliente_id
+                    ]);
+                    */
+
+                    $modo = $request->modo_direccion ?? 'nueva';
+                    $DireccionCliente = null;
+
+                    /*
+                    LaravelLog::info('PASO 11: modo direccion',[
+                        'modo' => $modo
+                    ]);
+                    */
+
+                    if($modo == 'existente'){
+
+                        if(empty($request->cliente_direccion_id)){
+                            Feedback::error("Debe seleccionar una direccion existente");
+                            Feedback::j(0);
+                            return;
+                        }
+
+                        $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
+
+                        if(!$DireccionCliente){
+                            Feedback::error("Direccion no valida");
+                            Feedback::j(0);
+                            return;
+                        }
+
+                        /*
+                        LaravelLog::info('PASO 12: direccion cliente existente cargada', [
+                            'direccion_cliente_id' => $DireccionCliente->id
+                        ]);
+                        */
+
+                    }else{
+                        if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
+                            Feedback::error("Faltan datos obligatorios de la direccion");
+                            Feedback::j(0);
+                            return;
+                        }
+
+                        if(!empty($pedido->cliente_direccion_id)){
+                            $DireccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
+                        }
+
+                        if(!$DireccionCliente){
+                            $DireccionCliente = new DireccionCliente();
+                            $DireccionCliente->cliente_id = $pedido->cliente_id;
+                        }
+
+                        $DireccionCliente->nombre_direccion = $request->nombre_direccion;
+                        $DireccionCliente->tipo_residencia = $request->tipo_residencia;
+                        $DireccionCliente->direccion = $request->direccion;
+                        $DireccionCliente->colonia = $request->colonia;
+                        $DireccionCliente->ciudad = $request->ciudad;
+                        $DireccionCliente->estado = $request->estado;
+                        $DireccionCliente->codigo_postal = $request->codigo_postal;
+                        $DireccionCliente->celular = $request->celular;
+                        $DireccionCliente->telefono = $request->telefono;
+                        $DireccionCliente->nombre_recibe = $request->nombre_recibe;
+                        $DireccionCliente->url_mapa = $request->url_mapa;
+                        $DireccionCliente->instrucciones = $request->instrucciones;
+                        $DireccionCliente->save();
+
+                        DB::table('direccion_requerimiento')
+                            ->where('cliente_direccion_id', $DireccionCliente->id)
+                            ->delete();
+
+                        if(!empty($request->requerimientos)){
+                            foreach($request->requerimientos as $ReqId){
+                                DB::table('direccion_requerimiento')->insert([
+                                    'cliente_direccion_id' => $DireccionCliente->id,
+                                    'order_id' => null,
+                                    'requerimiento_especial_id' => $ReqId,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
+                        
+                        /*
+                        LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
+                            'direccion_cliente_id' => $DireccionCliente->id
+                        ]);
+                        */
+                        
+                    }
+
+                    if(!$DireccionCliente){
+                        Feedback::error("No se pudo determinar la direccion del cliente");
+                        Feedback::j(0);
+                        return;
+                    }
 
                     $pedido->update([
                         'estado_direccion' => 'completa',
-                        'cliente_direccion_id' => null,
-                        'nombre_direccion' => $request->nombre_direccion,
-                        'tipo_residencia' => $request->tipo_residencia,
-                        'direccion' => $request->direccion,
-                        'colonia' => $request->colonia,
-                        'ciudad' => $request->ciudad,
-                        'estado' => $request->estado,
-                        'codigo_postal' => $request->codigo_postal,
-                        'celular' => $request->celular,
-                        'telefono' => $request->telefono,
-                        'nombre_recibe' => $request->nombre_recibe,
-                        'url_mapa' => $request->url_mapa,
-                        'instrucciones' => $request->instrucciones,
+                        'cliente_direccion_id' => $DireccionCliente->id,
+                        'nombre_direccion' => $DireccionCliente->nombre_direccion,
+                        'tipo_residencia' => $DireccionCliente->tipo_residencia,
+                        'direccion' => $DireccionCliente->direccion,
+                        'colonia' => $DireccionCliente->colonia,
+                        'ciudad' => $DireccionCliente->ciudad,
+                        'estado' => $DireccionCliente->estado,
+                        'codigo_postal' => $DireccionCliente->codigo_postal,
+                        'celular' => $DireccionCliente->celular,
+                        'telefono' => $DireccionCliente->telefono,
+                        'nombre_recibe' => $DireccionCliente->nombre_recibe,
+                        'url_mapa' => $DireccionCliente->url_mapa,
+                        'instrucciones' => $DireccionCliente->instrucciones,
                     ]);
 
-                    LaravelLog::info('PASO 9: pedido actualizado SIN cliente');
-                    DB::table('direccion_requerimiento')
-                        ->where('order_id', $pedido->id)
-                        ->delete();
-
-                    if(!empty($request->requerimientos)){
-                        foreach($request->requerimientos as $ReqId){
-                            DB::table('direccion_requerimiento')->insert([
-                                'order_id' => $pedido->id,
-                                'cliente_direccion_id' => null,
-                                'requerimiento_especial_id' => $ReqId,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
-
+                    //LaravelLog::info('PASO 14: pedido actualizado CON cliente');
 
                     DB::commit();
                     Feedback::message("Direccion guardada correctamente");
                     Feedback::j(1);
-                    return;
-                }
 
-                
-                LaravelLog::info('PASO 10: flujo CON cliente', [
-                    'cliente_id' => $pedido->cliente_id
-                ]);
-                
+                }catch(\Exception $e){
 
-                $modo = $request->modo_direccion ?? 'nueva';
-                $DireccionCliente = null;
+                    DB::rollBack();
 
-                
-                LaravelLog::info('PASO 11: modo direccion',[
-                    'modo' => $modo
-                ]);
-                
-
-                if($modo == 'existente'){
-
-                    if(empty($request->cliente_direccion_id)){
-                        Feedback::error("Debe seleccionar una direccion existente");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    $DireccionCliente = DireccionCliente::find($request->cliente_direccion_id);
-
-                    if(!$DireccionCliente){
-                        Feedback::error("Direccion no valida");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    
-                    LaravelLog::info('PASO 12: direccion cliente existente cargada', [
-                        'direccion_cliente_id' => $DireccionCliente->id
+                    /*
+                    LaravelLog::error('ERROR guardarDireccion', [
+                        'msg' => $e->getMessage(),
+                        'line' => $e->getLine(),
+                        'file' => $e->getFile(),
                     ]);
-                    
+                    */
 
-                }else{
-                    if(empty($request->direccion) || empty($request->ciudad) || empty($request->estado)){
-                        Feedback::error("Faltan datos obligatorios de la direccion");
-                        Feedback::j(0);
-                        return;
-                    }
-
-                    if(!empty($pedido->cliente_direccion_id)){
-                        $DireccionCliente = DireccionCliente::find($pedido->cliente_direccion_id);
-                    }
-
-                    if(!$DireccionCliente){
-                        $DireccionCliente = new DireccionCliente();
-                        $DireccionCliente->cliente_id = $pedido->cliente_id;
-                    }
-
-                    $DireccionCliente->nombre_direccion = $request->nombre_direccion;
-                    $DireccionCliente->tipo_residencia = $request->tipo_residencia;
-                    $DireccionCliente->direccion = $request->direccion;
-                    $DireccionCliente->colonia = $request->colonia;
-                    $DireccionCliente->ciudad = $request->ciudad;
-                    $DireccionCliente->estado = $request->estado;
-                    $DireccionCliente->codigo_postal = $request->codigo_postal;
-                    $DireccionCliente->celular = $request->celular;
-                    $DireccionCliente->telefono = $request->telefono;
-                    $DireccionCliente->nombre_recibe = $request->nombre_recibe;
-                    $DireccionCliente->url_mapa = $request->url_mapa;
-                    $DireccionCliente->instrucciones = $request->instrucciones;
-                    $DireccionCliente->save();
-
-                    DB::table('direccion_requerimiento')
-                        ->where('cliente_direccion_id', $DireccionCliente->id)
-                        ->delete();
-
-                    if(!empty($request->requerimientos)){
-                        foreach($request->requerimientos as $ReqId){
-                            DB::table('direccion_requerimiento')->insert([
-                                'cliente_direccion_id' => $DireccionCliente->id,
-                                'order_id' => null,
-                                'requerimiento_especial_id' => $ReqId,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
-                    
-                    
-                    LaravelLog::info('PASO 13: direccion cliente guardada/actualizada', [
-                        'direccion_cliente_id' => $DireccionCliente->id
-                    ]);
-                    
-                }
-
-                if(!$DireccionCliente){
-                    Feedback::error("No se pudo determinar la direccion del cliente");
+                    Feedback::error("Error al guardar la direccion");
                     Feedback::j(0);
                     return;
                 }
-
-                $pedido->update([
-                    'estado_direccion' => 'completa',
-                    'cliente_direccion_id' => $DireccionCliente->id,
-                    'nombre_direccion' => $DireccionCliente->nombre_direccion,
-                    'tipo_residencia' => $DireccionCliente->tipo_residencia,
-                    'direccion' => $DireccionCliente->direccion,
-                    'colonia' => $DireccionCliente->colonia,
-                    'ciudad' => $DireccionCliente->ciudad,
-                    'estado' => $DireccionCliente->estado,
-                    'codigo_postal' => $DireccionCliente->codigo_postal,
-                    'celular' => $DireccionCliente->celular,
-                    'telefono' => $DireccionCliente->telefono,
-                    'nombre_recibe' => $DireccionCliente->nombre_recibe,
-                    'url_mapa' => $DireccionCliente->url_mapa,
-                    'instrucciones' => $DireccionCliente->instrucciones,
-                ]);
-
-                LaravelLog::info('PASO 14: pedido actualizado CON cliente');
-
-                DB::commit();
-                Feedback::message("Direccion guardada correctamente");
-                Feedback::j(1);
-
-            }catch(\Exception $e){
-
-                DB::rollBack();
-
-                
-                LaravelLog::error('ERROR guardarDireccion', [
-                    'msg' => $e->getMessage(),
-                    'line' => $e->getLine(),
-                    'file' => $e->getFile(),
-                ]);
-                
-
-                Feedback::error("Error al guardar la direccion");
-                Feedback::j(0);
-                return;
-            }
-        }
-
-                    
-
-        public function direccion_cliente($id){
-            $direccion = DireccionCliente::find($id);
-
-            if(!$direccion){
-                return response()->json(['status' => 0]);
             }
 
-            $reqs = DB::table('direccion_requerimiento')
-                ->where('cliente_direccion_id', $direccion->id)
-                ->pluck('requerimiento_especial_id')
-                ->toArray();
+                        
 
-            return response()->json([
-                'status' => 1,
-                'data' => [
-                    'nombre_direccion' => $direccion->nombre_direccion,
-                    'tipo_residencia' => $direccion->tipo_residencia,
-                    'direccion' => $direccion->direccion,
-                    'colonia' => $direccion->colonia,
-                    'ciudad' => $direccion->ciudad,
-                    'estado' => $direccion->estado,
-                    'codigo_postal' => $direccion->codigo_postal,
-                    'celular' => $direccion->celular,
-                    'telefono' => $direccion->telefono,
-                    'nombre_recibe' => $direccion->nombre_recibe,
-                    'url_mapa' => $direccion->url_mapa,
-                    'requerimientos' => $reqs,
-                    'instrucciones' => $direccion->instrucciones,
-                ]
-            ]);
-        }
+            public function direccion_cliente($id){
+                $direccion = DireccionCliente::find($id);
+
+                if(!$direccion){
+                    return response()->json(['status' => 0]);
+                }
+
+                $reqs = DB::table('direccion_requerimiento')
+                    ->where('cliente_direccion_id', $direccion->id)
+                    ->pluck('requerimiento_especial_id')
+                    ->toArray();
+
+                return response()->json([
+                    'status' => 1,
+                    'data' => [
+                        'nombre_direccion' => $direccion->nombre_direccion,
+                        'tipo_residencia' => $direccion->tipo_residencia,
+                        'direccion' => $direccion->direccion,
+                        'colonia' => $direccion->colonia,
+                        'ciudad' => $direccion->ciudad,
+                        'estado' => $direccion->estado,
+                        'codigo_postal' => $direccion->codigo_postal,
+                        'celular' => $direccion->celular,
+                        'telefono' => $direccion->telefono,
+                        'nombre_recibe' => $direccion->nombre_recibe,
+                        'url_mapa' => $direccion->url_mapa,
+                        'requerimientos' => $reqs,
+                        'instrucciones' => $direccion->instrucciones,
+                    ]
+                ]);
+            }
+
+        //--------------------------------------------------------//
+        //----- FIN FLUJO EDITAR DIRECCION DENTRO DEL PEDIDO -----//
+        //--------------------------------------------------------//
 
 
         public function guardarEntregaProgramada(Request $request, $id){
