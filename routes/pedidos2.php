@@ -98,22 +98,22 @@ Route::middleware('auth')->group(function () {
 	Route::get('pedidos2/parcial_desestatus/{id}/{status_id}', [Pedidos2Controller::class, 'parcial_desestatus']);
 	Route::get('pedidos2/ordenf_desestatus/{id}/{status_id}', [Pedidos2Controller::class, 'ordenf_desestatus']);
 
-	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardarEtiquetas'])->name('pedido.etiquetas.guardar');
+	Route::post('/pedido/{id}/etiquetas', [Pedidos2Controller::class, 'guardado_etiquetaP'])->name('pedido.etiquetas.guardar');
 
 	//CRUD ETIQUETAS
 	Route::middleware(['auth'])->group(function () {
-		Route::get('/etiquetas', [Pedidos2Controller::class, 'indexEtiquetas'])->name('etiquetas.index');
-		Route::get('/etiquetas/create', [Pedidos2Controller::class, 'createEtiqueta'])->name('etiquetas.create');
-		Route::post('/etiquetas/store', [Pedidos2Controller::class, 'storeEtiqueta'])->name('etiquetas.store');
-		Route::get('/etiquetas/edit/{id}', [Pedidos2Controller::class, 'editEtiqueta'])->name('etiquetas.edit');
-		Route::post('/etiquetas/update/{id}', [Pedidos2Controller::class, 'updateEtiqueta'])->name('etiquetas.update');
-		Route::post('/etiquetas/{id}/delete', [Pedidos2Controller::class, 'deleteEtiqueta'])->name('etiquetas.delete');
+		Route::get('/etiquetas', [Pedidos2Controller::class, 'index_etiquetas'])->name('etiquetas.index');
+		Route::get('/etiquetas/create', [Pedidos2Controller::class, 'crear_etiqueta'])->name('etiquetas.create');
+		Route::post('/etiquetas/store', [Pedidos2Controller::class, 'guardar_etiqueta'])->name('etiquetas.store');
+		Route::get('/etiquetas/edit/{id}', [Pedidos2Controller::class, 'editar_etiqueta'])->name('etiquetas.edit');
+		Route::post('/etiquetas/update/{id}', [Pedidos2Controller::class, 'actualizar_etiqueta'])->name('etiquetas.update');
+		Route::post('/etiquetas/{id}/delete', [Pedidos2Controller::class, 'borrar_etiqueta'])->name('etiquetas.delete');
 	});
 
 	//DASHBOARD
 	Route::middleware(['auth'])->group(function () {
 		Route::get('pedidos2/dashboard', [Pedidos2Controller::class, 'dashboard'])->name('dashboard');
-		Route::match(['get', 'post'], 'pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboardLista'])->name('dashboard.lista');
+		Route::match(['get', 'post'], 'pedidos2/dashboard/lista', [Pedidos2Controller::class, 'dashboard_lista'])->name('dashboard.lista');
 
 	});
 
@@ -126,8 +126,11 @@ Route::middleware('auth')->group(function () {
 	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_editar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_editar']);
 	Route::match(['get', 'post'],'pedidos2/devolucion_parcial_actualizar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_actualizar']);
 	Route::post('pedidos2/devolucion_parcial_cancelar/{id}', [Pedidos2Controller::class, 'devolucion_parcial_cancelar']);
-	Route::post('pedidos2/devolucion_parcial_evidencia_eliminar/{id}',[Pedidos2Controller::class, 'devolucion_parcial_evidencia_eliminar']
-);
+	Route::post('pedidos2/devolucion_parcial_evidencia_eliminar/{id}',[Pedidos2Controller::class, 'devolucion_parcial_evidencia_eliminar']);
+
+	//MODIFICAR DIRECCION DEL PEDIDO
+	Route::post('pedidos2/{id}/direccion', [Pedidos2Controller::class, 'guardar_direccion'])->name('guardar_direccion');
+	Route::get('pedidos2/direccion-cliente/{id}', [Pedidos2Controller::class, 'direccion_cliente'])->name('direccion_cliente');
 
 
 });

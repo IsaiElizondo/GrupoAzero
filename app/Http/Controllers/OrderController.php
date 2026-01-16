@@ -18,6 +18,8 @@ use App\Rebilling;
 use App\Shipment;
 use App\Status;
 use App\User;
+use App\Models\Cliente;
+use App\Models\DireccionCliente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;

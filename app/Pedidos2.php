@@ -42,9 +42,6 @@ class Pedidos2 extends Model
     array $recogido=[], array $suborigen=[], int $user_id=0, array $etiquetas = []
     ) : array {
 
-        //LaravelLog::info('RPP recibido en Lista(): ' . self::$rpp);
-
-
         $ini= ($pag>1) ? ($pag -1) * self::$rpp : 0;
 
         $A0order = null;
@@ -151,11 +148,10 @@ class Pedidos2 extends Model
 
             }
 
-
-            if (in_array('a0', $subprocesos)) {
+            if (in_array('a0', $subprocesos)){
 
                 $wheres[] = "o.invoice_number LIKE 'A0%'";
-                foreach ($subpstatus as $sp) {
+                foreach ($subpstatus as $sp){
                     if($sp === 'a0_asc')  { $A0order = 'ASC'; }
                     if($sp === 'a0_desc') { $A0order = 'DESC'; }
                 }
@@ -202,7 +198,7 @@ class Pedidos2 extends Model
         $wheres[]="(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type  IN (".implode(",",$rearr).") ) > 0";          
         }
 
-        if (!empty($etiquetas)) {
+        if (!empty($etiquetas)){
             $wheres[] = "(SELECT COUNT(*) FROM etiqueta_pedido ep WHERE ep.pedido_id = o.id AND ep.etiqueta_id IN (" . implode(',', $etiquetas) . ")) > 0";
         }
         
@@ -309,51 +305,50 @@ class Pedidos2 extends Model
 
     
     public static function StatusCodes() : array
-{
-    return [
-        1 => "GEN",
-        2 => "EMB",
-        3 => "FAB",
-        4 => "FAB",
-        5 => "PUE",
-        6 => "ENT",
-        7 => "CNC",
-        8 => "REF",
-        9 => "DEV",
-        10 => "AUD",
-    ];
-}
-
-// Devuelve estatus para salidas de materiales (modifica el estatus 4)
-public static function StatusesSmaterial() : array
-{
-    $estatuses = self::StatusesCat();
-    if (isset($estatuses[4])) {
-        $estatuses[4] = "Elaborado";
+    {
+        return [
+            1 => "GEN",
+            2 => "EMB",
+            3 => "FAB",
+            4 => "FAB",
+            5 => "PUE",
+            6 => "ENT",
+            7 => "CNC",
+            8 => "REF",
+            9 => "DEV",
+            10 => "AUD",
+        ];
     }
-    return $estatuses;
-}
 
-// Devuelve estatus para parciales (modifica el estatus 4)
-public static function StatusesPartial() : array
-{
-    $estatuses = self::StatusesCat();
-    if (isset($estatuses[4])) {
-        $estatuses[4] = "Generado";
+    // Devuelve estatus para salidas de materiales (modifica el estatus 4)
+    public static function StatusesSmaterial() : array
+    {
+        $estatuses = self::StatusesCat();
+        if (isset($estatuses[4])) {
+            $estatuses[4] = "Elaborado";
+        }
+        return $estatuses;
     }
-    return $estatuses;
-}
 
-// Devuelve los tipos de origen de pedidos
-public static function OrigenesCat() : array
-{
-    return [
-        "" => "",
-        "C" => "Cotización",
-        "F" => "Factura",
-        "R" => "Requisición",
-    ];
-}
+    // Devuelve estatus para parciales (modifica el estatus 4)  
+    public static function StatusesPartial() : array
+    {
+        $estatuses = self::StatusesCat();
+        if (isset($estatuses[4])) {
+            $estatuses[4] = "Generado";
+        }
+        return $estatuses;
+    }
+
+    // Devuelve los tipos de origen de pedidos
+    public static function OrigenesCat() : array {
+        return [
+            "" => "",
+            "C" => "Cotización",
+            "F" => "Factura",
+            "R" => "Requisición",
+        ];
+    }
 
     public static function Events() : array {
         return DB::table('events')->get()->toArray();
@@ -470,97 +465,97 @@ public static function OrigenesCat() : array
 
         $where = ["o.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"];
 
-        if (!empty($termino)) {
+        if (!empty($termino)){
             $where[] = "( o.office LIKE '%$termino%' OR o.invoice LIKE '%$termino%' OR o.invoice_number LIKE '%$termino%' OR o.client LIKE '%$termino%' OR q.number LIKE '%$termino%' )";
         }
 
-        if (!empty($etiquetas)) {
+        if (!empty($etiquetas)){
             $where[] = "ep.etiqueta_id IN (" . implode(',', $etiquetas) . ")";
         }
 
-        if (!empty($status)) {
+        if (!empty($status)){
             $where[] = "o.status_id IN (" . implode(',', $status) . ")";
         }
 
-        if (!empty($origen)) {
+        if (!empty($origen)){
             $arr = array_map(fn($v) => "'" . addslashes($v) . "'", $origen);
             $where[] = "o.origin IN (" . implode(',', $arr) . ")";
         }
 
-        if (!empty($sucursal)) {
+        if (!empty($sucursal)){
             $arr = array_map(fn($v) => "'" . addslashes($v) . "'", $sucursal);
             $where[] = "o.office IN (" . implode(',', $arr) . ")";
         }
 
-        if (!empty($recogido)) {
+        if (!empty($recogido)){
             $where[] = "(SELECT COUNT(*) FROM shipments sh WHERE sh.order_id = o.id AND sh.type IN (" . implode(',', $recogido) . ")) > 0";
         }
 
-        if (!empty($suborigen)) {
-            foreach ($suborigen as $subor) {
+        if (!empty($suborigen)){
+            foreach ($suborigen as $subor){
                 $valpar = explode("_", $subor);
-                if ($valpar[0] == "C" && $valpar[1] == 0) {
+                if ($valpar[0] == "C" && $valpar[1] == 0){
                     $where[] = "(o.invoice_number = '' OR o.invoice_number IS NULL)";
-                } elseif ($valpar[0] == "C" && $valpar[1] == 1) {
+                } elseif ($valpar[0] == "C" && $valpar[1] == 1){
                     $where[] = "(o.invoice_number IS NOT NULL AND o.invoice_number != '')";
                 }
             }
         }
 
         // Filtros de subprocesos y subestatus
-        if (!empty($subprocesos)) {
-            if (in_array("devolucion", $subprocesos)) {
+        if(!empty($subprocesos)){
+            if (in_array("devolucion", $subprocesos)){
                 $where[] = "(SELECT COUNT(*) FROM debolutions WHERE debolutions.order_id = o.id) > 0";
             }
 
-            if (in_array("ordenc", $subprocesos)) {
+            if(in_array("ordenc", $subprocesos)){
                 $where[] = "(SELECT COUNT(*) FROM purchase_orders po WHERE po.order_id = o.id) > 0";
                 $subpo = [];
-                foreach ($subpstatus as $sp) {
+                foreach ($subpstatus as $sp){
                     $arr = explode("_", $sp);
                     if ($arr[0] == "ordenc") $subpo[] = $arr[1];
                 }
-                if (!empty($subpo)) {
+                if(!empty($subpo)){
                     $where[] = "(SELECT COUNT(*) FROM purchase_orders po WHERE po.order_id = o.id AND po.status_id IN (" . implode(',', $subpo) . ")) > 0";
                 }
             }
 
-            if (in_array("ordenf", $subprocesos)) {
+            if(in_array("ordenf", $subprocesos)){
                 $where[] = "(SELECT COUNT(*) FROM manufacturing_orders mof WHERE mof.order_id = o.id) > 0";
                 $submo = [];
-                foreach ($subpstatus as $sp) {
+                foreach ($subpstatus as $sp){
                     $arr = explode("_", $sp);
                     if ($arr[0] == "ordenf") $submo[] = $arr[1];
                 }
-                if (!empty($submo)) {
+                if(!empty($submo)) {
                     $where[] = "(SELECT COUNT(*) FROM manufacturing_orders mof WHERE mof.order_id = o.id AND mof.status_id IN (" . implode(',', $submo) . ")) > 0";
                 }
             }
 
-            if (in_array("parcial", $subprocesos)) {
+            if(in_array("parcial", $subprocesos)) {
                 $where[] = "(SELECT COUNT(*) FROM partials WHERE partials.order_id = o.id) > 0";
                 $subpa = [];
                 foreach ($subpstatus as $sp) {
                     $arr = explode("_", $sp);
                     if ($arr[0] == "parcial") $subpa[] = $arr[1];
                 }
-                if (!empty($subpa)) {
+                if(!empty($subpa)) {
                     $where[] = "(SELECT COUNT(*) FROM partials pa WHERE pa.order_id = o.id AND pa.status_id IN (" . implode(',', $subpa) . ")) > 0";
                 }
             }
 
-            if (in_array("refacturar", $subprocesos)) {
+            if(in_array("refacturar", $subprocesos)) {
                 $where[] = "(SELECT COUNT(*) FROM rebillings WHERE rebillings.order_id = o.id) > 0";
             }
 
-            if (in_array("sm", $subprocesos)) {
+            if(in_array("sm", $subprocesos)) {
                 $where[] = "(SELECT COUNT(*) FROM smaterial WHERE smaterial.order_id = o.id) > 0";
                 $subsm = [];
                 foreach ($subpstatus as $sp) {
                     $arr = explode("_", $sp);
                     if ($arr[0] == "sm") $subsm[] = $arr[1];
                 }
-                if (!empty($subsm)) {
+                if(!empty($subsm)) {
                     $where[] = "(SELECT COUNT(*) FROM smaterial sma WHERE sma.order_id = o.id AND sma.status_id IN (" . implode(',', $subsm) . ")) > 0";
                 }
             }
@@ -581,12 +576,12 @@ public static function OrigenesCat() : array
             }
 
 
-            if (in_array('a0', $subprocesos)) {
+            if(in_array('a0', $subprocesos)){
 
                 $where[] = "o.invoice_number LIKE 'A0%'";
-                foreach ($subpstatus as $sp) {
+                foreach($subpstatus as $sp){
                     if($sp === 'a0_asc')  { $A0order = 'ASC'; }
-                    if($sp === 'a0_desc') { $A0order = 'DESC'; }
+                    if($sp === 'a0_desc'){ $A0order = 'DESC'; }
                 }
 
             }
@@ -768,6 +763,37 @@ public static function OrigenesCat() : array
         ];
     }
 
+        // Filtros por rol y departamento
+        if($user->role_id == 2 && $user->department_id == 3){
+            $where[] = "log_creador.user_id = {$user->id}";
+            $where[] = "o.status_id IN (1,2,3,4,5)";
+        }elseif($user->role_id == 2 && $user->department_id == 4){
+            $where[] = "o.status_id IN (2,5)";
+            $where[] = "EXISTS (
+                SELECT 1
+                FROM logs l_emb
+                JOIN users ul_emb ON ul_emb.id = l_emb.user_id
+                WHERE l_emb.order_id = o.id
+                AND l_emb.status LIKE '%Recibido por embarques%'
+                AND ul_emb.office = '" . addslashes($user->office) . "'
+            )";
+        }elseif($user->role_id == 2 && $user->department_id == 5){
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+            $where[] = "EXISTS (
+                SELECT 1
+                FROM manufacturing_orders mo
+                JOIN users u_mo ON u_mo.id = mo.created_by
+                WHERE mo.order_id = o.id
+                AND mo.status_id IN (1,3)
+                AND u_mo.office = '" . addslashes($user->office) . "'
+            )";
+        }
+        elseif($user->role_id == 1 || $user->department_id == 2){
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
+            $where[] = "o.status_id IN (6,7,8,9)";
+            $where[] = "o.origin IN ('F', 'C')";
+        }
 
     public static function ListaDashboardFabricacion(int $pag, $user, array $filtros): array{
         

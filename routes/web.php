@@ -94,6 +94,7 @@ Route::group(['middleware' => 'auth'], function () {
 require_once "pedidos2.php";
 require_once "reportes.php";
 require_once "dev.php";
+require_once "rutas.php";
 
 // Para generar el storage link
 // Route::get('storage-link', function(){

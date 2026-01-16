@@ -14526,12 +14526,12 @@ fieldset[disabled] .form-group.is-focused .togglebutton label {
 
 .sidebar .sidebar-wrapper {
   position: relative;
-  max-height: calc(100vh - 75px);
+  max-height: calc(90vh - 75px);
   overflow-y: auto;
   overflow: auto;
   width: 260px;
   z-index: 4;
-  padding-bottom: 30px;
+  padding-bottom: 40px;
 }
 
 .sidebar .sidebar-wrapper .dropdown .dropdown-backdrop {

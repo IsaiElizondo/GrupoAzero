@@ -59,18 +59,62 @@
                     </a>
                 </li>
             {{-- @endif --}}
-          
-             {{-- SECCIÓN NUEVA DE ETIQUETAS  --}}
 
-           @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
-          
-                <li class="nav-item{{ $activePage == 'etiquetas' ? ' active' : '' }}">
-                    <a class="nav-link" href="{{ route('etiquetas.index') }}">
-                        <i class="material-icons">label</i>
-                        <p>Etiquetas</p>
-                    </a>
-                </li>
+
+            {{--///// Documentación  /////--}}
+            {{--///// SECCIÓN NUEVA DE CLIENTES  /////--}}
+
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
+                    <li class="nav-item{{ $activePage == 'clientes' ? ' active' : '' }}">
+                        <a class="nav-link" href="{{ route('clientes.index') }}">
+                            <i class="material-icons">people</i>
+                            <p>Clientes</p>
+                        </a>
+                    </li>
             @endif
+            {{--///// FIN DE LA PESTAÑA CLIENTES /////--}}
+
+
+            {{--///// Documentación  /////--}}
+            {{--///// SECCIÓN NUEVA DE RUTAS  /////--}}
+
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
+                    <li class="nav-item{{ $activePage == 'rutas' ? ' active' : '' }}">
+                        <a class="nav-link" href="{{ route('rutas.index') }}">
+                            <i class="material-icons">alt_route</i>
+                            <p>Rutas</p>
+                        </a>
+                    </li>
+            @endif         
+            {{--///// FIN DE LA PESTAÑA RUTAS  /////--}}
+
+            
+            {{--///// Documentación  /////--}}
+            {{--///// SECCIÓN NUEVA DE UNIDADES  /////--}}
+
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
+                    <li class="nav-item{{ $activePage == 'unidades' ? ' active' : '' }}">
+                        <a class="nav-link" href="{{ route('unidades.index') }}">
+                            <i class="material-icons">local_shipping</i>
+                            <p>Unidades</p>
+                        </a>
+                    </li>
+            @endif          
+            {{--///// FIN DE LA PESTAÑA UNIDADES  /////--}}
+
+
+            {{--///// Documentación  /////--}}
+            {{--///// SECCIÓN NUEVA DE ETIQUETAS  /////--}}
+
+            @if (in_array(auth()->user()->role->name, ["Administrador","ALEJANDRO GALICIA"]) || auth()->user()->department->name == "Administrador")
+                    <li class="nav-item{{ $activePage == 'etiquetas' ? ' active' : '' }}">
+                        <a class="nav-link" href="{{ route('etiquetas.index') }}">
+                            <i class="material-icons">label</i>
+                            <p>Etiquetas</p>
+                        </a>
+                    </li>
+            @endif
+            {{--///// SECCIÓN NUEVA DE ETIQUETAS  /////--}}
 
 
             @if ( auth()->user()->role->name == "Administrador" || in_array(auth()->user()->department_id, [3,4,5,7,9]) )
@@ -216,7 +260,7 @@
 
            
 
-            
+            {{-- Documentación --}}
             {{-- SECCIÓN CERRADO DE SESIÓN  --}}
             <div class="d-lg-none mt-2">
                 <ul class="navbar-nav ml-auto">

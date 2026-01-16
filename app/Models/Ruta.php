@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Cliente;
+use App\Models\RutaPedido;
+use App\Models\Unidad;
+use App\User;
+use App\Order;
+
+class Ruta extends Model
+{
+    protected $table = 'rutas';
+
+    protected $fillable = [
+        'numero_ruta',
+        'fecha_hora',
+        'numero_dia',
+        'unidad_id',
+        'chofer_id',
+    ];
+
+    public function cliente(){
+        return $this->belongsTo(Cliente::class, 'cliente_id')->withTrashed();
+    }
+
+    public function unidad(){
+        return $this->belongsTo(Unidad::class, 'unidad_id');
+    }
+
+    public function chofer(){
+        return $this->belongsTo(User::class, 'chofer_id');
+    }
+
+    public function pedidos(){
+        return $this->hasMany(RutaPedido::class, 'ruta_id');
+    }
+
+    public function pedidosGenerales(){
+        return $this->hasMany(RutaPedido::class, 'ruta_id')
+            ->where('tipo_subproceso', 'pedido');
+    }
+}

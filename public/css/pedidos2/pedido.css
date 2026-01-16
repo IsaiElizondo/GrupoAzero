@@ -37,6 +37,25 @@
     font-weight: bold;
 }
 
+.DireccionInfo{
+    font-size: 1rem;
+    color:#333;
+    margin: 0px 20px 5px 20px;
+}
+
+.DireccionInfo div{
+    margin: 0px  0px .2rem 0px;
+    display: grid;
+}
+
+.DireccionInfo .block{
+    display: block;
+}
+
+.DireccionInfo label{
+    font-weight: bold;
+}
+
 .padded{
     margin-left:20px;
     margin-right:20px;

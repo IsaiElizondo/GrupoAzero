@@ -4,12 +4,43 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Models\Ruta;
+use App\Models\Cliente;
+use App\Models\DireccionCliente;
 
 class Order extends Model
 {
     protected $fillable = [
-        'office', 'invoice', 'invoice_number', 'invoice_document','client', 'credit', 'status_id', 'delete',
-        'origin','embarques_by','end_at','created_by'
+        'office',
+        'invoice',
+        'invoice_number',
+        'invoice_document',
+        'client',
+        //NUEVOS CAMPOS
+        'cliente_id',
+        'cliente_direccion_id',
+        'estado_direccion',
+        'nombre_cliente',
+        'tipo_residencia',
+        'nombre_direccion',
+        'direccion',
+        'ciudad',
+        'estado',
+        'colonia',
+        'codigo_postal',
+        'celular',
+        'telefono',
+        'nombre_recibe',
+        'url_mapa',
+        'instrucciones',
+        //FIN DE LOS NUEVOS CAMPOS
+        'credit',
+        'status_id',
+        'delete',
+        'origin',
+        'embarques_by',
+        'end_at',
+        'created_by'
     ];
     
     public static function countAll()
@@ -65,7 +96,7 @@ class Order extends Model
     {
         return $this->hasOne(Debolution::class);
     }
-    public function debolutions()
+    public function debolutions()   
     {
         return $this->hasMany(Debolution::class);
     }
@@ -99,6 +130,28 @@ class Order extends Model
 
         return $this->hasMany(\App\DevolucionParcial::class, 'order_id');
 
+    }
+
+    public function rutas(){
+        return $this->belongsToMany(Ruta::class, 'ruta_pedido', 'order_id', 'ruta_id')
+            ->withPivot([
+                'estatus_pago',
+                'monto_por_cobrar',
+                'numero_pedido_ruta',
+                'cliente_codigo',
+                'cliente_nombre',
+                'partial_folio',
+                'smaterial_folio',
+            ]);
+    }
+
+
+    public function cliente(){
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function direccion(){
+        return $this->belongsTo(DireccionCliente::class, 'cliente_direccion_id');
     }
 
 

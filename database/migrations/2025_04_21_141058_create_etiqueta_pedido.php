@@ -11,10 +11,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('pedido_id');
             $table->unsignedBigInteger('etiqueta_id');
             $table->timestamps();
-
-            // Opcional: integridad referencial si después quieres foreign keys:
-            // $table->foreign('pedido_id')->references('id')->on('orders')->onDelete('cascade');
-            // $table->foreign('etiqueta_id')->references('id')->on('etiquetas')->onDelete('cascade');
         });
     }
 
