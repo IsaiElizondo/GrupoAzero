@@ -47,9 +47,19 @@
                                     <div class="col-sm-7">
                                         <select name="role" id="inputRole" class="form-control" onchange="actualizar(this)"">
                                             <option value="3" selected><b>Selecciona un rol...</b></option>
-                                            @foreach ($roles as $role)
-                                                <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                            @endforeach
+                                            @if(auth()->user()->department->name == "Administrador" && auth()->user()->role->name == "Administrador")
+                                                @foreach ($roles as $role)
+                                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                                @endforeach
+                                            @endif
+
+                                            @if(auth()->user()->department->name == "Embarques" && auth()->user()->role->name == "Empleado")
+                                                @foreach ($roles as $role)
+                                                    @if($role->name =="Empleado")
+                                                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                                    @endif
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                 </div>
@@ -58,9 +68,19 @@
                                     <div class="col-sm-7">
                                         <select name="department" id="inputDepartment" class="form-control">
                                             <option value="1" selected><b>Selecciona un departamento...</b></option>
-                                            @foreach ($departments as $department)
-                                                <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                            @endforeach
+                                            @if(auth()->user()->department->name == "Administrador" && auth()->user()->role->name == "Administrador")
+                                                @foreach ($departments as $department)                                                    
+                                                    <option value="{{ $department->id }}">{{ $department->name }}</option>                                                    
+                                                @endforeach
+                                            @endif
+
+                                            @if(auth()->user()->department->name == "Embarques" && auth()->user()->role->name == "Empleado")
+                                                @foreach ($departments as $department)
+                                                    @if($department->name == "Flotilla")
+                                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                                    @endif
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                 </div>

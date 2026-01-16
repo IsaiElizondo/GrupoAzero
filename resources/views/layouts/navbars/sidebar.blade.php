@@ -189,6 +189,18 @@
                         </a>
                     </li>
                 @endif
+
+                @if(auth()->user()->role->name == "Empleado" && auth()->user()->department->name == "Embarques")
+                    
+                    <li class="nav-item{{ $activePage == 'user-management' ? ' active' : '' }}">
+                        <a class="nav-link" href="{{ route('users.index') }}">
+                        <span class="sidebar-mini"> US </span>
+                        <span class="sidebar-normal"> {{ __('Usuarios') }} </span>
+                        </a>
+                    </li>
+                
+                @endif
+
                 </ul>
             </div>
             </li>

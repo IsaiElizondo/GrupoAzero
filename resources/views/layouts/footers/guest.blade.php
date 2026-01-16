@@ -27,6 +27,7 @@
         <div class="copyright float-center">
         &copy;
         {{ date("Y") }}, <span>by FPA for Ferreteria y Aceros 2000</span>
+        <br>
         <span>Ecosistema de Información</span>
         </div>
     </div>

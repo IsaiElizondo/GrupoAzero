@@ -78,7 +78,7 @@ use App\Http\Controllers\Pedidos2Controller;
                 <fieldset>
                     <legend>Subprocesos</legend>
                     @foreach ($events as $k=>$v)
-                        @if ($k == "refacturar")
+                        @if (in_array($k, ['refacturar','devolucion']))
                             @continue
                         @endif 
                     <div class="checkpair parent" rel="{{ $k }}"><input type="checkbox" name="sp[]" value="{{ $k }}" id="sp_{{ $v }}"> <label for="sp_{{ $v }}">{{ ($k=="ordenc") ? "Requisición": $v }}</label></div>

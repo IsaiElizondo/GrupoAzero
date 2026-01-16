@@ -55,22 +55,8 @@ var_dump($pedido);
 
         <div>&nbsp;</div>
 
-    <form action="{{ url('pedidos2/guardar/'.$pedido->id) }}" method="post" enctype="multipart/form-data">
-        @csrf
-
-            <fieldset class='MainInfo'>
-                @if ($pedido->origin != "R" && ($user->role->id == 1 || in_array($user->department->id, [2,3,4,7,9]) ) )
-
-                    
-                <div class='FormRow'>
-                    <label>Folio Cotización</label>
-                    @if (empty($pedido->invoice) || $user->role->id == 1)
-                        <input type="text" class="form-control" name="invoice" value="{{$pedido->invoice}}" />
-                    @else
-                        <span title="Sólo un administrador puede cambiar este dato">{{$pedido->invoice}}</span>
-                    @endif
-                </div>
-                    
+    <form action="{{ url('pedidos2/guardar/'.$pedido->id) }}" id="FEditar" class="ajaxFormPedido" method="post" enctype="multipart/form-data">
+    @csrf
 
                 <div class='FormRow'>
                     <label>Archivo Cotización</label>
@@ -701,8 +687,8 @@ $pedidoStatusId = $pedido->status_id;
     @endif
 
 
-    @if ( ($user->role_id == 1 || 
-        ( in_array($user->department_id,[2,7]) &&  !in_array($pedido->status_id,[6,7,10])    ) ) 
+    @if (($user->role_id == 1 || 
+        ( in_array($user->department_id,[2,7]) &&  !in_array($pedido->status_id,[6,7,10]))) 
       )
         <a class="Candidato" rel="requisicion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=requisicion') }}">+ Requisición</a>
     @endif
@@ -724,11 +710,11 @@ $pedidoStatusId = $pedido->status_id;
         <a class="Candidato" rel="devolucion_parcial" href="{{ url('pedidos2/devolucion_parcial_nueva/'.$pedido->id) }}">+ Devolucion</a>
     @endif
 
-
+{{--
     @if ($user->role_id == 1 || (in_array($user->department_id,[2,8]) && !in_array($pedido->status_id,[10])) )
         <a class="Candidato" rel="devolucion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=devolucion') }}">Devolución</a> 
      @endif 
-
+--}}
     @if ($user->role_id == 1 || (in_array($user->department_id,[3,7]) && in_array($pedido->status_id, [7]) && !isset($rebilling->id)) )
 
         <a class="Candidato" rel="refacturacion" href="{{ url('pedidos2/subproceso_nuevo/'.$pedido->id.'?a=refacturacion') }}">Refacturación</a>
@@ -902,7 +888,7 @@ $pedidoStatusId = $pedido->status_id;
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="headersub"> Etiquetas disponibles</div>
                 <div class="Eleccion">
                     @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
                         @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))

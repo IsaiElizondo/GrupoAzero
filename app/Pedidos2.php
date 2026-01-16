@@ -138,11 +138,11 @@ class Pedidos2 extends Model
 
                 if(!empty($tipos)){
                     if($tipos == ["'total'"]){
-                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0 OR o.status_id = 9)";
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'total') > 0 OR o.status_id = 9";
                     }elseif($tipos == ["'parcial'"]){
-                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0)";
+                        $wheres[] ="(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo = 'parcial') > 0";
                     }else{
-                        $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN ('parcial', 'total'))> 0 OR o.status_id = 9)";
+                        $wheres[] = "(SELECT COUNT(*) FROM devoluciones_parciales dp WHERE dp.order_id = o.id AND dp.cancelado = 0 AND dp.tipo IN ('parcial', 'total'))> 0 OR o.status_id = 9";
                     }
                 }
 
@@ -616,10 +616,10 @@ class Pedidos2 extends Model
         }
 
         // Filtros por rol y departamento
-        if($user->role_id == 2 && $user->department_id == 3){
+        if ($user->role_id == 2 && $user->department_id == 3) {
             $where[] = "log_creador.user_id = {$user->id}";
             $where[] = "o.status_id IN (1,2,3,4,5)";
-        }elseif($user->role_id == 2 && $user->department_id == 4){
+        }elseif ($user->role_id == 2 && $user->department_id == 4) {
             $where[] = "o.status_id IN (2,5)";
             $where[] = "EXISTS (
                 SELECT 1
@@ -629,7 +629,7 @@ class Pedidos2 extends Model
                 AND l_emb.status LIKE '%Recibido por embarques%'
                 AND ul_emb.office = '" . addslashes($user->office) . "'
             )";
-        }elseif($user->role_id == 2 && $user->department_id == 5){
+        }elseif ($user->role_id == 2 && $user->department_id == 5) {
             $where[] = "o.status_id NOT IN (6,7,8,9,10)";
             $where[] = "EXISTS (
                 SELECT 1
@@ -640,11 +640,11 @@ class Pedidos2 extends Model
                 AND u_mo.office = '" . addslashes($user->office) . "'
             )";
         }
-        elseif($user->role_id == 1 || $user->department_id == 2){
+        elseif ($user->role_id == 1 || $user->department_id == 2) {
             $where[] = "o.status_id NOT IN (6,7,8,9,10)";
-        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
+        } elseif (in_array($user->role_id, [1,2]) && $user->department_id == 9) {
             $where[] = "o.status_id IN (6,7,8,9)";
-            $where[] = "o.origin IN ('F', 'C')";
+            $where[] = "(o.origin = 'F' OR (origin = 'C' AND o.invoice_number IS NOT NULL AND o.invoice_number != ''))"; 
         }
 
         $whereStr = implode(" AND ", $where);
@@ -763,6 +763,134 @@ class Pedidos2 extends Model
         ];
     }
 
+        // Filtros por rol y departamento
+        if($user->role_id == 2 && $user->department_id == 3){
+            $where[] = "log_creador.user_id = {$user->id}";
+            $where[] = "o.status_id IN (1,2,3,4,5)";
+        }elseif($user->role_id == 2 && $user->department_id == 4){
+            $where[] = "o.status_id IN (2,5)";
+            $where[] = "EXISTS (
+                SELECT 1
+                FROM logs l_emb
+                JOIN users ul_emb ON ul_emb.id = l_emb.user_id
+                WHERE l_emb.order_id = o.id
+                AND l_emb.status LIKE '%Recibido por embarques%'
+                AND ul_emb.office = '" . addslashes($user->office) . "'
+            )";
+        }elseif($user->role_id == 2 && $user->department_id == 5){
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+            $where[] = "EXISTS (
+                SELECT 1
+                FROM manufacturing_orders mo
+                JOIN users u_mo ON u_mo.id = mo.created_by
+                WHERE mo.order_id = o.id
+                AND mo.status_id IN (1,3)
+                AND u_mo.office = '" . addslashes($user->office) . "'
+            )";
+        }
+        elseif($user->role_id == 1 || $user->department_id == 2){
+            $where[] = "o.status_id NOT IN (6,7,8,9,10)";
+        }elseif(in_array($user->role_id, [1,2]) && $user->department_id == 9){
+            $where[] = "o.status_id IN (6,7,8,9)";
+            $where[] = "o.origin IN ('F', 'C')";
+        }
 
+    public static function ListaDashboardFabricacion(int $pag, $user, array $filtros): array{
+        
+        $ini = ($pag > 1) ? ($pag - 1) * self::$rpp : 0;
+
+        $termino = addslashes($filtros['termino'] ?? '');
+        $desde = $filtros['desde'] ?? '2025-01-01';
+        $hasta = $filtros['hasta'] ?? now()->format('Y-m-d');
+        $etiquetas = $filtros['etiquetas'] ?? [];
+        $status = $filtros['st'] ?? [];
+        $sucursal = $filtros['suc'] ?? [];
+
+        $where = [
+            "mo.status_id IN (1,3)",
+            "o.status_id NOT IN (6,7,8,9,10)",
+            "mo.created_at BETWEEN '$desde 00:00:00' AND '$hasta 23:59:59'"
+        ];
+
+        if(!empty($termino)){
+            $where[] = "(o.invoice LIKE '%$termino%' 
+                OR o.invoice_number LIKE '%$termino%' 
+                OR mo.number LIKE '%$termino%' 
+                OR o.client LIKE '%$termino%')";
+        }
+
+        if(!empty($etiquetas)){
+            $where[] = "ep.etiqueta_id IN (" . implode(',', $etiquetas) . ")";
+        }
+
+        if(!empty($status)){
+            $where[] = "o.status_id IN (" . implode(',', $status) . ")";
+        }
+
+        if(!empty($sucursal)){
+            $arr = array_map(fn($v) => "'" . addslashes($v) . "'", $sucursal);
+            $where[] = "o.office IN (" . implode(',', $arr) . ")";
+        }
+
+        if($user->role_id == 2 && $user->department_id == 5){
+            $where[] = "u.office = '" . addslashes($user->office) . "'";
+        }
+
+        if($user->role_id == 1 || $user->department_id == 2){
+            // admin, sin filtro extra
+        }
+        $whereStr = implode(' AND ', $where);
+        $totalQ = DB::select("
+            SELECT COUNT(DISTINCT mo.id) AS tot
+            FROM manufacturing_orders mo
+            JOIN orders o ON o.id = mo.order_id
+            JOIN users u ON u.id = mo.created_by
+            LEFT JOIN etiqueta_pedido ep ON ep.pedido_id = o.id
+            LEFT JOIN etiquetas e ON e.id = ep.etiqueta_id
+            WHERE $whereStr
+        ");
+
+        $query = "
+            SELECT
+                mo.id AS manufacturing_id,
+                mo.number AS orden_fabricacion,
+                mo.status_id AS of_status_id,
+                mo.created_at AS of_created_at,
+                o.id AS order_id,
+                o.invoice,
+                o.invoice_number,
+                o.client,
+                o.created_at AS pedido_created_at,
+                u.name AS creado_por,
+                u.office AS sucursal,
+                GROUP_CONCAT(DISTINCT e.nombre SEPARATOR ', ') AS etiquetas
+            FROM manufacturing_orders mo
+            JOIN orders o ON o.id = mo.order_id
+            JOIN users u ON u.id = mo.created_by
+            LEFT JOIN etiqueta_pedido ep ON ep.pedido_id = o.id
+            LEFT JOIN etiquetas e ON e.id = ep.etiqueta_id
+            WHERE $whereStr
+            GROUP BY
+                mo.id,
+                mo.number,
+                mo.status_id,
+                mo.created_at,
+                o.id,
+                o.invoice,
+                o.invoice_number,
+                o.client,
+                o.created_at,
+                u.name,
+                u.office
+            ORDER BY mo.created_at DESC
+            LIMIT " . self::$rpp . " OFFSET $ini";
+
+        $resultados = DB::select($query);
+
+        return [
+            'total' => $totalQ[0]->tot ?? 0,
+            'data' => $resultados,
+        ];
+    }
 
 }
