@@ -72,19 +72,68 @@ if($user->role_id == 1 || $user->department_id == 9){
                     <div class="dropdown-menu-checkboxes">
 
                     @php
+                        $user = auth()->user();
 
-                    $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
-                                                                    
-                    if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
-                        $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
-                            return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
-                        });
-                    }
+                        $TipoEtiqueta = null;
 
-                @endphp
+                            if ($user->department->name === 'Administrador') {
+                                $TipoEtiqueta = 'administrador';
+                            }
+                            elseif ($user->department->name === 'Embarques') {
+                                $TipoEtiqueta = 'embarques';
+                            }
+                            elseif ($user->department->name === 'Fabricación' && $user->office === 'San Pablo') {
+                                $TipoEtiqueta = 'fabricacion_sp';
+                            }
+                            elseif ($user->department->name === 'Fabricación' && $user->office === 'La Noria') {
+                                $TipoEtiqueta = 'fabricacion_ln';
+                            }
+                            elseif ($user->department->name === 'Auditoria') {
+                                $TipoEtiqueta = 'auditoria';
+                            }
 
-                        @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
-                            @foreach($etiquetas as $etiqueta)
+                        $EtiquetasVisibles = $etiquetas;
+
+                            if(in_array($user->role->name, ['Administrador', 'Empleado']) && !in_array($user->department->name, ['Administrador', 'Auditoria'])){
+                                $EtiquetasVisibles = $EtiquetasVisibles->filter(function ($etiqueta){
+                                    return !in_array($etiqueta->nombre, config('etiquetas.ventas_ocultas'));
+                                });
+                            }
+
+                        $EtiquetasFiltradas = collect();
+
+                            if ($TipoEtiqueta == 'administrador'){
+                                $EtiquetasFiltradas = $EtiquetasVisibles;
+                            }
+
+                            elseif ($TipoEtiqueta == 'embarques'){
+                                $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                    !in_array($e->nombre, config('etiquetas.embarques_excluir'))
+                                );
+                            }
+
+                            elseif ($TipoEtiqueta == 'fabricacion_sp'){
+                                $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                    in_array($e->nombre, config('etiquetas.fabricacion_sp'))
+                                );
+                            }
+
+                            elseif ($TipoEtiqueta == 'fabricacion_ln'){
+                                $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                    in_array($e->nombre, config('etiquetas.fabricacion_ln'))
+                                );
+                            }
+
+                            elseif ($TipoEtiqueta == 'auditoria'){
+                                $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                    in_array($e->nombre, config('etiquetas.auditoria'))
+                                );
+                            }
+
+                    @endphp
+
+                        @if($EtiquetasFiltradas->count() > 0)
+                            @foreach($EtiquetasFiltradas as $etiqueta)
                                 <label class="dropdown-item-checkbox">
                                     <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
                                     <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
@@ -94,57 +143,6 @@ if($user->role_id == 1 || $user->department_id == 9){
                             @endforeach
                         @endif
 
-                        @if(auth()->user()->department->name == "Embarques" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
-                            @foreach($etiquetas as $etiqueta)
-                                @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-                                    <label class="dropdown-item-checkbox">
-                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
-                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
-                                            {{ strtoupper($etiqueta->nombre) }}
-                                        </span>
-                                    </label>
-                                @endif
-                            @endforeach
-                        @endif
-
-                        @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
-                            @foreach($etiquetas as $etiqueta)
-                                @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
-                                    <label class="dropdown-item-checkbox">
-                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
-                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
-                                            {{ strtoupper($etiqueta->nombre) }}
-                                        </span>
-                                    </label>
-                                @endif
-                            @endforeach
-                        @endif
-
-                        @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
-                            @foreach($etiquetas as $etiqueta)
-                                @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-                                    <label class="dropdown-item-checkbox">
-                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
-                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
-                                            {{ strtoupper($etiqueta->nombre) }}
-                                        </span>
-                                    </label>
-                                @endif
-                            @endforeach
-                        @endif
-
-                        @if(auth()->user()->department->name == "Auditoria" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
-                            @foreach($etiquetas as $etiqueta)
-                                @if(in_array($etiqueta->nombre, ['NO ESTA', 'GERENCIA', 'PERDIDA']))
-                                    <label class="dropdown-item-checkbox">
-                                        <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
-                                        <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
-                                            {{ strtoupper($etiqueta->nombre) }}
-                                        </span>
-                                    </label>
-                                @endif
-                            @endforeach
-                        @endif
                     </div>
                 </div>
 

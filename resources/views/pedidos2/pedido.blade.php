@@ -838,164 +838,79 @@ $pedidoStatusId = $pedido->status_id;
 {{-- NUEVA SECCIÓN DE ETIQUETADO --}}
 
     @php
+        
         $user = auth()->user();
 
-        $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA'];
+        $TipoEtiqueta = null;
 
-        $EtiquetasDisponiblesOcultas = $EtiquetasDisponibles;
-                                                                    
-            if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
-                $EtiquetasDisponiblesOcultas = $EtiquetasDisponibles->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
-                    return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
-                });
-            }
+        if($user->department->name == 'Administrador'){
+            $TipoEtiqueta = 'administrador';
+        }
+
+        elseif($user->department->name == 'Embarques'){
+            $TipoEtiqueta = 'embarques';
+        }
+
+        elseif($user->department->name == 'Fabricación' && $user->office == 'San Pablo'){
+            $TipoEtiqueta = 'fabricacion_sp';
+        }
+
+        elseif($user->department->name == 'Fabricación' && $user->office == 'La Noria'){
+            $TipoEtiqueta = 'fabricacion_ln';
+        }
+
+        elseif($user->department->name == 'Auditoria'){
+            $TipoEtiqueta = 'auditoria';
+        }
+
+        
+        $EtiquetasVisibles = $EtiquetasDisponibles;
+
+        if(in_array($user->role->name, ['Administrador', 'Empleado']) && !in_array($user->department->name, ['Administrador', 'Auditoria'])){
+            $EtiquetasVisibles = $EtiquetasVisibles->filter(function($etiqueta){
+                return !in_array($etiqueta->nombre, config('etiquetas.ventas_ocultas'));
+            });
+        }
+
+        $EtiquetasEditables = collect();
+        if($TipoEtiqueta == 'administrador'){
+            $EtiquetasEditables = $EtiquetasVisibles;
+        }
+
+        elseif($TipoEtiqueta == 'embarques'){
+            $EtiquetasEditables = $EtiquetasVisibles->filter(function($etiqueta){
+                return !in_array($etiqueta->nombre, config('etiquetas.embarques_excluir'));
+            });
+        }
+
+        elseif($TipoEtiqueta == 'fabricacion_sp'){
+            $EtiquetasEditables = $EtiquetasVisibles->filter(function($etiqueta){
+                return in_array($etiqueta->nombre, config('etiquetas.fabricacion_sp'));
+            });
+        }
+
+        elseif($TipoEtiqueta == 'fabricacion_ln'){
+            $EtiquetasEditables = $EtiquetasVisibles->filter(function($etiqueta){
+                return in_array($etiqueta->nombre, config('etiquetas.fabricacion_ln'));
+            });
+        }
+
+        elseif($TipoEtiqueta == 'auditoria'){
+            $EtiquetasEditables = $EtiquetasVisibles->filter(function($etiqueta){
+                return in_array($etiqueta->nombre, config('etiquetas.auditoria'));
+            });
+        }
+
 
     @endphp
 
-    {{-- ETIQUETAS ACTIVAS --}}
+    @include('partials.etiquetas.form', [
+        'id' => $id,
+        'EtiquetasVisibles' => $EtiquetasVisibles,
+        'EtiquetasEditables' => $EtiquetasEditables,
+        'EtiquetasAsignadas' => $EtiquetasAsignadas
+    ])
 
-    @if(count($EtiquetasAsignadas) > 0)
-        <div class="card etiquetas-card">
-            <div class="headersub">Etiquetas activas(SOLO LECTURA)</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        @if(in_array($etiqueta->id, $EtiquetasAsignadas))
-                            <div class="etiqueta-item">
-                                <input type="checkbox" disabled checked id="etiqueta_view_{{$etiqueta->id }}" class="etiqueta-checkbox">
-                                <label class="Candidato etiqueta-label checked" for="etiqueta_view_{{ $etiqueta->id }}" style="background-color: {{ $etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                    {{strtoupper($etiqueta->nombre)}}
-                                </label>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-        </div>
-    @endif
-
-    {{-- ETIQUETAS PARA ADMINISTRACIÓN--}}
-
-    @if(in_array(auth()->user()->department->name,["Administrador"]) && in_array($user->role->name, ["Administrador", "Empleado"]))
-        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
-            @csrf
-            <div class="card etiquetas-card">
-                <div class="headersub">Etiquetas disponibles</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        <div class="etiqueta-item">
-                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{$etiqueta->id}}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : ''}}>
-                            <label class="Candidato etiqueta-label {{in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{ $etiqueta->id }}" style="background-color: {{ $etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                {{strtoupper($etiqueta->nombre)}}
-                            </label>
-                        </div>
-                    @endforeach
-                </div>
-                <br>
-                <button class="btn btn-dark" type="submit"> Guardar </button>
-            </div>
-        </form>
-    @endif
-
-
-    {{-- ETIQUETAS PARA EMBARQUES --}}
-
-     @if($user->department->name =="Embarques" && in_array($user->role->name, ["Administrador", "Empleado"]))
-        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
-            @csrf
-            <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-                            <div class="etiqueta-item">
-                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}>
-                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                    {{strtoupper($etiqueta->nombre)}}
-                                </label>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-                <br>
-                <button class="btn btn-dark" type="submit">Guardar</button>
-            </div>
-        </form>
-    @endif
-
-    {{-- ETIQUETAS PARA FABRICACIÓN NORIA --}}
-
-    @if($user->department->name =="Fabricación" && in_array($user->role->name, ["Administrador", "Empleado"]) && $user->office == "La Noria")
-        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
-            @csrf
-            <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-                            <div class="etiqueta-item">
-                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}>
-                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                    {{strtoupper($etiqueta->nombre)}}
-                                </label>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-                <br>
-                <button class="btn btn-dark" type="submit">Guardar</button>
-            </div>
-        </form>
-    @endif
-
-    {{-- ETIQUETAS PARA FABRICACIÓN SAN PABLO --}}
-
-    @if($user->department->name =="Fabricación" && in_array($user->role->name, ["Administrador", "Empleado"]) && $user->office == "San Pablo")
-        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
-            @csrf
-            <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
-                            <div class="etiqueta-item">
-                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}>
-                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                    {{strtoupper($etiqueta->nombre)}}
-                                </label>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-                <br>
-                <button class="btn btn-dark" type="submit">Guardar</button>
-            </div>
-        </form>
-    @endif
-    
-
-    @if($user->department->name =="Auditoria" && in_array($user->role->name, ["Administrador", "Empleado"]))
-        <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
-            @csrf
-            <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
-                <div class="Eleccion">
-                    @foreach($EtiquetasDisponiblesOcultas as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['NO ESTA', 'PERDIDA', 'GERENCIA']))
-                            <div class="etiqueta-item">
-                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}>
-                                <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $EtiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
-                                    {{strtoupper($etiqueta->nombre)}}
-                                </label>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-                <br>
-                <button class="btn btn-dark" type="submit">Guardar</button>
-            </div>
-        </form>
-    @endif
-
-{{-- FIN DE SECCIÓN DE ETIQUETADO --}}
 
 
 

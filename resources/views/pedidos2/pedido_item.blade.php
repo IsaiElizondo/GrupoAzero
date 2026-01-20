@@ -194,14 +194,14 @@ $requisitions = PurchaseOrder::where(["order_id"=>$item->id])->orderBy("id","DES
             @php
                     $usuario = auth()->user();
                     
-                    $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA'];
+                    $EtiquetasOcultasVentas = ['PERDIDA', 'NO ESTA'];
 
                     $etiquetasMiniFiltradas = $item->etiquetas_render ?? [];
                                                                                 
                         if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
-                            $etiquetasMiniFiltradas = array_values(array_filter($etiquetasMiniFiltradas, function($etq) use ($etiquetasOucltasVentas){
+                            $etiquetasMiniFiltradas = array_values(array_filter($etiquetasMiniFiltradas, function($etq) use ($EtiquetasOcultasVentas){
                                 $nombre = isset($etq['nombre']) ? mb_strtoupper($etq['nombre']) : '';
-                                return !in_array($nombre, $etiquetasOucltasVentas, true);
+                                return !in_array($nombre, $EtiquetasOcultasVentas, true);
                             }));
                             
                         }
