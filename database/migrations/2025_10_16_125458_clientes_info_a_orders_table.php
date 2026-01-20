@@ -28,7 +28,6 @@ return new class extends Migration
             $table->string('telefono', 20)->nullable();
             $table->string('nombre_recibe',100)->nullable();
             $table->string('url_mapa')->nullable();
-            $table->text('requerimientos_especiales')->nullable();
             $table->string('instrucciones')->nullable();
         });
     }

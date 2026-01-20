@@ -26,7 +26,6 @@ return new class extends Migration
             $table->string('nombre_recibe', 50)->nullable();
             $table->string('url_mapa')->nullable();
             $table->text('instrucciones')->nullable();
-            $table->text('requerimientos_especiales')->nullable();
             $table->timestamps();
 
             $table->index('cliente_id');

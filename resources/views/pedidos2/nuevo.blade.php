@@ -105,7 +105,7 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label">C.P.</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control cp-input" type="text" name="general_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
+                                        <input class="form-control cp-input is-invalid" type="text" name="general_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
                                     </div>
                                 
                                     <label class="col-sm-1 col-form-label">Estado</label>
@@ -129,12 +129,12 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label">Celular</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Celular">
+                                        <input class="form-control is-invalid" type="text" name="general_celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Celular">
                                     </div>
 
                                     <label class="col-sm-1 col-form-label">Teléf</label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="general_telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
+                                        <input class="form-control is-invalid" type="text" name="general_telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
                                     </div>
                                 </div>
 
@@ -234,7 +234,7 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> C.P. </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control cp-input" type="text" name="codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" id="codigo_postal" placeholder="Código Postal">
+                                        <input class="form-control cp-input is-invalid" type="text" name="codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" id="codigo_postal" placeholder="Código Postal">
                                     </div>
 
                                     <label class="col-sm-1 col-form-label">Estado</label>
@@ -259,11 +259,11 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> Celular </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" id="celular" placeholder="Celular">
+                                        <input class="form-control is-invalid" type="text" name="celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" id="celular" placeholder="Celular">
                                     </div>
                                     <label class="col-sm-1 col-form-label"> Teléf </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" id="telefono" placeholder="Teléfono">
+                                        <input class="form-control is-invalid" type="text" name="telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" id="telefono" placeholder="Teléfono">
                                     </div>
                                 </div>
                                 
@@ -352,7 +352,7 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> C.P. </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control cp-input" type="text" name="nuevo_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
+                                        <input class="form-control cp-input is-invalid" type="text" name="nuevo_codigo_postal" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="Código Postal">
                                     </div>
 
                                     <label class="col-sm-1 col-form-label"> Estado </label>
@@ -376,12 +376,12 @@
                                 <div class="row mt-2">
                                     <label class="col-sm-2 col-form-label"> Celular </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Celular">
+                                        <input class="form-control is-invalid" type="text" name="nuevo_celular" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Celular">
                                     </div>
 
                                     <label class="col-sm-1 col-form-label"> Teléf </label>
                                     <div class="col-sm-3">
-                                        <input class="form-control" type="text" name="nuevo_telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
+                                        <input class="form-control is-invalid" type="text" name="nuevo_telefono" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Teléfono">
                                     </div>
                                 </div>
 
@@ -550,6 +550,41 @@
         });
 
         $('#guardar_direccion').on('click', function(){
+
+            let cont = $('#form_nueva_direccion');
+
+            cont.find('.is-invalid').removeClass('is-invalid');
+            cont.find('.invalid-feedback').remove();
+
+            let inputCelular      = cont.find('input[name="celular"]');
+            let inputTelefono     = cont.find('input[name="telefono"]');
+            let inputCodigoPostal = cont.find('input[name="codigo_postal"]');
+
+            let Celular      = inputCelular.val();
+            let Telefono     = inputTelefono.val();
+            let CodigoPostal = inputCodigoPostal.val();
+
+            if(Celular && !/^\d{10}$/.test(Celular)){
+                inputCelular.addClass('is-invalid')
+                    .after('<div class="invalid-feedback">El celular debe tener 10 dígitos</div>');
+                inputCelular.focus();
+                return;
+            }
+
+            if(Telefono && !/^\d{10}$/.test(Telefono)){
+                inputTelefono.addClass('is-invalid')
+                    .after('<div class="invalid-feedback">El teléfono debe tener 10 dígitos</div>');
+                inputTelefono.focus();
+                return;
+            }
+
+            if(CodigoPostal && !/^\d{5}$/.test(CodigoPostal)){
+                inputCodigoPostal.addClass('is-invalid')
+                    .after('<div class="invalid-feedback">El código postal debe tener 5 dígitos</div>');
+                inputCodigoPostal.focus();
+                return;
+            }
+
             let datos = {
                 cliente_id: $('#cliente_id_ajax').val(),
                 nombre_direccion: $('#nombre_direccion').val(),

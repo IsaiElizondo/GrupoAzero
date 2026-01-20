@@ -130,7 +130,7 @@
                             </div>
 
                             <div class="card-footer ml-auto mr-auto">
-                                <button type="submit" class="btn btn-primary"> Actualizar </button>
+                                <button type="submit" class="btn" style="background-color: #03b20f; color: white;"> Actualizar </button>
                                 <a href="{{route('clientes.index')}}" class="btn btn-danger"> Cancelar </a>
                             </div>
 

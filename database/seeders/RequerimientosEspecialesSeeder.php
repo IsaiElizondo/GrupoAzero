@@ -27,8 +27,8 @@ class RequerimientosEspecialesSeeder extends Seeder
             ],
 
             [
-                'nombre' => 'Entrada cerrada',
-                'slug' => 'entrada_cerrada',
+                'nombre' => 'Curva cerrada',
+                'slug' => 'curva_cerrada',
             ],
 
             [

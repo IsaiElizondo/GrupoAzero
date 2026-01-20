@@ -10,9 +10,6 @@ use App\Http\Controllers\SepomexController;
 
 Route::middleware(['auth', 'bloquear_rol_departamento'])->group(function(){
 
-    //dd('RUTAS CARGADAS');
-
-
     //RUTAS PARA AGREGAR O CREAR UN PEDIDO CON CLIENTE
     Route::get('clientes/buscar', [ClientesController::class, 'buscar']);
     Route::get('clientes/{id}/direcciones', [ClientesController::class, 'direcciones']);

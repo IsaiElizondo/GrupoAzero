@@ -218,7 +218,7 @@ var_dump($pedido);
 
                                 <div class="FormRow">
                                     <label> Codigo Postal </label>
-                                    <input type="text" name="codigo_postal" class="form-control cp-input" input="numeric" pattern="[0-9]{5}" maxlength="5" value="{{ $pedido->codigo_postal }}">
+                                    <input type="text" name="codigo_postal" class="form-control cp-input is-invalid" input="numeric" pattern="[0-9]{5}" maxlength="5" value="{{ $pedido->codigo_postal }}">
                                 </div>
                                 
                                 <div class="FormRow">
@@ -238,12 +238,12 @@ var_dump($pedido);
 
                                 <div class="FormRow">
                                     <label> Celular </label>
-                                    <input type="text" name="celular" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->celular }}">
+                                    <input type="text" name="celular" class="form-control is-invalid" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->celular }}">
                                 </div>
 
                                 <div class="FormRow">
                                     <label> Telefono </label>
-                                    <input type="text" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->telefono }}">
+                                    <input type="text" name="telefono" class="form-control is-invalid" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" value="{{ $pedido->telefono }}">
                                 </div>
 
                                 <div class="FormRow">
@@ -1443,6 +1443,39 @@ $(document).ready(function(){
         }
 
         let cont = $("#formDireccionPedido");
+
+        cont.find('.is-invalid').removeClass('is-invalid');
+        cont.find('.invalid-feedback').remove();
+
+        let inputCelular      = cont.find('input[name="celular"]');
+        let inputTelefono     = cont.find('input[name="telefono"]');
+        let inputCodigoPostal = cont.find('input[name="codigo_postal"]');
+
+        let Celular      = inputCelular.val();
+        let Telefono     = inputTelefono.val();
+        let CodigoPostal = inputCodigoPostal.val();
+
+        if(Celular && !/^\d{10}$/.test(Celular)){
+            inputCelular.addClass('is-invalid');
+            inputCelular.after('<div class="invalid-feedback">El celular debe tener 10 dígitos</div>');
+            inputCelular.focus();
+            return;
+        }
+
+        if(Telefono && !/^\d{10}$/.test(Telefono)){
+            inputTelefono.addClass('is-invalid');
+            inputTelefono.after('<div class="invalid-feedback">El teléfono debe tener 10 dígitos</div>');
+            inputTelefono.focus();
+            return;
+        }
+
+        if(CodigoPostal && !/^\d{5}$/.test(CodigoPostal)){
+            inputCodigoPostal.addClass('is-invalid');
+            inputCodigoPostal.after('<div class="invalid-feedback">El código postal debe tener 5 dígitos</div>');
+            inputCodigoPostal.focus();
+            return;
+        }
+
         let url = cont.data("url");
 
         $.ajax({
