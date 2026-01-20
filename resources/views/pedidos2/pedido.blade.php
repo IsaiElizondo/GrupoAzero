@@ -602,7 +602,7 @@ $pedidoStatusId = $pedido->status_id;
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles</div>
+                <div class="headersub"> Etiquetas disponibles - Embarques</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponiblesOcultas as $etiqueta)
                         @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
@@ -630,7 +630,7 @@ $pedidoStatusId = $pedido->status_id;
                 <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponiblesOcultas as $etiqueta)
-                        @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                        @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)', 'FABRICACION LA CRUZ']))
                             <div class="etiqueta-item">
                                 <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etiqueta_{{ $etiqueta->id }}" class="etiqueta-checkbox" {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}>
                                 <label class="Candidato etiqueta-label {{ in_array($etiqueta->id, $etiquetasAsignadas) ? 'checked' : '' }}" for="etiqueta_{{$etiqueta->id}}" style="background-color: {{$etiqueta->color ?? '#CCCCCC' }}; color:white;">
@@ -652,7 +652,7 @@ $pedidoStatusId = $pedido->status_id;
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="headersub"> Etiquetas disponibles - Fabricación SP</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponiblesOcultas as $etiqueta)
                         @if(in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
@@ -676,7 +676,7 @@ $pedidoStatusId = $pedido->status_id;
         <form method="POST" action="{{route('pedido.etiquetas.guardar', ['id' => $id]) }}">
             @csrf
             <div class="card etiquetas-card">
-                <div class="headersub"> Etiquetas disponibles - Fabricación LN</div>
+                <div class="headersub"> Etiquetas disponibles - Auditoría</div>
                 <div class="Eleccion">
                     @foreach($etiquetasDisponiblesOcultas as $etiqueta)
                         @if(in_array($etiqueta->nombre, ['NO ESTA', 'PERDIDA', 'GERENCIA']))

@@ -250,7 +250,7 @@ use App\Http\Controllers\Pedidos2Controller;
                     <fieldset>
                         <legend>Etiquetas fabricación</legend>
                         @foreach($etiquetas as $etiqueta)
-                            @if (in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                            @if (in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)', 'FABRICACION LA CRUZ']))
                                 <div class="checkpair">
                                     <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
                                     <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>

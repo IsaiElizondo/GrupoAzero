@@ -122,7 +122,7 @@ if($user->role_id == 1 || $user->department_id == 9){
 
                         @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
                             @foreach($etiquetas as $etiqueta)
-                                @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+                                @if(in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)', 'FABRICACION LA CRUZ']))
                                     <label class="dropdown-item-checkbox">
                                         <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}">
                                         <span class="etiqueta-color" style="background-color: {{ $etiqueta->color ?? '#CCC' }}">
