@@ -249,83 +249,77 @@ use App\Http\Controllers\Pedidos2Controller;
                                                 </fieldset>
 
                                             @php
+                                                $user = auth()->user();
 
-                                                $etiquetasOucltasVentas = ['PERDIDA', 'NO ESTA']; 
-                                                                                                
-                                                 if(in_array(auth()->user()->role->name,["Administrador", "Empleado"]) && !in_array(auth()->user()->department->name,["Administrador", "Auditoria"])) {
-                                                    $etiquetas = $etiquetas->filter(function($etiqueta) use ($etiquetasOucltasVentas) {
-                                                        return !in_array($etiqueta->nombre, $etiquetasOucltasVentas);
-                                                    });
-                                                }
+                                                $TipoEtiqueta = null;
+
+                                                    if ($user->department->name === 'Administrador') {
+                                                        $TipoEtiqueta = 'administrador';
+                                                    }
+                                                    elseif ($user->department->name === 'Embarques') {
+                                                        $TipoEtiqueta = 'embarques';
+                                                    }
+                                                    elseif ($user->department->name === 'Fabricación' && $user->office === 'San Pablo') {
+                                                        $TipoEtiqueta = 'fabricacion_sp';
+                                                    }
+                                                    elseif ($user->department->name === 'Fabricación' && $user->office === 'La Noria') {
+                                                        $TipoEtiqueta = 'fabricacion_ln';
+                                                    }
+                                                    elseif ($user->department->name === 'Auditoria') {
+                                                        $TipoEtiqueta = 'auditoria';
+                                                    }
+
+                                                $EtiquetasVisibles = $etiquetas;
+
+                                                    if(in_array($user->role->name, ['Administrador', 'Empleado']) && !in_array($user->department->name, ['Administrador', 'Auditoria'])){
+                                                        $EtiquetasVisibles = $EtiquetasVisibles->filter(function ($etiqueta){
+                                                            return !in_array($etiqueta->nombre, config('etiquetas.ventas_ocultas'));
+                                                        });
+                                                    }
+
+                                                $EtiquetasFiltradas = collect();
+
+                                                    if ($TipoEtiqueta == 'administrador'){
+                                                        $EtiquetasFiltradas = $EtiquetasVisibles;
+                                                    }
+
+                                                    elseif ($TipoEtiqueta == 'embarques'){
+                                                        $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                                            !in_array($e->nombre, config('etiquetas.embarques_excluir'))
+                                                        );
+                                                    }
+
+                                                    elseif ($TipoEtiqueta == 'fabricacion_sp'){
+                                                        $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                                            in_array($e->nombre, config('etiquetas.fabricacion_sp'))
+                                                        );
+                                                    }
+
+                                                    elseif ($TipoEtiqueta == 'fabricacion_ln'){
+                                                        $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                                            in_array($e->nombre, config('etiquetas.fabricacion_ln'))
+                                                        );
+                                                    }
+
+                                                    elseif ($TipoEtiqueta == 'auditoria'){
+                                                        $EtiquetasFiltradas = $EtiquetasVisibles->filter(fn($e) =>
+                                                            in_array($e->nombre, config('etiquetas.auditoria'))
+                                                        );
+                                                    }
+
                                             @endphp
 
-                                    
-
-                                            @if(in_array(auth()->user()->department->name, ["Administrador", "Ventas"]) && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
+                                            
+                                            @if($EtiquetasFiltradas->count() > 0)
                                                 <fieldset>
-                                                    <legend>Etiquetas embarques</legend>
-                                                    @foreach($etiquetas as $etiqueta)
+                                                    <legend>Etiquetas</legend>
+                                                    @foreach($EtiquetasFiltradas as $etiqueta)
                                                         <div class="checkpair">
-                                                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
-                                                            <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
+                                                            <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{ $etiqueta->id }}">
+                                                            <label for="etq_{{ $etiqueta->id }}">
+                                                                {{ $etiqueta->nombre }}
+                                                            </label>
                                                         </div>
-                                                    @endforeach
-                                                </fieldset>
-                                            @endif
-
-                                            @if(auth()->user()->department->name == "Embarques" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
-                                                <fielset>
-                                                    <legend> Etiquetas de embarques </legend>
-                                                    @foreach($etiquetas as $etiqueta)
-                                                        @if(!in_array($etiqueta->nombre, ['N1', 'N2', 'N3', 'N4', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
-                                                            <div class="checkpair">
-                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
-                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
-                                                            </div>
-                                                        @endif
-                                                    @endforeach
-                                                </fieldset>
-                                            @endif
-
-
-                                            @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "San Pablo")
-                                                <fieldset>
-                                                    <legend>Etiquetas fabricación</legend>
-                                                    @foreach($etiquetas as $etiqueta)
-                                                        @if (in_array($etiqueta->nombre, ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
-                                                            <div class="checkpair">
-                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
-                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
-                                                            </div>
-                                                        @endif
-                                                    @endforeach
-                                                </fieldset>
-                                            @endif
-
-                                            @if(auth()->user()->department->name == "Fabricación" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]) && auth()->user()->office == "La Noria")
-                                                <fieldset>
-                                                    <legend>Etiquetas fabricación</legend>
-                                                    @foreach($etiquetas as $etiqueta)
-                                                        @if (in_array($etiqueta->nombre, ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)', 'FABRICACION LA CRUZ']))
-                                                            <div class="checkpair">
-                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
-                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
-                                                            </div>
-                                                        @endif
-                                                    @endforeach
-                                                </fieldset>
-                                            @endif
-
-                                            @if(auth()->user()->department->name == "Auditoria" && in_array(auth()->user()->role->name, ["Administrador", "Empleado"]))
-                                                <fieldset>
-                                                    <legend>Etiquetas Auditoria</legend>
-                                                    @foreach($etiquetas as $etiqueta)
-                                                        @if (in_array($etiqueta->nombre, ['NO ESTA', 'GERENCIA', 'PERDIDA']))
-                                                            <div class="checkpair">
-                                                                <input type="checkbox" name="etiquetas[]" value="{{ $etiqueta->id }}" id="etq_{{$etiqueta->id}}">
-                                                                <label for="etq_{{ $etiqueta->id }}">{{ $etiqueta->nombre}}</label>
-                                                            </div>
-                                                        @endif
                                                     @endforeach
                                                 </fieldset>
                                             @endif

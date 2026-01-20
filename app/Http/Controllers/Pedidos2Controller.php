@@ -235,20 +235,20 @@ class Pedidos2Controller extends Controller
         $purchaseOrder = PurchaseOrder::where(["order_id" => $id])->first();
        // var_dump($purchaseOrder);
        
-       $etiquetasDisponibles = DB::table('etiquetas')->get();
+       $EtiquetasDisponibles = DB::table('etiquetas')->get();
 
-       $etiquetasAsignadas = DB::table('etiqueta_pedido')
+       $EtiquetasAsignadas = DB::table('etiqueta_pedido')
             ->where('pedido_id', $id)
             ->pluck('etiqueta_id')
             ->toArray();
 
-        $data['etiquetasDisponibles'] = $etiquetasDisponibles;
-        $data['etiquetasAsignadas'] = $etiquetasAsignadas;
+        $data['EtiquetasDisponibles'] = $EtiquetasDisponibles;
+        $data['EtiquetasAsignadas'] = $EtiquetasAsignadas;
         
 
         return view('pedidos2.pedido', compact('id','pedido','shipments',
         'role','user','evidences','debolutions', 'quote', 'purchaseOrder','imagenesEntrega','parciales',
-        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "etiquetasAsignadas", "etiquetasDisponibles"));
+        "statuses","rebilling","reasons","stockreq","notes","smateriales_num", "EtiquetasAsignadas", "EtiquetasDisponibles"));
     }
 
 
@@ -264,7 +264,7 @@ class Pedidos2Controller extends Controller
         $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
         //Obtener etiquetas ya activas
-        $etiquetasAsignadas = DB::table('etiqueta_pedido')
+        $EtiquetasAsignadas = DB::table('etiqueta_pedido')
             ->where('pedido_id', $id)
             ->pluck('etiqueta_id');
 
@@ -276,13 +276,13 @@ class Pedidos2Controller extends Controller
             ->pluck('id');
 
         //Etiquetas que no puede modificar
-        $etiquetasNoModificables = $etiquetasAsignadas->diff($etiquetasPermitidas);
+        $etiquetasNoModificables = $EtiquetasAsignadas->diff($etiquetasPermitidas);
 
         //Etiquetas que si puede modificar
         $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
 
-        $eliminadas = $etiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
-        $nuevas = $etiquetasFiltradas->diff($etiquetasAsignadas);
+        $eliminadas = $EtiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
+        $nuevas = $etiquetasFiltradas->diff($EtiquetasAsignadas);
 
         //Eliminar solo las etiquetas Permitidas
         DB::table('etiqueta_pedido')
