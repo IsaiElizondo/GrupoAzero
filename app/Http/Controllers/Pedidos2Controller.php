@@ -261,7 +261,7 @@ class Pedidos2Controller extends Controller
     
         $user = auth()->user();
 
-        $etiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
+        $EtiquetasSeleccionadas = collect($request->input('etiquetas',[]))->map(fn($id) => (int) $id);
 
         //Obtener etiquetas ya activas
         $EtiquetasAsignadas = DB::table('etiqueta_pedido')
@@ -269,29 +269,29 @@ class Pedidos2Controller extends Controller
             ->pluck('etiqueta_id');
 
         //Obtener las etiquetas nuevas de fabricación
-        $etiquetasPermitidas = DB::table('etiquetas')
-            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)']))
+        $EtiquetasPermitidas = DB::table('etiquetas')
+            ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'La Noria', fn($q) => $q->whereIn('nombre', ['N3', 'N4', 'PARCIALMENTE TERMINADO (LN)', 'PEDIDO EN PAUSA (LN)', 'FABRICACION LA CRUZ']))
             ->when($user->department && $user->department->name == 'Fabricación' && $user->office == 'San Pablo', fn($q) => $q->whereIn('nombre', ['N1', 'N2', 'PARCIALMENTE TERMINADO (SP)', 'PEDIDO EN PAUSA (SP)']))
             ->when(in_array($user->department?->name, ['Embarques', 'Administrador', 'Ventas']), fn($q) => $q)
             ->pluck('id');
 
         //Etiquetas que no puede modificar
-        $etiquetasNoModificables = $EtiquetasAsignadas->diff($etiquetasPermitidas);
+        $EtiquetasNoModificables = $EtiquetasAsignadas->diff($EtiquetasPermitidas);
 
         //Etiquetas que si puede modificar
-        $etiquetasFiltradas = $etiquetasSeleccionadas->intersect($etiquetasPermitidas);
+        $EtiquetasFiltradas = $EtiquetasSeleccionadas->intersect($EtiquetasPermitidas);
 
-        $eliminadas = $EtiquetasAsignadas->intersect($etiquetasPermitidas)->diff($etiquetasFiltradas);
-        $nuevas = $etiquetasFiltradas->diff($EtiquetasAsignadas);
+        $eliminadas = $EtiquetasAsignadas->intersect($EtiquetasPermitidas)->diff($EtiquetasFiltradas);
+        $nuevas = $EtiquetasFiltradas->diff($EtiquetasAsignadas);
 
         //Eliminar solo las etiquetas Permitidas
         DB::table('etiqueta_pedido')
             ->where('pedido_id', $id)
-            ->whereIN('etiqueta_id', $etiquetasPermitidas)
+            ->whereIN('etiqueta_id', $EtiquetasPermitidas)
             ->delete();
 
         //Volver a poner las nuevas etiquetas permitidas
-        foreach($etiquetasFiltradas as $etiqueta_id){
+        foreach($EtiquetasFiltradas as $etiqueta_id){
 
             DB::table('etiqueta_pedido')->insert([
 
@@ -305,7 +305,7 @@ class Pedidos2Controller extends Controller
         }
 
         //Volver a poner las etiquetas no permitidas
-        foreach($etiquetasNoModificables as $etiqueta_id){
+        foreach($EtiquetasNoModificables as $etiqueta_id){
 
             DB::table('etiqueta_pedido')->insert([
 
@@ -321,14 +321,14 @@ class Pedidos2Controller extends Controller
         //Registrar en el historial
         foreach($nuevas as $nueva){
 
-            $nombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
+            $NombreEtiqueta = DB::table('etiquetas')->where('id', $nueva)->value('nombre');
 
             DB::table('logs')->insert([
 
                 'order_id' => $id,
                 'user_id' =>$user->id,
                 'action' => "Añadió etiqueta",
-                'status' => 'Etiqueta añadida: ' .$nombreEtiqueta,
+                'status' => 'Etiqueta añadida: ' .$NombreEtiqueta,
                 'created_at' => now(),
                 'updated_at' => now(),
 
@@ -339,14 +339,14 @@ class Pedidos2Controller extends Controller
 
         foreach($eliminadas as $eliminada){
 
-            $nombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
+            $NombreEtiqueta = DB::table('etiquetas')->where('id', $eliminada)->value('nombre');
 
             DB::table('logs')->insert([
 
                 'order_id' => $id,
                 'user_id' =>$user->id,
                 'action' => "Eliminó etiqueta",
-                'status' => 'Etiqueta eliminada: ' .$nombreEtiqueta,
+                'status' => 'Etiqueta eliminada: ' .$NombreEtiqueta,
                 'created_at' => now(),
                 'updated_at' => now(),
 
